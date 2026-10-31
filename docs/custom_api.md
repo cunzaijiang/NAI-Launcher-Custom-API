@@ -1,6 +1,6 @@
 # 自定义图像 API / 自訂影像 API / Custom image APIs
 
-> **Preview 2 尚未发布 / 尚未發佈 / Not yet published.** 以下为待发布协议说明，发布与附件验证由主发布流程完成。 / Publication and asset verification remain pending in the main release process.
+> **Preview 2 已公开发布 / 已公開發佈 / Publicly released.** [Release / 下载 / 下載](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2) · [CI 与发布验证 / CI 與發佈驗證 / CI and publication verification](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/actions/runs/41213027696)
 
 ## 简体中文
 

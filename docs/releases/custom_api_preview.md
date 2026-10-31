@@ -1,6 +1,8 @@
 # NAI Launcher Custom API 4.3.1 Preview 2
 
-> **Preview 2 尚未发布 / 尚未發佈 / Not yet published.** 等待主发布流程上传附件并完成验证。 / Upload and verification by the main release process are pending.
+> **Preview 2 已公开发布 / 已公開發佈 / Publicly released.** Release ID: `430016699` · [CI 与发布验证 / CI 與發佈驗證 / CI and publication verification](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/actions/runs/41213027696)
+>
+> Source SHA: `2d812ac3d8e3307af8e3f2a0beca121f3adf784d`
 
 Tag: `custom-api-v4.3.1-preview.2` · Asset version: `4.3.1-custom-api-preview.2`
 
@@ -32,12 +34,12 @@ Tag: `custom-api-v4.3.1-preview.2` · Asset version: `4.3.1-custom-api-preview.2
 | Android | `NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.2.apk` |
 | macOS | `NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.2_Portable.zip` |
 
-- 四个二进制包须从同一不可变源码 SHA 重建，不复制上游应用成品。内部基础版本仍为 `4.3.1+46`，独立预览身份由 tag、文件名及清单标识。发布是否完成、实际大小、来源 SHA 与 SHA-256 以 Release 实际附件为准，文档不代替上传验证。
+- 四个二进制包已从同一不可变源码 SHA `2d812ac3d8e3307af8e3f2a0beca121f3adf784d` 构建，不复制上游应用成品。内部基础版本仍为 `4.3.1+46`，独立预览身份由 tag、文件名及清单标识。上述 CI run 全部 jobs 成功，包括完整 19-suite 测试 gate；publish 步骤已下载全部 7 个附件并完成 SHA-256 回验。实际大小、来源 SHA 与 SHA-256 见 Release 附件；不推算测试用例总数。
 - Windows x64 Portable / NSIS Setup 无 Authenticode 签名，可能触发 SmartScreen；安装目录可能与上游重叠。macOS 仅 ad-hoc 签名，无 Apple Developer ID 且未公证，Gatekeeper 可能阻止打开。核对来源与哈希，不要全局关闭系统安全保护。
 - Android 是 release 模式、runner 临时 debug key 签名，不是上游官方签名。应用 ID 仍为 `com.aaalice.nai_launcher`；不能覆盖不同签名的上游安装，也不保证不同预览构建间直接覆盖。安装、卸载前备份，卸载可能删除本地数据。
 - 附带 `checksums.txt`、`release_manifest.json`、`release_notes_custom_api.md`。校验文件覆盖四个二进制包、清单与说明；清单记录真实 SHA-256、大小与源码 SHA。校验值不等于发布者数字签名，清单仅用于独立下载溯源，不是上游受信任签名更新格式。
 - GitHub 自动提供同 tag 的 Source code ZIP/TAR.GZ，源码归档不是安装包，也不包含完整 Git LFS 数据库。需要自有注册的云盘 OAuth 等功能不含上游凭据。
-- 没有真实服务地址、密钥或付费端到端验证；离线测试通过不保证任意第三方服务可用。具体协议与验证范围见 [custom_api.md](../custom_api.md) 和 [custom_api_verification.md](../custom_api_verification.md)。
+- 没有真实服务地址、密钥或付费 API / 真实服务端到端验证，也未完成人工跨平台端到端验收；离线测试通过不保证任意第三方服务可用。具体协议与验证范围见 [custom_api.md](../custom_api.md) 和 [custom_api_verification.md](../custom_api_verification.md)。
 
 ## 繁體中文
 
@@ -51,9 +53,9 @@ Tag: `custom-api-v4.3.1-preview.2` · Asset version: `4.3.1-custom-api-preview.2
 
 參考欄位為 `controlnet: {strength: 1, images: [{image, info_extracted, strength}]}` 與 `character_references` 陣列，不是 `precise_reference`。
 
-四個套件名稱見上表，須由同一不可變來源 SHA 重建；內部版本仍為 `4.3.1+46`。Windows 無 Authenticode、macOS 僅 ad-hoc 且未公證、Android release 模式使用 runner 臨時 debug key；應用程式 ID 與安裝位置沿用上游，不能覆蓋不同簽章安裝，不保證預覽間可直接升級。安裝／解除安裝前備份，不要全域停用安全保護。
+四個套件名稱見上表，已由同一不可變來源 SHA `2d812ac3d8e3307af8e3f2a0beca121f3adf784d` 建置；上述 CI run 全部 jobs 成功，包括完整 19-suite 測試 gate，publish 步驟已下載全部 7 個附件並完成 SHA-256 回驗，不推算測試案例總數。內部版本仍為 `4.3.1+46`。Windows 無 Authenticode、macOS 僅 ad-hoc 且未公證、Android release 模式使用 runner 臨時 debug key；應用程式 ID 與安裝位置沿用上游，不能覆蓋不同簽章安裝，不保證預覽間可直接升級。安裝／解除安裝前備份，不要全域停用安全保護。
 
-實際附件、大小與雜湊以 Release 為準。`checksums.txt`、獨立清單與說明記錄來源，不是數位簽章或可信任自動更新中繼資料。來源封存檔不是安裝包且缺少完整 LFS 資料庫；不含上游雲端 OAuth 憑證。未進行真實服務或付費端對端測試。詳見 [使用說明](../custom_api.md) 與 [驗證範圍](../custom_api_verification.md)。
+實際附件、大小與雜湊以 Release 為準。`checksums.txt`、獨立清單與說明記錄來源，不是數位簽章或可信任自動更新中繼資料。來源封存檔不是安裝包且缺少完整 LFS 資料庫；不含上游雲端 OAuth 憑證。未進行真實服務或付費 API / 端對端測試，也未完成人工跨平台端對端驗收。詳見 [使用說明](../custom_api.md) 與 [驗證範圍](../custom_api_verification.md)。
 
 ## English
 
@@ -67,6 +69,6 @@ This is independent Preview 2 from `cunzaijiang/NAI-Launcher-Custom-API`, **not 
 
 Reference fields are `controlnet: {strength: 1, images: [{image, info_extracted, strength}]}` and a `character_references` array, not `precise_reference`.
 
-The four filenames are listed above and must be rebuilt from one immutable source SHA, without copying upstream binaries. The internal version remains `4.3.1+46`. Windows lacks Authenticode; macOS has ad-hoc signing only, no Developer ID or notarization; Android is release-mode with an ephemeral runner debug key. Application IDs and installation locations are inherited, preventing differently signed replacements and potentially overlapping upstream installations. Upgrades between previews are not guaranteed. Back up before installation/uninstallation, which may erase local data; do not globally disable security protections.
+The four filenames are listed above and were built from immutable source SHA `2d812ac3d8e3307af8e3f2a0beca121f3adf784d`, without copying upstream binaries. All jobs in the linked CI run succeeded, including the complete 19-suite test gate; the publish step downloaded all 7 assets and completed SHA-256 verification. No test-case total is inferred. The internal version remains `4.3.1+46`. Windows lacks Authenticode; macOS has ad-hoc signing only, no Developer ID or notarization; Android is release-mode with an ephemeral runner debug key. Application IDs and installation locations are inherited, preventing differently signed replacements and potentially overlapping upstream installations. Upgrades between previews are not guaranteed. Back up before installation/uninstallation, which may erase local data; do not globally disable security protections.
 
-Publication, sizes, source SHA and hashes are established by actual Release attachments, not by these notes. `checksums.txt`, `release_manifest.json` and `release_notes_custom_api.md` document provenance, not publisher signatures or trusted automatic-update metadata. GitHub source archives are not installers and omit full LFS databases. Upstream cloud OAuth credentials are not included. No real-service or paid end-to-end tests have been performed; offline passing tests cannot establish arbitrary provider compatibility. See the [API guide](../custom_api.md) and [verification scope](../custom_api_verification.md).
+Publication, sizes, source SHA and hashes are established by actual Release attachments, not by these notes. `checksums.txt`, `release_manifest.json` and `release_notes_custom_api.md` document provenance, not publisher signatures or trusted automatic-update metadata. GitHub source archives are not installers and omit full LFS databases. Upstream cloud OAuth credentials are not included. No real-service or paid API / end-to-end tests have been performed, and manual cross-platform end-to-end acceptance has not been completed; offline passing tests cannot establish arbitrary provider compatibility. See the [API guide](../custom_api.md) and [verification scope](../custom_api_verification.md).

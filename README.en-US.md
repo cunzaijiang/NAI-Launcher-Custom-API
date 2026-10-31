@@ -30,7 +30,7 @@ The primary entry is **Custom API** on the sign-in page: enter **one API URL, a 
 
 ## Download Custom API Preview 2
 
-**4.3.1 Custom API Preview 2 is not yet published; upload and verification by the main release process are pending.** The following are planned asset links, not evidence of downloadable packages before publication. [Planned release and checksums (not yet published)](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2) · [Read this fork's release notes](docs/releases/custom_api_preview.md). Use these four actual packages, not the source archives, to install:
+**4.3.1 Custom API Preview 2 is publicly released.** [Release and checksums](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2) · [Read this fork's release notes](docs/releases/custom_api_preview.md). Use these four actual packages, not the source archives, to install:
 
 | Platform | Direct package download |
 | --- | --- |
@@ -203,7 +203,7 @@ These screenshots are inherited from upstream and are illustrations only, not ev
 
 ### 1. Manually download and install the current preview
 
-Preview 2 is not yet published; this is the [planned release page](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2). The filenames below match the direct links above:
+Preview 2 is publicly released; use the [release page](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2). The filenames below match the direct links above:
 
 | Platform | File | Usage |
 | --- | --- | --- |
@@ -252,7 +252,7 @@ NAI Launcher does not host your account or artwork on a project-operated server.
 
 - If something goes wrong, use **Settings → About → Export diagnostic logs** and attach the exported information to your report.
 - [Open a fork Issue](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/issues) for a reproducible bug or feature request. Remove tokens and other sensitive data before sharing logs.
-- [Planned Preview 2 release (not yet published)](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2) and verify checksums; read the [fork release notes](docs/releases/custom_api_preview.md) for changes. Upgrade manually; Preview 2 does not support in-app update installation.
+- [Preview 2 release](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2) and verify checksums; read the [fork release notes](docs/releases/custom_api_preview.md) for changes. Upgrade manually; Preview 2 does not support in-app update installation.
 
 ## 🙏 Acknowledgments
 

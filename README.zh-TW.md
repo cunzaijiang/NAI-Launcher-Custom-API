@@ -30,7 +30,7 @@
 
 ## 下載 Custom API Preview 2
 
-**4.3.1 Custom API Preview 2 尚未發佈，等待主發佈流程完成上傳與驗證。** 以下為預定附件連結，發佈完成前不代表可下載版本。[預定發佈頁與檢查碼（尚未發佈）](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2) · [閱讀本分支更新說明](docs/releases/custom_api_preview.md)。請使用以下四個實際安裝包，不要下載原始碼封存檔來安裝：
+**4.3.1 Custom API Preview 2 已公開發佈。** [發佈頁與檢查碼](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2) · [閱讀本分支更新說明](docs/releases/custom_api_preview.md)。請使用以下四個實際安裝包，不要下載原始碼封存檔來安裝：
 
 | 平台 | 直接下載安裝包 |
 | --- | --- |
@@ -203,7 +203,7 @@
 
 ### 1. 手動下載並安裝目前預覽版
 
-Preview 2 尚未發佈；以下為[預定發佈頁面](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2)，檔名如下（與上方直接連結一致）：
+Preview 2 已公開發佈；請查看[發佈頁面](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2)，檔名如下（與上方直接連結一致）：
 
 | 平台 | 檔案 | 用法 |
 | --- | --- | --- |
@@ -252,7 +252,7 @@ NAI Launcher 不會在專案自有伺服器上託管你的帳號或作品。只�
 
 - 如遇異常，請透過「設定 → 關於 → 匯出診斷日誌」儲存排查資訊，並在回報時一併提供。
 - [提交本分支 Issue](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/issues)：回報可以重現的問題或提出功能建議；分享日誌前請移除 Token 等敏感資訊。
-- [Preview 2 預定發佈頁（尚未發佈）](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2)並核對檢查碼檔案；更新內容見[本分支更新說明](docs/releases/custom_api_preview.md)。請手動升級；Preview 2 不支援應用程式內安裝更新。
+- [Preview 2 發佈頁](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2)並核對檢查碼檔案；更新內容見[本分支更新說明](docs/releases/custom_api_preview.md)。請手動升級；Preview 2 不支援應用程式內安裝更新。
 
 ## 🙏 致謝
 
