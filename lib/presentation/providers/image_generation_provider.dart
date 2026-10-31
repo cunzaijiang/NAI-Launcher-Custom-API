@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/constants/model_capabilities.dart';
+import '../../core/network/nai_api_endpoint_service.dart';
 import '../../core/platform/platform_capabilities.dart';
 import '../../core/services/android_foreground_task_service.dart';
 import '../../core/services/anlas_calculator.dart';
@@ -398,6 +399,10 @@ class ImageGenerationNotifier extends _$ImageGenerationNotifier {
       final dlss = ref.read(dlssProvider);
       final coordinator = ImageGenerationCoordinator(
         apiService: ref.read(naiImageGenerationApiServiceProvider),
+        isOpenAiCompatible: ref
+            .read(naiApiEndpointServiceProvider)
+            .current
+            .isOpenAiCompatible,
         postprocess: dlss.automaticSnapshot(),
         onPostprocessError: dlss.reportEnhancementError,
       );
@@ -514,6 +519,10 @@ class ImageGenerationNotifier extends _$ImageGenerationNotifier {
         vibes: GenerationVibePreparation(prepare: _prepareVibesForGeneration),
       ),
       preserveCharacterSnapshot: preserveCharacterSnapshot,
+      isOpenAiCompatible: ref
+          .read(naiApiEndpointServiceProvider)
+          .current
+          .isOpenAiCompatible,
     );
   }
 

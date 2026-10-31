@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/dio_client.dart';
 import '../../../core/network/nai_api_endpoint.dart';
+import '../../../core/network/nai_compatible_request.dart';
 import '../../../core/utils/app_logger.dart';
 
 part 'nai_auth_api_service.g.dart';
@@ -56,8 +57,8 @@ class NAIAuthApiService {
 
   /// 验证 API Token 是否有效
   ///
-  /// 第三方端点缺失 `/user/subscription` 时改用生成端点做鉴权探测，
-  /// 探测通过则返回无订阅信息的成功结果，登录不再因 404 失败。
+  /// 显式 OpenAI 兼容 profile 仅通过 `/v1/models` 验证，不探测生成接口。
+  /// 普通第三方端点缺失 `/user/subscription` 时保留既有生成端点鉴权探测。
   Future<TokenValidationResult> validateToken(
     String token, {
     NaiApiEndpointConfig endpoint = NaiApiEndpointConfig.official,
@@ -78,23 +79,18 @@ class NAIAuthApiService {
 
     // 详细的日志记录用于诊断登录问题
     final tokenFormat = normalizedToken.startsWith('pst-') ? 'pst' : 'jwt';
-    final prefix = normalizedToken.startsWith('pst-')
-        ? normalizedToken.substring(
-            0,
-            normalizedToken.length > 10 ? 10 : normalizedToken.length,
-          )
-        : normalizedToken.substring(
-            0,
-            normalizedToken.length > 20 ? 20 : normalizedToken.length,
-          );
     AppLogger.i(
-      'Validating token: format=$tokenFormat, length=${normalizedToken.length}, prefix=$prefix...',
+      'Validating token: format=$tokenFormat, length=${normalizedToken.length}',
       'NAIAuth',
     );
     AppLogger.d(
       'Auth header prepared: length=${authHeader.length}, tokenFormat=$tokenFormat',
       'NAIAuth',
     );
+
+    if (endpoint.isOpenAiCompatible) {
+      return _validateOpenAiModels(endpoint, authHeader);
+    }
 
     final Response<dynamic> response;
     try {
@@ -110,7 +106,7 @@ class NAIAuthApiService {
       if (endpoint.isThirdParty && e.response?.statusCode == 404) {
         AppLogger.w(
           'Third-party site has no /user/subscription, '
-          'falling back to image endpoint probe',
+              'falling back to image endpoint probe',
           'NAIAuth',
         );
         return _probeThirdPartyImageAuth(endpoint, authHeader);
@@ -119,7 +115,7 @@ class NAIAuthApiService {
         final responseData = e.response?.data;
         final message = responseData is Map ? responseData['message'] : null;
         AppLogger.e(
-          'Token validation failed (400): $message, authHeader format=$tokenFormat',
+          'Token validation failed (400), tokenFormat=$tokenFormat',
           'NAIAuth',
         );
         // 添加更详细的错误信息
@@ -144,7 +140,7 @@ class NAIAuthApiService {
       if (endpoint.isThirdParty) {
         AppLogger.w(
           'Third-party /user/subscription returned non-JSON body, '
-          'falling back to image endpoint probe',
+              'falling back to image endpoint probe',
           'NAIAuth',
         );
         return _probeThirdPartyImageAuth(endpoint, authHeader);
@@ -156,6 +152,57 @@ class NAIAuthApiService {
 
     AppLogger.i('Token validation successful', 'NAIAuth');
     return TokenValidationResult.subscribed(data);
+  }
+
+  /// This explicit profile never probes a billable generation endpoint or
+  /// trusts the provider's fixed subscription placeholders as a real balance.
+  Future<TokenValidationResult> _validateOpenAiModels(
+    NaiApiEndpointConfig endpoint,
+    String authHeader,
+  ) async {
+    final modelsUrl = endpoint.mainUrl('/models');
+    final response = await _dio.get<dynamic>(
+      modelsUrl,
+      options: Options(
+        headers: {'Authorization': authHeader},
+        receiveTimeout: _timeout,
+        sendTimeout: _timeout,
+        followRedirects: false,
+        validateStatus: (status) =>
+            status != null && status >= 200 && status < 300,
+      ),
+    );
+    // Check explicitly too: injected clients/interceptors may accept errors.
+    final status = response.statusCode ?? 0;
+    if (status < 200 || status >= 300) {
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        type: DioExceptionType.badResponse,
+        error: 'Provider model validation failed',
+      );
+    }
+    final payload = response.data;
+    final models = payload is Map ? payload['data'] : null;
+    final hasSupportedModel =
+        models is List &&
+        models.isNotEmpty &&
+        models.any(
+          (model) =>
+              model is Map &&
+              NaiCompatibleRequest.generationModels.contains(model['id']),
+        );
+    if (!hasSupportedModel) {
+      throw NaiEndpointIncompatibleException(
+        probedUrl: modelsUrl,
+        statusCode: response.statusCode,
+      );
+    }
+    AppLogger.i(
+      'Provider model validation successful (no balance info)',
+      'NAIAuth',
+    );
+    return const TokenValidationResult.withoutSubscription();
   }
 
   /// 用生成端点对第三方 Token 做鉴权探测。
@@ -217,7 +264,7 @@ class NAIAuthApiService {
 
     AppLogger.i(
       'Third-party auth probe passed (status=$status), '
-      'logging in without subscription info',
+          'logging in without subscription info',
       'NAIAuth',
     );
     return const TokenValidationResult.withoutSubscription();

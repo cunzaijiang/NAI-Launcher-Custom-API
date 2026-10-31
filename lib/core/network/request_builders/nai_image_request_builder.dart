@@ -14,6 +14,7 @@ import '../../utils/novelai_auto_text.dart';
 import '../../utils/prompt_semantics_utils.dart';
 import '../../utils/prompt_edit_document.dart';
 import '../../../data/models/image/image_params.dart';
+import '../nai_compatible_request.dart';
 import 'official_parameter_order.dart';
 import 'reference_strength_normalization.dart';
 
@@ -23,12 +24,11 @@ const int _cfgDelayReferenceLatents = 4 * 104 * 152;
 /// 官网当前所有图像模型共用的请求参数版本。
 const int _officialParamsVersion = 4;
 
-typedef EncodeVibeFn =
-    Future<String> Function(
-      Uint8List image, {
-      required String model,
-      double informationExtracted,
-    });
+typedef EncodeVibeFn = Future<String> Function(
+  Uint8List image, {
+  required String model,
+  double informationExtracted,
+});
 
 class NAIImageRequestBuildResult {
   NAIImageRequestBuildResult({
@@ -56,18 +56,75 @@ class NAIImageRequestBuilder {
   NAIImageRequestBuilder({
     required ImageParams params,
     required this.encodeVibe,
+    this.isOpenAiCompatible = false,
     List<PreciseReference>? preciseReferences,
-  }) : params = params.resolveFixedSettings(),
+  }) : _originalParams = params,
+       params =
+           (isOpenAiCompatible
+                   ? params.copyWith(
+                       model: ImageModels.resolveBaseModel(params.model),
+                     )
+                   : params)
+               .resolveFixedSettings(),
        _preciseReferences =
-           (preciseReferences ??
-                   (params.capabilities.supportsPreciseReference
-                       ? params.preciseReferences
-                       : <PreciseReference>[]))
+           (isOpenAiCompatible && params.preciseReferences.isNotEmpty
+                   ? params.preciseReferences
+                   : preciseReferences ??
+                         (isOpenAiCompatible ||
+                                 params.capabilities.supportsPreciseReference
+                             ? params.preciseReferences
+                             : <PreciseReference>[]))
                .where((reference) => reference.enabled)
                .toList(growable: false);
 
   final ImageParams params;
+  final ImageParams _originalParams;
+  final bool isOpenAiCompatible;
   final EncodeVibeFn encodeVibe;
+
+  /// Check the user's intent before official capability filters or paid encoding.
+  static void validateCompatibleParams(
+    ImageParams original, {
+    String? sampler,
+    List<PreciseReference> preciseReferences = const [],
+  }) {
+    final baseModel = ImageModels.resolveBaseModel(original.model);
+    final vibes = original.enabledVibeReferencesV4;
+    final preciseCount = max(
+      original.enabledPreciseReferences.length,
+      preciseReferences.where((reference) => reference.enabled).length,
+    );
+    if (original.e2eUpscale || original.upscaledEnhance) {
+      throw UnsupportedError(
+        'OpenAI-compatible NovelAI API does not support end-to-end upscale '
+        'or upscaled enhancement',
+      );
+    }
+    NaiCompatibleRequest.generation({
+      'model': baseModel,
+      'parameters': {
+        'n_samples': original.nSamples,
+        'steps': original.steps,
+        'width': original.width,
+        'height': original.height,
+        'sampler': original.sampler == Samplers.kDpm2Ancestral
+            ? original.sampler
+            : sampler ?? original.sampler,
+        if (original.varietyPlus) 'varietyPlus': true,
+        'reference_image_multiple': List.filled(vibes.length, ''),
+        'director_reference_images': List.filled(preciseCount, ''),
+        'characterPrompts': original.characters,
+      },
+    });
+    for (final vibe in vibes) {
+      if (!vibe.hasVibeEncoding && !vibe.canReencodeFromRawSource) {
+        throw ArgumentError(
+          'Vibe reference ${vibe.displayName} has no image or encoding',
+        );
+      }
+    }
+  }
+
   final List<PreciseReference> _preciseReferences;
 
   Map<String, dynamic> buildBaseParameters({
@@ -326,7 +383,7 @@ class NAIImageRequestBuilder {
       // 因此两者同时存在时优先保留 Precise Reference，避免结果偏离网页端。
       return vibeEncodingMap;
     }
-    if (params.action == ImageGenerationAction.infill) {
+    if (!isOpenAiCompatible && params.action == ImageGenerationAction.infill) {
       // NovelAI 的 infill 请求会直接携带 image + mask，继续附带
       // Vibe Transfer payload 会触发服务端 500，因此局部重绘时跳过。
       return vibeEncodingMap;
@@ -408,12 +465,18 @@ class NAIImageRequestBuilder {
                 'ImgGen',
               );
             } else {
+              if (isOpenAiCompatible) {
+                throw StateError(
+                  'Vibe encoding returned no data for ${vibe.displayName}',
+                );
+              }
               AppLogger.w(
                 'V4 Vibe: Failed to encode raw image at index $i (empty result)',
                 'ImgGen',
               );
             }
           } catch (e) {
+            if (isOpenAiCompatible) rethrow;
             AppLogger.e(
               'V4 Vibe: Failed to encode raw image at index $i: $e',
               'ImgGen',
@@ -482,12 +545,18 @@ class NAIImageRequestBuilder {
               'ImgGen',
             );
           } else {
+            if (isOpenAiCompatible) {
+              throw StateError(
+                'Vibe encoding returned no data for ${vibe.displayName}',
+              );
+            }
             AppLogger.w(
               'V4 Vibe (Stream): Failed to encode raw image (empty result)',
               'ImgGen',
             );
           }
         } catch (e) {
+          if (isOpenAiCompatible) rethrow;
           AppLogger.e(
             'V4 Vibe (Stream): Failed to encode raw image: $e',
             'ImgGen',
@@ -564,6 +633,13 @@ class NAIImageRequestBuilder {
     required String sampler,
     bool isStream = false,
   }) async {
+    if (isOpenAiCompatible) {
+      validateCompatibleParams(
+        _originalParams,
+        sampler: sampler,
+        preciseReferences: _preciseReferences,
+      );
+    }
     PromptEditDocument.requireEffective(params.prompt, field: 'prompt');
     PromptEditDocument.requireEffective(
       params.negativePrompt,
@@ -623,7 +699,9 @@ class NAIImageRequestBuilder {
     final seed = params.seed == -1 ? Random().nextInt(4294967295) : params.seed;
 
     final baseModel = ImageModels.resolveBaseModel(params.model);
-    final requestModel = params.action == ImageGenerationAction.infill
+    final requestModel = isOpenAiCompatible
+        ? baseModel
+        : params.action == ImageGenerationAction.infill
         ? ImageModels.resolveInpaintingModel(baseModel)
         : params.model;
     final promptSemantics = buildPromptSemanticsSnapshot(

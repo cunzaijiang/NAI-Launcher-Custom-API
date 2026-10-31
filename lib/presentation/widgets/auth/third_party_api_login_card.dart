@@ -24,15 +24,12 @@ class _ThirdPartyApiLoginCardState
     extends ConsumerState<ThirdPartyApiLoginCard> {
   final _formKey = GlobalKey<FormState>();
   final _mainApiController = TextEditingController();
-  final _imageApiController = TextEditingController();
   final _tokenController = TextEditingController();
   final _nicknameController = TextEditingController();
   bool _obscureToken = true;
-
   @override
   void dispose() {
     _mainApiController.dispose();
-    _imageApiController.dispose();
     _tokenController.dispose();
     _nicknameController.dispose();
     super.dispose();
@@ -49,25 +46,30 @@ class _ThirdPartyApiLoginCardState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Text(
+            l10n.auth_openAiCompatibleProfileHint,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            l10n.auth_openAiCompatibleWarning,
+            key: const Key('third_party_openai_warning'),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 16),
           FloatingLabelInput(
             label: l10n.auth_thirdPartyApiSite,
             controller: _mainApiController,
-            hintText: 'https://example.com/api',
+            hintText: 'https://example.com/v1',
             prefixIcon: Icons.public_outlined,
             keyboardType: TextInputType.url,
             textInputAction: TextInputAction.next,
             required: true,
             validator: (value) => _validateMainApiUrl(value),
-          ),
-          const SizedBox(height: 16),
-          FloatingLabelInput(
-            label: l10n.auth_imageApiSiteOptional,
-            controller: _imageApiController,
-            hintText: l10n.auth_imageApiSiteHint,
-            prefixIcon: Icons.image_outlined,
-            keyboardType: TextInputType.url,
-            textInputAction: TextInputAction.next,
-            validator: (value) => _validateImageApiUrl(value),
           ),
           const SizedBox(height: 16),
           FloatingLabelInput(
@@ -123,34 +125,6 @@ class _ThirdPartyApiLoginCardState
               }
               return null;
             },
-          ),
-          const SizedBox(height: 12),
-          Text(
-            l10n.auth_thirdPartyCompatibilityHint,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            key: const Key('third_party_streaming_hint'),
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(
-                Icons.info_outline,
-                size: 16,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  l10n.auth_thirdPartyStreamingHint,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-            ],
           ),
           const SizedBox(height: 16),
           FilledButton.icon(
@@ -210,24 +184,8 @@ class _ThirdPartyApiLoginCardState
 
     try {
       NaiApiEndpointConfig.fromInput(
+        protocol: NaiApiProtocol.openAiCompatible,
         mainBaseUrl: value,
-        imageBaseUrl: _imageApiController.text,
-      );
-      return null;
-    } on ArgumentError catch (e) {
-      return e.message.toString();
-    }
-  }
-
-  String? _validateImageApiUrl(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return null;
-    }
-
-    try {
-      NaiApiEndpointConfig.fromInput(
-        mainBaseUrl: _mainApiController.text,
-        imageBaseUrl: value,
       );
       return null;
     } on ArgumentError catch (e) {
@@ -246,8 +204,8 @@ class _ThirdPartyApiLoginCardState
     if (!_formKey.currentState!.validate()) return;
 
     final endpoint = NaiApiEndpointConfig.fromInput(
+      protocol: NaiApiProtocol.openAiCompatible,
       mainBaseUrl: _mainApiController.text,
-      imageBaseUrl: _imageApiController.text,
     );
     final token = _tokenController.text.trim();
     final nickname = _nicknameController.text.trim();

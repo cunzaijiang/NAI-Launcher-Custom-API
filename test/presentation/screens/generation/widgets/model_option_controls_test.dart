@@ -8,13 +8,21 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:nai_launcher/core/constants/api_constants.dart';
 import 'package:nai_launcher/core/constants/storage_keys.dart';
 import 'package:nai_launcher/core/enums/image_model_mode.dart';
+import 'package:nai_launcher/core/network/nai_api_endpoint.dart';
+import 'package:nai_launcher/core/network/nai_api_endpoint_service.dart';
+import 'package:nai_launcher/core/network/nai_compatible_request.dart';
 import 'package:nai_launcher/core/storage/local_storage_service.dart';
 import 'package:nai_launcher/data/models/vibe/vibe_library_entry.dart';
+import 'package:nai_launcher/data/services/auth_provider.dart';
 import 'package:nai_launcher/data/services/vibe_library_storage_service.dart';
 import 'package:nai_launcher/l10n/app_localizations.dart';
 import 'package:nai_launcher/presentation/providers/generation/generation_params_notifier.dart';
+import 'package:nai_launcher/presentation/providers/generation/generation_params_selectors.dart';
+import 'package:nai_launcher/presentation/providers/generation/image_workflow_controller.dart';
 import 'package:nai_launcher/presentation/screens/generation/widgets/generation_param_sections.dart';
 import 'package:nai_launcher/presentation/screens/generation/widgets/generation_toggle_button.dart';
+import 'package:nai_launcher/presentation/screens/generation/widgets/img2img_adjustment_section.dart';
+import 'package:nai_launcher/presentation/screens/generation/widgets/img2img_panel_data.dart';
 import 'package:nai_launcher/presentation/widgets/common/themed_dropdown.dart';
 import 'package:nai_launcher/presentation/widgets/common/themed_slider.dart';
 
@@ -46,6 +54,9 @@ void main() {
   Future<ProviderContainer> pumpSections(
     WidgetTester tester, {
     required String model,
+    NaiApiEndpointConfig endpoint = NaiApiEndpointConfig.official,
+    bool includeSize = false,
+    bool includeEnhance = false,
     double width = 600,
     double textScale = 1,
   }) async {
@@ -54,6 +65,10 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          authNotifierProvider.overrideWith(_TestAuthNotifier.new),
+          naiApiEndpointServiceProvider.overrideWithValue(
+            NaiApiEndpointService()..setCurrent(endpoint),
+          ),
           localStorageServiceProvider.overrideWith(
             (ref) => _TestLocalStorageService(model),
           ),
@@ -66,23 +81,39 @@ void main() {
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(
-              context,
-            ).copyWith(textScaler: TextScaler.linear(textScale)),
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: TextScaler.linear(textScale)),
             child: child!,
           ),
-          home: const Scaffold(
+          home: Scaffold(
             body: SingleChildScrollView(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  ModelSection(),
-                  StepsSection(),
-                  SamplerSection(),
-                  NoiseScheduleSection(),
-                  CfgScaleSection(),
-                  AdvancedSamplingOptions(),
+                  const ModelSection(),
+                  if (includeSize) const SizeSection(),
+                  const StepsSection(),
+                  const SamplerSection(),
+                  const NoiseScheduleSection(),
+                  const CfgScaleSection(),
+                  const AdvancedSamplingOptions(),
+                  if (includeEnhance)
+                    Consumer(
+                      builder: (context, ref, child) =>
+                          Img2ImgAdjustmentSection(
+                            data: Img2ImgPanelData(
+                              params: ref.watch(
+                                generationParamsNotifierProvider.select(
+                                  selectImg2ImgPanelViewData,
+                                ),
+                              ),
+                              workflow: ref.watch(
+                                imageWorkflowControllerProvider,
+                              ),
+                            ),
+                          ),
+                    ),
                 ],
               ),
             ),
@@ -107,6 +138,530 @@ void main() {
   ThemedSlider cfgRescaleSlider(WidgetTester tester) => tester
       .widgetList<ThemedSlider>(find.byType(ThemedSlider))
       .singleWhere((slider) => slider.max == 1);
+
+  final compatibleEndpoint = NaiApiEndpointConfig.fromInput(
+    mainBaseUrl: 'https://compatible.example',
+    protocol: NaiApiProtocol.openAiCompatible,
+  );
+  final genericEndpoint = NaiApiEndpointConfig.fromInput(
+    mainBaseUrl: 'https://generic.example',
+  );
+
+  final varietyToggle = find.widgetWithText(GenerationToggleButton, 'Variety+');
+  final maxChip = find.widgetWithText(ChoiceChip, '最大');
+
+  for (final model in [
+    ImageModels.animeDiffusionV5Full,
+    ImageModels.animeDiffusionV5Curated,
+    ImageModels.animeDiffusionV5FullMedium,
+  ]) {
+    testWidgets('compatible V5 Variety+ is off-only: $model', (tester) async {
+      final container = await pumpSections(
+        tester,
+        model: model,
+        endpoint: compatibleEndpoint,
+      );
+      expect(varietyToggle, findsNothing);
+      final params = container.read(generationParamsNotifierProvider.notifier)
+        ..updateVarietyPlus(true);
+      await tester.pump();
+      final toggle = tester.widget<GenerationToggleButton>(varietyToggle);
+      expect(toggle.isEnabled, isTrue);
+      expect(
+        container.read(generationParamsNotifierProvider).varietyPlus,
+        isTrue,
+      );
+      await tester.ensureVisible(varietyToggle);
+      await tester.tap(varietyToggle);
+      await tester.pump();
+      expect(
+        container.read(generationParamsNotifierProvider).varietyPlus,
+        isFalse,
+      );
+      expect(varietyToggle, findsNothing);
+      toggle.onChanged!(true);
+      await tester.pump();
+      expect(
+        container.read(generationParamsNotifierProvider).varietyPlus,
+        isFalse,
+      );
+      params.updateVarietyPlus(true);
+      await tester.pump();
+      expect(varietyToggle, findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  for (final endpoint in [NaiApiEndpointConfig.official, genericEndpoint]) {
+    testWidgets(
+      'non-profile V5 keeps Variety+ toggle: ${endpoint.mainBaseUrl}',
+      (tester) async {
+        final container = await pumpSections(
+          tester,
+          model: ImageModels.animeDiffusionV5Full,
+          endpoint: endpoint,
+        );
+        await tester.ensureVisible(varietyToggle);
+        await tester.tap(varietyToggle);
+        await tester.pump();
+        expect(
+          container.read(generationParamsNotifierProvider).varietyPlus,
+          isTrue,
+        );
+        await tester.tap(varietyToggle);
+        await tester.pump();
+        expect(
+          container.read(generationParamsNotifierProvider).varietyPlus,
+          isFalse,
+        );
+      },
+    );
+  }
+
+  testWidgets('compatible V4.5 keeps Variety+ available', (tester) async {
+    final container = await pumpSections(
+      tester,
+      model: ImageModels.animeDiffusionV45Full,
+      endpoint: compatibleEndpoint,
+    );
+    await tester.ensureVisible(varietyToggle);
+    await tester.tap(varietyToggle);
+    await tester.pump();
+    expect(
+      container.read(generationParamsNotifierProvider).varietyPlus,
+      isTrue,
+    );
+  });
+
+  void enterEnhance(ProviderContainer container) {
+    container
+        .read(generationParamsNotifierProvider.notifier)
+        .setSourceImage(Uint8List.fromList([1]));
+    container.read(imageWorkflowControllerProvider.notifier)
+      ..setSourceImageDimensions(768, 1024)
+      ..enterEnhanceMode();
+  }
+
+  for (final endpoint in [NaiApiEndpointConfig.official, genericEndpoint]) {
+    testWidgets('non-profile enhance keeps Max: ${endpoint.mainBaseUrl}', (
+      tester,
+    ) async {
+      final container = await pumpSections(
+        tester,
+        model: ImageModels.animeDiffusionV5Full,
+        endpoint: endpoint,
+        includeEnhance: true,
+      );
+      enterEnhance(container);
+      await tester.pump();
+      expect(tester.widget<ChoiceChip>(maxChip).selected, isFalse);
+      await tester.ensureVisible(maxChip);
+      await tester.tap(maxChip);
+      await tester.pump();
+      expect(
+        container.read(imageWorkflowControllerProvider).enhance.maxScale,
+        isTrue,
+      );
+      expect(
+        container.read(generationParamsNotifierProvider).upscaledEnhance,
+        isTrue,
+      );
+      await tester.tap(find.widgetWithText(ChoiceChip, '1x'));
+      await tester.pump();
+      expect(
+        container.read(imageWorkflowControllerProvider).enhance.maxScale,
+        isFalse,
+      );
+      expect(
+        container.read(generationParamsNotifierProvider).upscaledEnhance,
+        isFalse,
+      );
+      expect(maxChip, findsOneWidget);
+    });
+  }
+
+  for (final flagOnly in [false, true]) {
+    testWidgets(
+      'compatible enhance allows clearing saved Max, flag-only=$flagOnly',
+      (tester) async {
+        final container = await pumpSections(
+          tester,
+          model: ImageModels.animeDiffusionV5Full,
+          endpoint: compatibleEndpoint,
+          includeEnhance: true,
+        );
+        enterEnhance(container);
+        await tester.pump();
+        expect(maxChip, findsNothing);
+        if (flagOnly) {
+          container
+              .read(generationParamsNotifierProvider.notifier)
+              .updateUpscaledEnhance(true);
+        } else {
+          container
+              .read(imageWorkflowControllerProvider.notifier)
+              .selectEnhanceMaxScale();
+        }
+        await tester.pump();
+        final chip = tester.widget<ChoiceChip>(maxChip);
+        expect(chip.selected, isTrue);
+        expect(
+          container.read(generationParamsNotifierProvider).upscaledEnhance,
+          isTrue,
+        );
+        await tester.ensureVisible(maxChip);
+        await tester.tap(maxChip);
+        await tester.pump();
+        expect(
+          container.read(imageWorkflowControllerProvider).enhance.maxScale,
+          isFalse,
+        );
+        expect(
+          container.read(generationParamsNotifierProvider).upscaledEnhance,
+          isFalse,
+        );
+        expect(maxChip, findsNothing);
+        chip.onSelected!(true);
+        await tester.pump();
+        expect(
+          container.read(imageWorkflowControllerProvider).enhance.maxScale,
+          isFalse,
+        );
+        expect(
+          container.read(generationParamsNotifierProvider).upscaledEnhance,
+          isFalse,
+        );
+        expect(maxChip, findsNothing);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  testWidgets(
+    'account switch keeps unsupported values until explicitly cleared',
+    (tester) async {
+      final container = await pumpSections(
+        tester,
+        model: ImageModels.animeDiffusionV5Full,
+        includeEnhance: true,
+      );
+      enterEnhance(container);
+      container
+          .read(generationParamsNotifierProvider.notifier)
+          .updateVarietyPlus(true);
+      container
+          .read(imageWorkflowControllerProvider.notifier)
+          .selectEnhanceMaxScale();
+      await tester.pump();
+      final auth =
+          container.read(authNotifierProvider.notifier) as _TestAuthNotifier;
+      auth.switchEndpoint(compatibleEndpoint);
+      await tester.pump();
+      expect(
+        tester.widget<GenerationToggleButton>(varietyToggle).isEnabled,
+        isTrue,
+      );
+      expect(tester.widget<ChoiceChip>(maxChip).selected, isTrue);
+      await tester.ensureVisible(varietyToggle);
+      await tester.tap(varietyToggle);
+      await tester.ensureVisible(find.widgetWithText(ChoiceChip, '1x'));
+      await tester.tap(find.widgetWithText(ChoiceChip, '1x'));
+      await tester.pump();
+      expect(
+        container.read(generationParamsNotifierProvider).varietyPlus,
+        isFalse,
+      );
+      expect(
+        container.read(generationParamsNotifierProvider).upscaledEnhance,
+        isFalse,
+      );
+      expect(
+        container.read(imageWorkflowControllerProvider).enhance.maxScale,
+        isFalse,
+      );
+      expect(varietyToggle, findsNothing);
+      expect(maxChip, findsNothing);
+      auth.switchEndpoint(NaiApiEndpointConfig.official);
+      await tester.pump();
+      expect(varietyToggle, findsOneWidget);
+      expect(maxChip, findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  ThemedDropdown<String> modelDropdown(WidgetTester tester) =>
+      tester.widget<ThemedDropdown<String>>(
+        find.descendant(
+          of: find.byType(ModelSection),
+          matching: find.byType(ThemedDropdown<String>),
+        ),
+      );
+
+  ThemedDropdown<String> samplerDropdown(WidgetTester tester) =>
+      tester.widget<ThemedDropdown<String>>(
+        find.descendant(
+          of: find.byType(SamplerSection),
+          matching: find.byType(ThemedDropdown<String>),
+        ),
+      );
+
+  String? renderedModelSelection(WidgetTester tester) => tester
+      .state<FormFieldState<String>>(
+        find.descendant(
+          of: find.byType(ModelSection),
+          matching: find.byType(DropdownButtonFormField<String>),
+        ),
+      )
+      .value;
+
+  for (final model in NaiCompatibleRequest.generationModels) {
+    testWidgets('compatible profile offers exactly five models for $model', (
+      tester,
+    ) async {
+      final container = await pumpSections(
+        tester,
+        model: model,
+        endpoint: compatibleEndpoint,
+      );
+
+      final dropdown = modelDropdown(tester);
+      expect(
+        dropdown.items.map((item) => item.value),
+        unorderedEquals(NaiCompatibleRequest.generationModels),
+      );
+      expect(dropdown.value, model);
+      expect(container.read(generationParamsNotifierProvider).model, model);
+      expect(effortToggle, findsNothing);
+      expect(modeToggle, findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  for (final model in [
+    ImageModels.animeDiffusionV3,
+    ImageModels.animeDiffusionV4Curated,
+    ImageModels.animeDiffusionV5FullMedium,
+    'unknown-saved-model',
+  ]) {
+    testWidgets('compatible profile preserves unsupported saved model $model', (
+      tester,
+    ) async {
+      final container = await pumpSections(
+        tester,
+        model: model,
+        endpoint: compatibleEndpoint,
+      );
+
+      final dropdown = modelDropdown(tester);
+      expect(dropdown.value, isNull);
+      expect(dropdown.hintText, contains(model));
+      expect(dropdown.items.map((item) => item.value), isNot(contains(model)));
+      expect(container.read(generationParamsNotifierProvider).model, model);
+      expect(effortToggle, findsNothing);
+      expect(tester.takeException(), isNull);
+
+      // Explicitly choosing High works even when Medium shares its selector ID.
+      await tester.tap(find.byType(ThemedDropdown<String>).first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('NAI Diffusion V5 (Full)').last);
+      await tester.pumpAndSettle();
+      expect(
+        container.read(generationParamsNotifierProvider).model,
+        ImageModels.animeDiffusionV5Full,
+      );
+      expect(stepsSlider(tester).onChanged, isNotNull);
+    });
+  }
+
+  testWidgets('generic third-party keeps official model and effort options', (
+    tester,
+  ) async {
+    final container = await pumpSections(
+      tester,
+      model: ImageModels.animeDiffusionV5FullMedium,
+      endpoint: genericEndpoint,
+    );
+
+    expect(effortToggle, findsOneWidget);
+    expect(modelDropdown(tester).value, ImageModels.animeDiffusionV5Full);
+    expect(
+      modelDropdown(tester).items.map((item) => item.value),
+      contains(ImageModels.animeDiffusionV3),
+    );
+    modelDropdown(tester).onChanged!(ImageModels.animeDiffusionV5Full);
+    await tester.pump();
+    expect(
+      container.read(generationParamsNotifierProvider).model,
+      ImageModels.animeDiffusionV5FullMedium,
+    );
+  });
+
+  testWidgets(
+    'account transitions rebuild profile restrictions without edits',
+    (tester) async {
+      final container = await pumpSections(
+        tester,
+        model: ImageModels.animeDiffusionV5FullMedium,
+        includeSize: true,
+      );
+      final params = container.read(generationParamsNotifierProvider.notifier)
+        ..updateE2eUpscale(true);
+      final auth =
+          container.read(authNotifierProvider.notifier) as _TestAuthNotifier;
+      await tester.pump();
+      expect(effortToggle, findsOneWidget);
+      expect(renderedModelSelection(tester), ImageModels.animeDiffusionV5Full);
+
+      auth.switchEndpoint(compatibleEndpoint);
+      await tester.pump();
+      expect(effortToggle, findsNothing);
+      expect(modelDropdown(tester).value, isNull);
+      expect(renderedModelSelection(tester), isNull);
+      expect(find.widgetWithText(GenerationToggleButton, '×2'), findsOneWidget);
+      expect(
+        container.read(generationParamsNotifierProvider).model,
+        ImageModels.animeDiffusionV5FullMedium,
+      );
+      expect(
+        container.read(generationParamsNotifierProvider).e2eUpscale,
+        isTrue,
+      );
+
+      params
+        ..updateModel(ImageModels.animeDiffusionV5Full)
+        ..updateSampler(Samplers.kDpm2Ancestral);
+      await tester.pump();
+      expect(samplerDropdown(tester).value, isNull);
+      params.updateSampler(Samplers.kEulerAncestral);
+      auth.switchEndpoint(genericEndpoint);
+      await tester.pump();
+      expect(effortToggle, findsOneWidget);
+      expect(modelDropdown(tester).value, ImageModels.animeDiffusionV5Full);
+      expect(samplerDropdown(tester).value, Samplers.kEulerAncestral);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  for (final model in [
+    ImageModels.animeDiffusionV5Full,
+    ImageModels.animeDiffusionV3,
+  ]) {
+    testWidgets('compatible e2e upscale is off-only, including saved $model', (
+      tester,
+    ) async {
+      final container = await pumpSections(
+        tester,
+        model: model,
+        endpoint: compatibleEndpoint,
+        includeSize: true,
+      );
+      final toggleFinder = find.widgetWithText(GenerationToggleButton, '×2');
+      expect(toggleFinder, findsNothing);
+      container
+          .read(generationParamsNotifierProvider.notifier)
+          .updateE2eUpscale(true);
+      await tester.pump();
+      final toggle = tester.widget<GenerationToggleButton>(toggleFinder);
+      expect(toggle.isEnabled, isTrue);
+      await tester.tap(toggleFinder);
+      await tester.pump();
+      expect(
+        container.read(generationParamsNotifierProvider).e2eUpscale,
+        isFalse,
+      );
+      expect(toggleFinder, findsNothing);
+      // Even a callback retained from the previous frame cannot enable it.
+      toggle.onChanged!(true);
+      await tester.pump();
+      expect(
+        container.read(generationParamsNotifierProvider).e2eUpscale,
+        isFalse,
+      );
+      expect(toggleFinder, findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  for (final model in [
+    ImageModels.animeDiffusionV5Full,
+    ImageModels.animeDiffusionV5Curated,
+  ]) {
+    testWidgets(
+      'compatible V5 preserves but cannot choose DPM2 Ancestral: $model',
+      (tester) async {
+        final container = await pumpSections(
+          tester,
+          model: model,
+          endpoint: compatibleEndpoint,
+        );
+        container
+            .read(generationParamsNotifierProvider.notifier)
+            .updateSampler(Samplers.kDpm2Ancestral);
+        await tester.pump();
+        final dropdown = samplerDropdown(tester);
+        expect(
+          dropdown.items.map((item) => item.value),
+          isNot(contains(Samplers.kDpm2Ancestral)),
+        );
+        expect(dropdown.value, isNull);
+        expect(dropdown.hintText, contains(Samplers.kDpm2Ancestral));
+        dropdown.onChanged!(Samplers.kDpm2Ancestral);
+        expect(
+          container.read(generationParamsNotifierProvider).sampler,
+          Samplers.kDpm2Ancestral,
+        );
+        dropdown.onChanged!(Samplers.kEulerAncestral);
+        await tester.pump();
+        expect(samplerDropdown(tester).value, Samplers.kEulerAncestral);
+        // A rejected callback cannot replace a now-valid selection.
+        samplerDropdown(tester).onChanged!(Samplers.kDpm2Ancestral);
+        expect(
+          container.read(generationParamsNotifierProvider).sampler,
+          Samplers.kEulerAncestral,
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  for (final width in [320.0, 600.0, 840.0, 1180.0, 1600.0]) {
+    testWidgets(
+      'compatible saved Medium is recoverable at ${width}px, 3x text',
+      (tester) async {
+        final container = await pumpSections(
+          tester,
+          model: ImageModels.animeDiffusionV5FullMedium,
+          endpoint: compatibleEndpoint,
+          width: width,
+          textScale: 3,
+        );
+        expect(effortToggle, findsNothing);
+        expect(modeToggle, findsOneWidget);
+        expect(
+          modelDropdown(tester).hintText,
+          ImageModels.animeDiffusionV5FullMedium,
+        );
+        expect(tester.takeException(), isNull);
+        await tester.ensureVisible(find.text('兽人'));
+        await tester.tap(find.text('兽人'));
+        await tester.pump();
+        expect(
+          container.read(generationParamsNotifierProvider).modelMode,
+          ImageModelMode.furry,
+        );
+        await tester.ensureVisible(find.byType(ThemedDropdown<String>).first);
+        await tester.tap(find.byType(ThemedDropdown<String>).first);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('NAI Diffusion V5 (Full)').last);
+        await tester.pumpAndSettle();
+        expect(
+          container.read(generationParamsNotifierProvider).model,
+          ImageModels.animeDiffusionV5Full,
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
 
   testWidgets('V5 Full shows mode and effort, starting on the full model', (
     tester,
@@ -305,6 +860,19 @@ void main() {
         ImageModels.animeDiffusionV5Full,
       );
     });
+  }
+}
+
+class _TestAuthNotifier extends AuthNotifier {
+  @override
+  AuthState build() => const AuthState(status: AuthStatus.authenticated);
+
+  void switchEndpoint(NaiApiEndpointConfig endpoint) {
+    ref.read(naiApiEndpointServiceProvider).setCurrent(endpoint);
+    state = AuthState(
+      status: AuthStatus.authenticated,
+      accountId: endpoint.mainBaseUrl,
+    );
   }
 }
 

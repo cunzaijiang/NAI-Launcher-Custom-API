@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/platform/platform_capabilities.dart';
+import '../../../../core/network/nai_api_endpoint_service.dart';
 import '../../dlss/dlss_enhancement_panel.dart';
 import '../../../../core/utils/focused_inpaint_utils.dart';
 import '../../../../core/utils/localization_extension.dart';
 import '../../../../data/models/image/image_params.dart';
+import '../../../../data/services/auth_provider.dart';
 import '../../../providers/cost_estimate_provider.dart';
 import '../../../providers/generation/generation_params_notifier.dart';
 import '../../../providers/generation/image_workflow_controller.dart';
@@ -167,7 +169,27 @@ class _EnhancePanelState extends ConsumerState<_EnhancePanel> {
       sourceWidth: workflow.sourceWidth ?? workflow.baseWidth,
       sourceHeight: workflow.sourceHeight ?? workflow.baseHeight,
     );
-    final useMax = enhance.maxScale && maxAvailable;
+    ref.watch(authNotifierProvider);
+    final compatible = ref
+        .watch(naiApiEndpointServiceProvider)
+        .current
+        .isOpenAiCompatible;
+    final upscaledEnhance = ref.watch(
+      generationParamsNotifierProvider.select((value) => value.upscaledEnhance),
+    );
+    // 兼容协议不提供 Max，但存量设置和请求标记都必须有可见的关闭入口。
+    final useMax = compatible
+        ? enhance.maxScale || upscaledEnhance
+        : enhance.maxScale && maxAvailable;
+    void selectFactor(double factor) {
+      controller.updateEnhanceUpscaleFactor(factor);
+      if (compatible) {
+        ref
+            .read(generationParamsNotifierProvider.notifier)
+            .updateUpscaledEnhance(false);
+      }
+    }
+
     return _SubPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -266,15 +288,21 @@ class _EnhancePanelState extends ConsumerState<_EnhancePanel> {
                     ),
                     selected:
                         !useMax && controller.effectiveEnhanceFactor == factor,
-                    onSelected: (_) =>
-                        controller.updateEnhanceUpscaleFactor(factor),
+                    onSelected: (_) => selectFactor(factor),
                   ),
                 ),
-                if (maxAvailable)
+                if (compatible ? useMax : maxAvailable)
                   ChoiceChip(
                     label: Text(context.l10n.img2img_enhanceScaleMax),
                     selected: useMax,
-                    onSelected: (_) => controller.selectEnhanceMaxScale(),
+                    onSelected: (selected) {
+                      if (compatible) {
+                        if (selected) return;
+                        selectFactor(controller.effectiveEnhanceFactor);
+                      } else {
+                        controller.selectEnhanceMaxScale();
+                      }
+                    },
                   ),
               ],
             ),

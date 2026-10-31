@@ -10,6 +10,8 @@ import 'package:nai_launcher/core/constants/api_constants.dart';
 import 'package:nai_launcher/core/constants/storage_keys.dart';
 import 'package:nai_launcher/core/enums/precise_ref_type.dart';
 import 'package:nai_launcher/core/services/anlas_calculator.dart';
+import 'package:nai_launcher/core/network/nai_api_endpoint.dart';
+import 'package:nai_launcher/core/network/nai_api_endpoint_service.dart';
 import 'package:nai_launcher/core/utils/focused_inpaint_utils.dart';
 import 'package:nai_launcher/data/models/image/image_params.dart';
 import 'package:nai_launcher/data/models/user/user_subscription.dart';
@@ -57,6 +59,52 @@ void main() {
     tearDown(() {
       container.dispose();
     });
+
+    test(
+      'provider has unknown cost/balance even with a stale Opus placeholder',
+      () async {
+        container
+            .read(naiApiEndpointServiceProvider)
+            .setCurrent(
+              NaiApiEndpointConfig.fromInput(
+                mainBaseUrl: 'https://provider.example',
+                protocol: NaiApiProtocol.openAiCompatible,
+              ),
+            );
+        container
+            .read(subscriptionNotifierProvider.notifier)
+            .state = const SubscriptionState.loaded(
+          UserSubscription(tier: AnlasCalculator.opusTier, active: true),
+        );
+        expect(container.read(estimatedCostProvider), isNull);
+        expect(await readSettledEstimatedCost(container), isNull);
+        expect(container.read(isFreeGenerationProvider), isFalse);
+        expect(container.read(anlasBalanceProvider), isNull);
+        expect(container.read(isOpusSubscriptionProvider), isFalse);
+        expect(container.read(isBalanceInsufficientProvider), isFalse);
+      },
+    );
+
+    test(
+      'provider local ComfyUI upscale remains zero without a provider request',
+      () {
+        container
+            .read(naiApiEndpointServiceProvider)
+            .setCurrent(
+              NaiApiEndpointConfig.fromInput(
+                mainBaseUrl: 'https://provider.example',
+                protocol: NaiApiProtocol.openAiCompatible,
+              ),
+            );
+        final workflow = container.read(
+          imageWorkflowControllerProvider.notifier,
+        );
+        workflow.replaceSourceImage(_buildPng(width: 768, height: 1024));
+        workflow.enterUpscaleMode();
+        workflow.updateUpscaleBackend(UpscaleBackend.comfyui);
+        expect(container.read(estimatedCostProvider), 0);
+      },
+    );
 
     test('should return zero for comfyui local upscale', () {
       final workflow = container.read(imageWorkflowControllerProvider.notifier);

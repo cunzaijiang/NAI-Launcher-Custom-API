@@ -28,6 +28,7 @@ class ImageGenerationCoordinator {
     Random? random,
     this.postprocess,
     this.onPostprocessError,
+    this.isOpenAiCompatible = false,
   }) : _apiService = apiService,
        _retryDelays = retryDelays,
        _delay = delay,
@@ -36,6 +37,7 @@ class ImageGenerationCoordinator {
   static const int randomSeedExclusiveUpperBound = 4294967295;
 
   final NAIImageGenerationApiService _apiService;
+  final bool isOpenAiCompatible;
   final List<Duration> _retryDelays;
   final Future<void> Function(Duration) _delay;
   final Duration concurrencyRetryInterval;
@@ -138,7 +140,9 @@ class ImageGenerationCoordinator {
           Object? batchError;
           var nonStreamOnly = false;
 
-          if (!command.requestEachImage) {
+          // Keep batchCount * batchSize images and the original preparation
+          // cadence, while this profile sends n_samples=1 on every wire call.
+          if (!command.requestEachImage && !isOpenAiCompatible) {
             final requestParams = currentParams.copyWith(
               nSamples: command.batchSize,
               seed: batchSeed,

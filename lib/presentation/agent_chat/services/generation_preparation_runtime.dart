@@ -29,6 +29,7 @@ class GenerationPreparation {
     required this.estimatedAnlas,
     required this.arguments,
     this.savePath,
+    this.providerPricingUnknown = false,
     this.savePathSource,
     this.enhance,
     this.enhanceDefaults,
@@ -43,7 +44,9 @@ class GenerationPreparation {
   final int batchSize;
   final int count;
   final bool autoStart;
+  // Retained internally for existing validation; never exposed as provider pricing.
   final int estimatedAnlas;
+  final bool providerPricingUnknown;
   final Map<String, dynamic> arguments;
   final String? savePath;
 
@@ -64,7 +67,13 @@ class GenerationPreparation {
       'preparation_id': id,
       'status': status.name,
       'operation': kind.name,
-      'estimated_anlas': estimatedAnlas,
+      'estimated_anlas': providerPricingUnknown ? null : estimatedAnlas,
+      if (providerPricingUnknown) ...{
+        'provider_pricing_unknown': true,
+        'billing_warning':
+            'Every generation has a provider base fee, even at '
+            '0 Anlas. Native requests have no server-side budget limit.',
+      },
       'count': count,
       'batch_size': batchSize,
       'auto_start': autoStart,
@@ -101,7 +110,8 @@ class GenerationPreparation {
         if (enhance case final enhance?) 'enhance': enhance.toJson(),
       },
       'confirmation_required':
-          status == GenerationPreparationStatus.prepared && estimatedAnlas != 0,
+          status == GenerationPreparationStatus.prepared &&
+          (providerPricingUnknown || estimatedAnlas != 0),
     };
   }
 }

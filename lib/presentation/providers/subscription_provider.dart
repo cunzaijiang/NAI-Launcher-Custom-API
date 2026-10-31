@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/network/critical_network_activity.dart';
+import '../../core/network/nai_api_endpoint_service.dart';
 import '../../core/services/interactive_work_gate.dart';
 import '../../core/utils/app_logger.dart';
 import '../../data/datasources/remote/nai_user_info_api_service.dart';
@@ -97,7 +98,12 @@ class SubscriptionNotifier extends _$SubscriptionNotifier {
 
     // 第三方站点不提供 /user/subscription：整条订阅链路静默，不拉取不轮询。
     final subscriptionUnsupported =
-        authState.isAuthenticated && authState.subscriptionUnsupported;
+        authState.isAuthenticated &&
+        (authState.subscriptionUnsupported ||
+            ref
+                .watch(naiApiEndpointServiceProvider)
+                .current
+                .isOpenAiCompatible);
 
     final hydratedState = subscriptionUnsupported
         ? null
@@ -600,6 +606,10 @@ class SubscriptionNotifier extends _$SubscriptionNotifier {
 /// 便捷的余额 Provider
 @riverpod
 int? anlasBalance(Ref ref) {
+  ref.watch(authNotifierProvider);
+  if (ref.watch(naiApiEndpointServiceProvider).current.isOpenAiCompatible) {
+    return null;
+  }
   final subscriptionState = ref.watch(subscriptionNotifierProvider);
   return subscriptionState.balance;
 }
@@ -645,6 +655,10 @@ class AnlasBalanceWatcher extends _$AnlasBalanceWatcher {
 /// 便捷的 Opus 状态 Provider
 @riverpod
 bool isOpusSubscription(Ref ref) {
+  ref.watch(authNotifierProvider);
+  if (ref.watch(naiApiEndpointServiceProvider).current.isOpenAiCompatible) {
+    return false;
+  }
   final subscriptionState = ref.watch(subscriptionNotifierProvider);
   return subscriptionState.isOpus;
 }

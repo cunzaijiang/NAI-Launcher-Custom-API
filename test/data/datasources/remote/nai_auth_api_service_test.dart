@@ -115,6 +115,196 @@ void main() {
     });
   });
 
+  group('explicit OpenAI-compatible provider validation', () {
+    final endpoint = NaiApiEndpointConfig.fromInput(
+      mainBaseUrl: 'https://provider.example/proxy/v1/',
+      imageBaseUrl: 'https://images.provider.example',
+      protocol: NaiApiProtocol.openAiCompatible,
+    );
+    const supportedModels = [
+      'nai-diffusion-4-full',
+      'nai-diffusion-4-5-full',
+      'nai-diffusion-4-5-curated',
+      'nai-diffusion-5-full',
+      'nai-diffusion-5-curated',
+    ];
+
+    for (final model in supportedModels) {
+      test(
+        'accepts exact model $model without reading subscription or drawing',
+        () async {
+          final adapter = _ScriptedDioAdapter(
+            (_) => _jsonResponse({
+              'object': 'list',
+              'data': [
+                {'id': model, 'object': 'model'},
+              ],
+            }, 200),
+          );
+          final service = NAIAuthApiService(Dio()..httpClientAdapter = adapter);
+          final result = await service.validateToken(
+            'Bearer sk-provider-token',
+            endpoint: endpoint,
+            allowAnyTokenFormat: true,
+          );
+          expect(result.subscriptionUnsupported, isTrue);
+          expect(result.subscriptionInfo, isNull);
+          expect(adapter.requests, hasLength(1));
+          final request = adapter.requests.single;
+          expect(
+            request.uri.toString(),
+            'https://provider.example/proxy/v1/models',
+          );
+          expect(request.method, 'GET');
+          expect(request.headers['Authorization'], 'Bearer sk-provider-token');
+          expect(request.data, isNull);
+        },
+      );
+    }
+
+    for (final status in [301, 400, 401, 403, 404, 405, 422, 429, 500, 502]) {
+      test(
+        'HTTP $status never validates even with a supported-model body',
+        () async {
+          final adapter = _ScriptedDioAdapter(
+            (_) => _jsonResponse({
+              'data': [
+                {'id': supportedModels.first},
+              ],
+            }, status),
+          );
+          final service = NAIAuthApiService(
+            Dio(BaseOptions(validateStatus: (_) => true))
+              ..httpClientAdapter = adapter,
+          );
+          await expectLater(
+            service.validateToken(
+              'sk-provider-token',
+              endpoint: endpoint,
+              allowAnyTokenFormat: true,
+            ),
+            throwsA(
+              isA<DioException>().having(
+                (e) => e.response?.statusCode,
+                'statusCode',
+                status,
+              ),
+            ),
+          );
+          expect(adapter.requests, hasLength(1));
+          expect(adapter.requests.single.method, 'GET');
+        },
+      );
+    }
+
+    test('HTML success fallback is incompatible, never a draw probe', () async {
+      final adapter = _ScriptedDioAdapter(
+        (_) => _htmlResponse('<!doctype html><html>Sign in</html>', 200),
+      );
+      final service = NAIAuthApiService(Dio()..httpClientAdapter = adapter);
+      await expectLater(
+        service.validateToken(
+          'sk-provider-token',
+          endpoint: endpoint,
+          allowAnyTokenFormat: true,
+        ),
+        throwsA(isA<NaiEndpointIncompatibleException>()),
+      );
+      expect(adapter.requests, hasLength(1));
+    });
+
+    test('network failure is propagated without a generation probe', () async {
+      final adapter = _ScriptedDioAdapter(
+        (options) => throw DioException(
+          requestOptions: options,
+          type: DioExceptionType.connectionTimeout,
+        ),
+      );
+      final service = NAIAuthApiService(Dio()..httpClientAdapter = adapter);
+      await expectLater(
+        service.validateToken(
+          'sk-provider-token',
+          endpoint: endpoint,
+          allowAnyTokenFormat: true,
+        ),
+        throwsA(
+          isA<DioException>().having(
+            (e) => e.type,
+            'type',
+            DioExceptionType.connectionTimeout,
+          ),
+        ),
+      );
+      expect(adapter.requests, hasLength(1));
+    });
+
+    final invalidPayloads = <Object>[
+      '<html>Sign in</html>',
+      {'tier': 3, 'active': true},
+      {'data': []},
+      {'data': 'nai-diffusion-5-full'},
+      {
+        'data': ['nai-diffusion-5-full'],
+      },
+      {
+        'data': [
+          null,
+          {'id': 123},
+        ],
+      },
+      {
+        'data': [
+          {'id': 'gpt-image-1'},
+        ],
+      },
+      {
+        'data': [
+          {'id': 'nai-diffusion-5-full-medium'},
+        ],
+      },
+      {
+        'data': [
+          {'id': 'nai-diffusion-4-full-inpainting'},
+        ],
+      },
+      {
+        'data': [
+          {'id': 'nai-diffusion-4-curated-preview'},
+        ],
+      },
+      {
+        'data': [
+          {'id': 'NAI-DIFFUSION-5-FULL'},
+        ],
+      },
+      {
+        'data': [
+          {'id': ' nai-diffusion-5-full '},
+        ],
+      },
+    ];
+    for (var i = 0; i < invalidPayloads.length; i++) {
+      test(
+        'rejects incompatible model payload $i without generation fallback',
+        () async {
+          final adapter = _ScriptedDioAdapter(
+            (_) => _jsonResponse(invalidPayloads[i], 200),
+          );
+          final service = NAIAuthApiService(Dio()..httpClientAdapter = adapter);
+          await expectLater(
+            service.validateToken(
+              'sk-provider-token',
+              endpoint: endpoint,
+              allowAnyTokenFormat: true,
+            ),
+            throwsA(isA<NaiEndpointIncompatibleException>()),
+          );
+          expect(adapter.requests, hasLength(1));
+        },
+      );
+    }
+  });
+
   group('third-party subscription fallback', () {
     final endpoint = NaiApiEndpointConfig.fromInput(
       mainBaseUrl: 'https://relay.example',

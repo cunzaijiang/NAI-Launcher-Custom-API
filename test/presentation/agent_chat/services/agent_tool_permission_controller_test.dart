@@ -302,6 +302,51 @@ void main() {
       );
     });
 
+    for (final estimate in [0, 1, 49]) {
+      test(
+        'provider estimate $estimate requires charge approval even with threshold off',
+        () async {
+          AgentToolApprovalRequest? approval;
+          final controller = _controller(
+            mode: AgentAccessMode.allowWrite,
+            estimate: estimate,
+            onApproval: (value) => approval = value,
+            chargeApproval: AgentChargeApproval.confirmAtThreshold,
+            chargeConfirmThreshold: () => null,
+            providerPricingUnknown: () => true,
+          );
+          final pending = controller.beforeToolCall(_context('provider'), null);
+          await Future<void>.delayed(Duration.zero);
+          expect(approval, isNotNull);
+          expect(approval!.estimatedAnlas, isNull);
+          expect(
+            controller.takeDecision('provider'),
+            AgentPermissionDecision.confirmCharge,
+          );
+          controller.resolveApproval('provider', false);
+          expect((await pending)?.block, isTrue);
+        },
+      );
+    }
+
+    test('provider invalid-cost sentinel is still blocked', () async {
+      AgentToolApprovalRequest? approval;
+      final controller = _controller(
+        mode: AgentAccessMode.allowWrite,
+        estimate: -1,
+        onApproval: (value) => approval = value,
+        providerPricingUnknown: () => true,
+      );
+      expect(
+        (await controller.beforeToolCall(
+          _context('invalid-provider'),
+          null,
+        ))?.block,
+        isTrue,
+      );
+      expect(approval, isNull);
+    });
+
     test('autopilot submits below the threshold without approval', () async {
       AgentToolApprovalRequest? approval;
       final controller = _controller(
@@ -451,6 +496,7 @@ AgentToolPermissionController _controller({
   List<String> Function(String, Map<String, dynamic>)? describeFileTargets,
   AgentChargeApproval chargeApproval = AgentChargeApproval.confirmEach,
   int? Function()? chargeConfirmThreshold,
+  bool Function()? providerPricingUnknown,
 }) {
   final descriptor = describeAgentToolPermission('submit_generation');
   final catalog = AgentToolPermissionCatalog(
@@ -459,6 +505,7 @@ AgentToolPermissionController _controller({
   );
   final controller = AgentToolPermissionController(
     auditSink: MemoryAgentAuditSink(),
+    providerPricingUnknown: providerPricingUnknown,
     estimateAnlas: (_, _) async => estimate,
     describeFileTargets: describeFileTargets ?? ((_, _) => const []),
     chargeConfirmThreshold: chargeConfirmThreshold ?? () => null,
@@ -479,10 +526,7 @@ AgentToolPermissionController _controller({
   return controller;
 }
 
-BeforeToolCallContext _context(
-  String id, {
-  String preparationId = 'prepared',
-}) {
+BeforeToolCallContext _context(String id, {String preparationId = 'prepared'}) {
   final toolCall = ToolCallContent(
     id: id,
     name: 'submit_generation',

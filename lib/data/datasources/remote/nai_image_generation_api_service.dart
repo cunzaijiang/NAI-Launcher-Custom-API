@@ -33,7 +33,8 @@ class NAIImageGenerationApiService {
     this._enhancementService,
     NaiApiEndpointService endpointService, [
     CriticalNetworkActivityCoordinator? networkActivity,
-  ]) : _transport = NaiGenerationTransport(dio, endpointService),
+  ]) : _endpointService = endpointService,
+       _transport = NaiGenerationTransport(dio, endpointService),
        _responseProcessor = NaiGenerationResponseProcessor(),
        _networkActivity =
            networkActivity ?? CriticalNetworkActivityCoordinator.instance;
@@ -41,6 +42,7 @@ class NAIImageGenerationApiService {
   static final Object _cancellationLeaseZoneKey = Object();
 
   final NAIImageEnhancementApiService _enhancementService;
+  final NaiApiEndpointService _endpointService;
   final NaiGenerationTransport _transport;
   final NaiGenerationResponseProcessor _responseProcessor;
   final CriticalNetworkActivityCoordinator _networkActivity;
@@ -337,19 +339,22 @@ class NAIImageGenerationApiService {
       focusedRequest,
     );
 
-    if (effectiveParams.hasVibeReferencesV4 &&
+    final isCompatible = _endpointService.current.isOpenAiCompatible;
+    if (!isCompatible &&
+        effectiveParams.hasVibeReferencesV4 &&
         effectiveParams.hasPreciseReferences) {
       AppLogger.d(
         'Both Vibe Transfer and Precise Reference are enabled; skipping vibe payload in favor of Precise Reference',
         'ImgGen',
       );
     }
-    final preciseReferences = effectiveParams.isV45Model
+    final preciseReferences = isCompatible || effectiveParams.isV45Model
         ? effectiveParams.enabledPreciseReferences
         : <PreciseReference>[];
     final buildResult =
         await NAIImageRequestBuilder(
           params: effectiveParams,
+          isOpenAiCompatible: isCompatible,
           encodeVibe: _enhancementService.encodeVibe,
           preciseReferences: preciseReferences,
         ).build(

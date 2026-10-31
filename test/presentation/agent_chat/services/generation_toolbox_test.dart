@@ -104,6 +104,25 @@ void main() {
     );
   }
 
+  test('provider preparation never exposes a zero quote as free', () {
+    final prepared = GenerationPreparation(
+      kind: GenerationPreparationKind.generate,
+      baseParams: const ImageParams(prompt: 'test'),
+      params: const ImageParams(prompt: 'test'),
+      batchSize: 1,
+      count: 1,
+      autoStart: false,
+      estimatedAnlas: 0,
+      providerPricingUnknown: true,
+      arguments: const {'prompt': 'test'},
+    );
+    final payload = prepared.toJson();
+    expect(payload['estimated_anlas'], isNull);
+    expect(payload['provider_pricing_unknown'], isTrue);
+    expect(payload['confirmation_required'], isTrue);
+    expect(payload['billing_warning'], contains('base fee'));
+  });
+
   test('registers image generation tools', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
@@ -228,9 +247,9 @@ void main() {
   test('queue_image_task rejects empty prompt', () async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
-    final tool = GenerationToolbox(
-      _makeRef(container),
-    ).tools().firstWhere((t) => t.name == 'queue_image_task');
+    final tool = GenerationToolbox(_makeRef(container))
+        .tools()
+        .firstWhere((t) => t.name == 'queue_image_task');
     final result = await tool.execute('t2', {});
     final text = result.content
         .whereType<ToolResultTextContent>()
@@ -245,9 +264,9 @@ void main() {
     () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
-      final tool = GenerationToolbox(
-        _makeRef(container),
-      ).tools().firstWhere((t) => t.name == 'generate_image');
+      final tool = GenerationToolbox(_makeRef(container))
+          .tools()
+          .firstWhere((t) => t.name == 'generate_image');
       final result = await tool.execute('t1', {});
       final text = result.content
           .whereType<ToolResultTextContent>()
@@ -261,9 +280,9 @@ void main() {
   test('generate_image rejects an excessive count before allocation', () async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
-    final tool = GenerationToolbox(
-      _makeRef(container),
-    ).tools().firstWhere((t) => t.name == 'generate_image');
+    final tool = GenerationToolbox(_makeRef(container))
+        .tools()
+        .firstWhere((t) => t.name == 'generate_image');
     final result = await tool.execute('t-count', {
       'prompt': '1girl',
       'count': 1000000000,
@@ -278,9 +297,9 @@ void main() {
   test('generate_image rejects incompatible resolutions', () async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
-    final tool = GenerationToolbox(
-      _makeRef(container),
-    ).tools().firstWhere((t) => t.name == 'generate_image');
+    final tool = GenerationToolbox(_makeRef(container))
+        .tools()
+        .firstWhere((t) => t.name == 'generate_image');
 
     final offGrid = await tool.execute('t-off-grid', {
       'prompt': '1girl',
@@ -308,9 +327,9 @@ void main() {
   test('interrogate_image observes an already aborted signal', () async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
-    final tool = GenerationToolbox(
-      _makeRef(container),
-    ).tools().firstWhere((t) => t.name == 'interrogate_image');
+    final tool = GenerationToolbox(_makeRef(container))
+        .tools()
+        .firstWhere((t) => t.name == 'interrogate_image');
     final controller = AbortController()..abort();
 
     expect(
@@ -326,9 +345,9 @@ void main() {
     () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
-      final tool = GenerationToolbox(
-        _makeRef(container),
-      ).tools().firstWhere((t) => t.name == 'queue_image_task');
+      final tool = GenerationToolbox(_makeRef(container))
+          .tools()
+          .firstWhere((t) => t.name == 'queue_image_task');
       final result = await tool.execute('t-queue-count', {
         'prompt': '1girl',
         'count': 1000000000,
@@ -359,9 +378,9 @@ void main() {
       ],
     );
     addTearDown(container.dispose);
-    final tool = GenerationToolbox(
-      _makeRef(container),
-    ).tools().firstWhere((t) => t.name == 'queue_image_task');
+    final tool = GenerationToolbox(_makeRef(container))
+        .tools()
+        .firstWhere((t) => t.name == 'queue_image_task');
 
     final prepared = await tool.execute('t-queue-snapshot', {
       'prompt': '1girl',
@@ -384,55 +403,52 @@ void main() {
     expect(task.characterPrompts!.single.negativePrompt, 'green hair');
   });
 
-  test(
-    'queue_image_task rejects the whole batch when the queue fills during encoding',
-    () async {
-      final execution = _CountingQueueExecutionNotifier();
-      final container = ProviderContainer(
-        overrides: [
-          replicationQueueNotifierProvider.overrideWith(
-            _TestReplicationQueueNotifier.new,
-          ),
-          queueExecutionNotifierProvider.overrideWith(() => execution),
-        ],
-      );
-      addTearDown(container.dispose);
-      final queue = container.read(replicationQueueNotifierProvider.notifier);
-      final service = GenerationQueueTaskService(
-        _makeRef(container),
-        maxQueueSnapshotBytes: GenerationToolbox.maxQueueSnapshotBytes,
-        maxPersistedQueueSnapshotBytes:
-            GenerationToolbox.maxPersistedQueueSnapshotBytes,
-      );
-
-      final pending = service.queueTask(
-        const {},
-        prepared: GenerationPreparation(
-          kind: GenerationPreparationKind.queue,
-          baseParams: const ImageParams(prompt: '1girl'),
-          params: const ImageParams(prompt: '1girl'),
-          batchSize: 1,
-          count: 2,
-          autoStart: true,
-          estimatedAnlas: 0,
-          arguments: const {'prompt': '1girl'},
+  test('queue_image_task rejects the whole batch when the queue fills during encoding', () async {
+    final execution = _CountingQueueExecutionNotifier();
+    final container = ProviderContainer(
+      overrides: [
+        replicationQueueNotifierProvider.overrideWith(
+          _TestReplicationQueueNotifier.new,
         ),
-      );
-      await queue.addAll([
-        for (var i = 0; i < kMaxQueueCapacity - 1; i++)
-          ReplicationTask.create(prompt: 'filler $i'),
-      ]);
-      final result = await pending;
+        queueExecutionNotifierProvider.overrideWith(() => execution),
+      ],
+    );
+    addTearDown(container.dispose);
+    final queue = container.read(replicationQueueNotifierProvider.notifier);
+    final service = GenerationQueueTaskService(
+      _makeRef(container),
+      maxQueueSnapshotBytes: GenerationToolbox.maxQueueSnapshotBytes,
+      maxPersistedQueueSnapshotBytes:
+          GenerationToolbox.maxPersistedQueueSnapshotBytes,
+    );
 
-      expect(result.isError, isTrue);
-      expect(_json(result)['code'], 'queue_capacity_insufficient');
-      expect(
-        container.read(replicationQueueNotifierProvider).tasks,
-        hasLength(kMaxQueueCapacity - 1),
-      );
-      expect(execution.startCalls, 0);
-    },
-  );
+    final pending = service.queueTask(
+      const {},
+      prepared: GenerationPreparation(
+        kind: GenerationPreparationKind.queue,
+        baseParams: const ImageParams(prompt: '1girl'),
+        params: const ImageParams(prompt: '1girl'),
+        batchSize: 1,
+        count: 2,
+        autoStart: true,
+        estimatedAnlas: 0,
+        arguments: const {'prompt': '1girl'},
+      ),
+    );
+    await queue.addAll([
+      for (var i = 0; i < kMaxQueueCapacity - 1; i++)
+        ReplicationTask.create(prompt: 'filler $i'),
+    ]);
+    final result = await pending;
+
+    expect(result.isError, isTrue);
+    expect(_json(result)['code'], 'queue_capacity_insufficient');
+    expect(
+      container.read(replicationQueueNotifierProvider).tasks,
+      hasLength(kMaxQueueCapacity - 1),
+    );
+    expect(execution.startCalls, 0);
+  });
 
   test(
     'queue_image_task persists a structured source reference snapshot',
@@ -662,80 +678,77 @@ void main() {
   );
 
   for (final route in ['submit_generation', 'generate_image']) {
-    test(
-      '$route sends the prompt text resolved during preparation',
-      () async {
-        final fake = _FakeImageGenerationNotifier();
-        final container = ProviderContainer(
-          overrides: [
-            imageGenerationNotifierProvider.overrideWith(() => fake),
-            generationParamsNotifierProvider.overrideWith(
-              _TestGenerationParamsNotifier.new,
-            ),
-            characterPromptNotifierProvider.overrideWith(
-              _TestCharacterPromptNotifier.new,
-            ),
-            subscriptionNotifierProvider.overrideWith(
-              _TestSubscriptionNotifier.new,
-            ),
-          ],
-        );
-        addTearDown(container.dispose);
-        final positive = AgentChatResourceReference(
-          kind: AgentChatResourceKind.tagLibraryEntry,
-          source: 'tag_library',
-          resourceId: 'blue-hair',
-        );
-        final negative = AgentChatResourceReference(
-          kind: AgentChatResourceKind.tagLibraryEntry,
-          source: 'tag_library',
-          resourceId: 'bad-anatomy',
-        );
-        final tools = GenerationToolbox(
+    test('$route sends the prompt text resolved during preparation', () async {
+      final fake = _FakeImageGenerationNotifier();
+      final container = ProviderContainer(
+        overrides: [
+          imageGenerationNotifierProvider.overrideWith(() => fake),
+          generationParamsNotifierProvider.overrideWith(
+            _TestGenerationParamsNotifier.new,
+          ),
+          characterPromptNotifierProvider.overrideWith(
+            _TestCharacterPromptNotifier.new,
+          ),
+          subscriptionNotifierProvider.overrideWith(
+            _TestSubscriptionNotifier.new,
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      final positive = AgentChatResourceReference(
+        kind: AgentChatResourceKind.tagLibraryEntry,
+        source: 'tag_library',
+        resourceId: 'blue-hair',
+      );
+      final negative = AgentChatResourceReference(
+        kind: AgentChatResourceKind.tagLibraryEntry,
+        source: 'tag_library',
+        resourceId: 'bad-anatomy',
+      );
+      final tools = GenerationToolbox(
+        _makeRef(container),
+        resourceResolver: _TestResourceResolver(
           _makeRef(container),
-          resourceResolver: _TestResourceResolver(
-            _makeRef(container),
-            textByResourceId: const {
-              'blue-hair': 'blue hair',
-              'bad-anatomy': 'bad anatomy',
-            },
-          ),
-        ).tools();
-        final prepareTool = route == 'generate_image'
-            ? 'generate_image'
-            : 'prepare_generation';
-        final prepared = _json(
-          await tools.firstWhere((tool) => tool.name == prepareTool).execute(
-            'prepare-$route-refs',
-            {
-              if (route == 'submit_generation') 'operation': 'generate',
-              'prompt': '1girl',
-              'negative_prompt': 'lowres',
-              'prompt_refs': [
-                AgentChatResourceReferenceCodec.encodeJsonMap(positive),
-              ],
-              'negative_prompt_refs': [
-                AgentChatResourceReferenceCodec.encodeJsonMap(negative),
-              ],
-            },
-          ),
-        );
-        expect(prepared['parameters']['prompt'], '1girl, blue hair');
+          textByResourceId: const {
+            'blue-hair': 'blue hair',
+            'bad-anatomy': 'bad anatomy',
+          },
+        ),
+      ).tools();
+      final prepareTool = route == 'generate_image'
+          ? 'generate_image'
+          : 'prepare_generation';
+      final prepared = _json(
+        await tools.firstWhere((tool) => tool.name == prepareTool).execute(
+          'prepare-$route-refs',
+          {
+            if (route == 'submit_generation') 'operation': 'generate',
+            'prompt': '1girl',
+            'negative_prompt': 'lowres',
+            'prompt_refs': [
+              AgentChatResourceReferenceCodec.encodeJsonMap(positive),
+            ],
+            'negative_prompt_refs': [
+              AgentChatResourceReferenceCodec.encodeJsonMap(negative),
+            ],
+          },
+        ),
+      );
+      expect(prepared['parameters']['prompt'], '1girl, blue hair');
 
-        final submitted = await tools
-            .firstWhere((tool) => tool.name == route)
-            .execute('submit-$route-refs', {
-              'preparation_id': prepared['preparation_id'],
-              'confirmed': true,
-            });
+      final submitted = await tools
+          .firstWhere((tool) => tool.name == route)
+          .execute('submit-$route-refs', {
+            'preparation_id': prepared['preparation_id'],
+            'confirmed': true,
+          });
 
-        expect(submitted.isError, isFalse);
-        expect(fake.generateCalls, 1);
-        expect(fake.params?.prompt, '1girl, blue hair');
-        expect(fake.params?.negativePrompt, 'lowres, bad anatomy');
-        expect(fake.bypassRandomPrompt, isTrue);
-      },
-    );
+      expect(submitted.isError, isFalse);
+      expect(fake.generateCalls, 1);
+      expect(fake.params?.prompt, '1girl, blue hair');
+      expect(fake.params?.negativePrompt, 'lowres, bad anatomy');
+      expect(fake.bypassRandomPrompt, isTrue);
+    });
   }
 
   test(
@@ -929,99 +942,88 @@ void main() {
     },
   );
 
-  test(
-    'Agent custom characters reach the final request as one immutable scene',
-    () async {
-      final fake = _FakeImageGenerationNotifier();
-      final container = ProviderContainer(
-        overrides: [
-          imageGenerationNotifierProvider.overrideWith(() => fake),
-          generationParamsNotifierProvider.overrideWith(
-            _TestV5GenerationParamsNotifier.new,
-          ),
-          characterPromptNotifierProvider.overrideWith(
-            _TestCharacterPromptNotifier.new,
-          ),
-          subscriptionNotifierProvider.overrideWith(
-            _TestSubscriptionNotifier.new,
-          ),
-        ],
-      );
-      addTearDown(container.dispose);
-      final tools = GenerationToolbox(_makeRef(container)).tools();
-      final prepare = tools.firstWhere(
-        (tool) => tool.name == 'prepare_generation',
-      );
-      final submit = tools.firstWhere(
-        (tool) => tool.name == 'submit_generation',
-      );
+  test('Agent custom characters reach the final request as one immutable scene', () async {
+    final fake = _FakeImageGenerationNotifier();
+    final container = ProviderContainer(
+      overrides: [
+        imageGenerationNotifierProvider.overrideWith(() => fake),
+        generationParamsNotifierProvider.overrideWith(
+          _TestV5GenerationParamsNotifier.new,
+        ),
+        characterPromptNotifierProvider.overrideWith(
+          _TestCharacterPromptNotifier.new,
+        ),
+        subscriptionNotifierProvider.overrideWith(
+          _TestSubscriptionNotifier.new,
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    final tools = GenerationToolbox(_makeRef(container)).tools();
+    final prepare = tools.firstWhere(
+      (tool) => tool.name == 'prepare_generation',
+    );
+    final submit = tools.firstWhere((tool) => tool.name == 'submit_generation');
 
-      final prepared = await prepare.execute('prepare-characters', const {
-        'operation': 'generate',
-        'prompt': 'two friends',
-        'character_layout_mode': 'custom',
-        'characters': [
-          {
-            'prompt': 'hero, black hair',
-            'negative_prompt': 'red hair',
-            'position_x': 0.2,
-            'position_y': 0.75,
-          },
-          {
-            'prompt': 'companion, blonde hair',
-            'negative_prompt': 'black hair',
-            'position': 'E1',
-          },
-        ],
-      });
-      expect(prepared.isError, isFalse);
-      final payload = _json(prepared);
-      final preparedParams = payload['parameters'] as Map<String, dynamic>;
-      expect(preparedParams['character_layout_mode'], 'custom');
-      expect(preparedParams['character_count'], 2);
-      expect(preparedParams['characters'][0]['center'], {'x': 0.2, 'y': 0.75});
-      expect(preparedParams['characters'][1]['center'], {'x': 0.9, 'y': 0.1});
+    final prepared = await prepare.execute('prepare-characters', const {
+      'operation': 'generate',
+      'prompt': 'two friends',
+      'character_layout_mode': 'custom',
+      'characters': [
+        {
+          'prompt': 'hero, black hair',
+          'negative_prompt': 'red hair',
+          'position_x': 0.2,
+          'position_y': 0.75,
+        },
+        {
+          'prompt': 'companion, blonde hair',
+          'negative_prompt': 'black hair',
+          'position': 'E1',
+        },
+      ],
+    });
+    expect(prepared.isError, isFalse);
+    final payload = _json(prepared);
+    final preparedParams = payload['parameters'] as Map<String, dynamic>;
+    expect(preparedParams['character_layout_mode'], 'custom');
+    expect(preparedParams['character_count'], 2);
+    expect(preparedParams['characters'][0]['center'], {'x': 0.2, 'y': 0.75});
+    expect(preparedParams['characters'][1]['center'], {'x': 0.9, 'y': 0.1});
 
-      container
-          .read(characterPromptNotifierProvider.notifier)
-          .clearAllCharacters();
-      final submitted = await submit.execute('submit-characters', {
-        'preparation_id': payload['preparation_id'],
-        'confirmed': true,
-      });
-      expect(submitted.isError, isFalse);
-      expect(fake.preserveCharacterSnapshot, isTrue);
-      final params = fake.params!;
-      expect(params.useCoords, isTrue);
-      expect(params.characters.map((character) => character.prompt), [
-        'hero, black hair',
-        'companion, blonde hair',
-      ]);
+    container
+        .read(characterPromptNotifierProvider.notifier)
+        .clearAllCharacters();
+    final submitted = await submit.execute('submit-characters', {
+      'preparation_id': payload['preparation_id'],
+      'confirmed': true,
+    });
+    expect(submitted.isError, isFalse);
+    expect(fake.preserveCharacterSnapshot, isTrue);
+    final params = fake.params!;
+    expect(params.useCoords, isTrue);
+    expect(params.characters.map((character) => character.prompt), [
+      'hero, black hair',
+      'companion, blonde hair',
+    ]);
 
-      final request = await NAIImageRequestBuilder(
-        params: params,
-        encodeVibe: _fakeEncodeVibe,
-      ).build(sampler: Samplers.kEulerAncestral);
-      final parameters = request.requestParameters;
-      expect(parameters['use_coords'], isTrue);
-      expect(parameters['v4_prompt']['use_coords'], isTrue);
-      expect(parameters['characterPrompts'][0]['center'], {
-        'x': 0.2,
-        'y': 0.75,
-      });
-      expect(parameters['characterPrompts'][1]['center'], {'x': 0.9, 'y': 0.1});
-      expect(
-        parameters['v4_prompt']['caption']['char_captions'][1]['centers'],
-        [
-          {'x': 0.9, 'y': 0.1},
-        ],
-      );
-      expect(
-        parameters['v4_negative_prompt']['caption']['char_captions'][0]['char_caption'],
-        'red hair',
-      );
-    },
-  );
+    final request = await NAIImageRequestBuilder(
+      params: params,
+      encodeVibe: _fakeEncodeVibe,
+    ).build(sampler: Samplers.kEulerAncestral);
+    final parameters = request.requestParameters;
+    expect(parameters['use_coords'], isTrue);
+    expect(parameters['v4_prompt']['use_coords'], isTrue);
+    expect(parameters['characterPrompts'][0]['center'], {'x': 0.2, 'y': 0.75});
+    expect(parameters['characterPrompts'][1]['center'], {'x': 0.9, 'y': 0.1});
+    expect(parameters['v4_prompt']['caption']['char_captions'][1]['centers'], [
+      {'x': 0.9, 'y': 0.1},
+    ]);
+    expect(
+      parameters['v4_negative_prompt']['caption']['char_captions'][0]['char_caption'],
+      'red hair',
+    );
+  });
 
   test(
     'prepare lifecycle returns a path that read accepts without translation',
@@ -1162,9 +1164,8 @@ void main() {
         lowGrayMask.setPixelR(x, y, 39);
       }
     }
-    await File(
-      workspaceFile('mask.png'),
-    ).writeAsBytes(image_lib.encodePng(lowGrayMask));
+    await File(workspaceFile('mask.png'))
+        .writeAsBytes(image_lib.encodePng(lowGrayMask));
     final savedFile = File(workspaceFile('saved.png'));
     await savedFile.writeAsBytes(
       image_lib.encodePng(image_lib.Image(width: 1, height: 1)),
@@ -1399,9 +1400,10 @@ void main() {
       isNot(contains(workspace.path)),
     );
 
-    final readResult = await ExecutionToolbox(
-      workspace.path,
-    ).tools().single.execute('read-recent', {'path': images.first['path']});
+    final readResult = await ExecutionToolbox(workspace.path)
+        .tools()
+        .single
+        .execute('read-recent', {'path': images.first['path']});
     expect(readResult.isError, isFalse);
     expect(
       readResult.content.whereType<ToolResultImageContent>(),
@@ -1418,9 +1420,9 @@ void main() {
       ],
     );
     addTearDown(container.dispose);
-    final tool = GenerationToolbox(
-      _makeRef(container),
-    ).tools().firstWhere((t) => t.name == 'get_recent_images');
+    final tool = GenerationToolbox(_makeRef(container))
+        .tools()
+        .firstWhere((t) => t.name == 'get_recent_images');
 
     for (final limit in [0, 1.5, GenerationToolbox.maxRecentImageLimit + 1]) {
       final result = await tool.execute('t-history-invalid-$limit', {
@@ -1438,9 +1440,9 @@ void main() {
   test('get_generation_status reports generation and queue sections', () async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
-    final tool = GenerationToolbox(
-      _makeRef(container),
-    ).tools().firstWhere((t) => t.name == 'get_generation_status');
+    final tool = GenerationToolbox(_makeRef(container))
+        .tools()
+        .firstWhere((t) => t.name == 'get_generation_status');
     final result = await tool.execute('t3', {});
     final text = result.content
         .whereType<ToolResultTextContent>()
@@ -1502,9 +1504,9 @@ void main() {
   test('interrogate_image rejects a path outside the workspace', () async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
-    final tool = GenerationToolbox(
-      _makeRef(container),
-    ).tools().firstWhere((t) => t.name == 'interrogate_image');
+    final tool = GenerationToolbox(_makeRef(container))
+        .tools()
+        .firstWhere((t) => t.name == 'interrogate_image');
     final result = await tool.execute('t4', {'path': 'Z:/no_such.png'});
     final text = result.content
         .whereType<ToolResultTextContent>()
@@ -1518,9 +1520,8 @@ void main() {
       'generation-save-path-',
     );
     addTearDown(() => workspace.delete(recursive: true));
-    await File(
-      '${workspace.path}${Platform.pathSeparator}taken.png',
-    ).writeAsString('user data');
+    await File('${workspace.path}${Platform.pathSeparator}taken.png')
+        .writeAsString('user data');
     final container = _savePathContainer();
     addTearDown(container.dispose);
     final prepare = GenerationToolbox(
@@ -1622,9 +1623,8 @@ void main() {
     expect(prepared['save_path'], isNot(contains(r'\')));
     // 准备阶段只校验，不得提前建目录。
     expect(
-      await Directory(
-        '${workspace.path}${Platform.pathSeparator}exports',
-      ).exists(),
+      await Directory('${workspace.path}${Platform.pathSeparator}exports')
+          .exists(),
       isFalse,
     );
 

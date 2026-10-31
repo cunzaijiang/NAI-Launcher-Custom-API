@@ -3,8 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/api_constants.dart';
+import '../../../../core/network/nai_api_endpoint_service.dart';
+import '../../../../core/network/nai_compatible_request.dart';
 import '../../../../core/utils/localization_extension.dart';
 import '../../../../data/models/image/image_params.dart';
+import '../../../../data/services/auth_provider.dart';
 import '../../../providers/image_generation_provider.dart';
 import '../../../widgets/common/app_toast.dart';
 import '../../../widgets/common/themed_dropdown.dart';
@@ -30,9 +33,8 @@ class ParamSectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: Theme.of(
-        context,
-      ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+      style: Theme.of(context).textTheme.titleSmall
+          ?.copyWith(fontWeight: FontWeight.w600),
     );
   }
 }
@@ -46,8 +48,23 @@ class ModelSection extends ConsumerWidget {
     final model = ref.watch(
       generationParamsNotifierProvider.select((params) => params.model),
     );
-    // 测试期的 custom 键与 Effort 变体都归到下拉框条目，保证 value 一定在候选项里。
+    // 端点服务可变，账号切换时跟随认证状态重新读取协议。
+    ref.watch(authNotifierProvider);
+    final compatible = ref
+        .watch(naiApiEndpointServiceProvider)
+        .current
+        .isOpenAiCompatible;
     final selectorModel = ImageModels.selectorModel(model);
+    final availableModels = compatible
+        ? ImageModels.allModels
+              .where(NaiCompatibleRequest.generationModels.contains)
+              .toList(growable: false)
+        : ImageModels.visibleModels(current: selectorModel);
+    // 不把存量 Medium 等不支持的值伪装成可用模型，也不在重建时改写参数。
+    final selectedModel =
+        compatible && !NaiCompatibleRequest.generationModels.contains(model)
+        ? null
+        : selectorModel;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -60,8 +77,10 @@ class ModelSection extends ConsumerWidget {
         ),
         const SizedBox(height: 8),
         ThemedDropdown<String>(
-          value: selectorModel,
-          items: ImageModels.visibleModels(current: selectorModel).map((model) {
+          key: ValueKey((compatible, selectedModel)),
+          value: selectedModel,
+          hintText: selectedModel == null ? model : null,
+          items: availableModels.map((model) {
             return DropdownMenuItem(
               value: model,
               child: ModelNameLabel(
@@ -72,8 +91,10 @@ class ModelSection extends ConsumerWidget {
             );
           }).toList(),
           onChanged: (value) {
-            // 重选同一条目不能把 Medium 档改回 High。
-            if (value != null && value != selectorModel) {
+            // 官方重选保持 Medium；兼容协议允许显式选回同一基础模型的 High。
+            if (value != null &&
+                availableModels.contains(value) &&
+                value != selectedModel) {
               ref
                   .read(generationParamsNotifierProvider.notifier)
                   .updateModel(value);
@@ -102,6 +123,11 @@ class SizeSection extends ConsumerWidget {
         ),
       ),
     );
+    ref.watch(authNotifierProvider);
+    final compatible = ref
+        .watch(naiApiEndpointServiceProvider)
+        .current
+        .isOpenAiCompatible;
     final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,11 +137,13 @@ class SizeSection extends ConsumerWidget {
             ParamSectionTitle(context.l10n.generation_imageSize),
             const Spacer(),
             // 端到端 ×2 放大：模型按基础分辨率生成，服务端输出边长翻倍
-            if (size.supportsE2eUpscale)
+            // 兼容协议只保留关闭存量开启值的入口，避免隐藏参数导致无法恢复。
+            if (compatible ? size.e2eUpscale : size.supportsE2eUpscale)
               GenerationToggleButton(
                 label: '×${E2eUpscale.factor}',
                 isEnabled: size.e2eUpscale,
                 onChanged: (value) {
+                  if (compatible && value) return;
                   ref
                       .read(generationParamsNotifierProvider.notifier)
                       .updateE2eUpscale(value);
@@ -133,7 +161,7 @@ class SizeSection extends ConsumerWidget {
                 .updateSize(width, height);
           },
         ),
-        if (size.supportsE2eUpscale && size.e2eUpscale) ...[
+        if (!compatible && size.supportsE2eUpscale && size.e2eUpscale) ...[
           const SizedBox(height: 6),
           Text(
             context.l10n.generation_e2eUpscaleHint(
@@ -160,26 +188,41 @@ class SamplerSection extends ConsumerWidget {
         (params) => (
           sampler: params.effectiveSampler,
           isV4Model: params.isV4Model,
+          isV5Model: ImageModels.isV5Model(params.model),
           locked: params.usesFixedSettings,
         ),
       ),
     );
-    // V4 起官网不提供 DDIM，存量选择由 effectiveSampler 显示为实际会发送的采样器
-    final availableSamplers = data.isV4Model
-        ? Samplers.allSamplers
-              .where(
-                (sampler) =>
-                    sampler != Samplers.ddim && sampler != Samplers.ddimV3,
-              )
-              .toList(growable: false)
-        : Samplers.allSamplers;
+    ref.watch(authNotifierProvider);
+    final compatible = ref
+        .watch(naiApiEndpointServiceProvider)
+        .current
+        .isOpenAiCompatible;
+    // V4 起官网不提供 DDIM；兼容协议下 V5 还不支持 DPM2 Ancestral。
+    final availableSamplers = Samplers.allSamplers
+        .where((sampler) {
+          if (data.isV4Model &&
+              (sampler == Samplers.ddim || sampler == Samplers.ddimV3)) {
+            return false;
+          }
+          return !(compatible &&
+              data.isV5Model &&
+              sampler == Samplers.kDpm2Ancestral);
+        })
+        .toList(growable: false);
+    final selectedSampler =
+        compatible && data.isV5Model && data.sampler == Samplers.kDpm2Ancestral
+        ? null
+        : data.sampler;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ParamSectionTitle(context.l10n.generation_sampler),
         const SizedBox(height: 8),
         ThemedDropdown<String>(
-          value: data.sampler,
+          key: ValueKey((compatible, selectedSampler)),
+          value: selectedSampler,
+          hintText: selectedSampler == null ? data.sampler : null,
           items: availableSamplers.map((sampler) {
             return DropdownMenuItem(
               value: sampler,
@@ -192,7 +235,10 @@ class SamplerSection extends ConsumerWidget {
           onChanged: data.locked
               ? null
               : (value) {
-                  if (value != null) {
+                  if (value != null &&
+                      !(compatible &&
+                          data.isV5Model &&
+                          value == Samplers.kDpm2Ancestral)) {
                     ref
                         .read(generationParamsNotifierProvider.notifier)
                         .updateSampler(value);
@@ -324,11 +370,16 @@ class CfgScaleSection extends ConsumerWidget {
           decrisp: params.decrisp,
           varietyPlus: params.varietyPlus,
           isV3Model: params.isV3Model,
+          isV5Model: ImageModels.isV5Model(params.model),
           supportsVarietyPlus: params.capabilities.supportsVarietyPlus,
           locked: params.usesFixedSettings,
         ),
       ),
     );
+    ref.watch(authNotifierProvider);
+    final restrictVarietyPlus =
+        ref.watch(naiApiEndpointServiceProvider).current.isOpenAiCompatible &&
+        data.isV5Model;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -355,17 +406,21 @@ class CfgScaleSection extends ConsumerWidget {
                           .updateDecrisp(value);
                     },
                   ),
-                if (data.supportsVarietyPlus)
+                // 兼容协议下 V5 只允许关闭存量开启值，包括 Medium 的隐藏值。
+                if (restrictVarietyPlus
+                    ? data.varietyPlus
+                    : data.supportsVarietyPlus)
                   GenerationToggleButton(
                     label: 'Variety+',
                     isEnabled: data.varietyPlus,
                     onChanged: (value) {
+                      if (restrictVarietyPlus && value) return;
                       ref
                           .read(generationParamsNotifierProvider.notifier)
                           .updateVarietyPlus(value);
                     },
                   )
-                else if (data.locked)
+                else if (data.locked && !restrictVarietyPlus)
                   Tooltip(
                     message: context.l10n.generation_effortUnavailableHint,
                     child: const GenerationToggleButton(

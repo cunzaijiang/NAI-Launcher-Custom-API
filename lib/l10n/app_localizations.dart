@@ -920,13 +920,13 @@ abstract class AppLocalizations {
   /// No description provided for @auth_thirdPartyLogin.
   ///
   /// In en, this message translates to:
-  /// **'Third-party Site'**
+  /// **'Custom API'**
   String get auth_thirdPartyLogin;
 
   /// No description provided for @auth_thirdPartyApiSite.
   ///
   /// In en, this message translates to:
-  /// **'Third-party API Site'**
+  /// **'API base URL'**
   String get auth_thirdPartyApiSite;
 
   /// No description provided for @auth_imageApiSiteOptional.
@@ -952,6 +952,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter the API token from the third-party site'**
   String get auth_thirdPartyTokenHint;
+
+  /// No description provided for @auth_openAiCompatibleProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'OpenAI-compatible NAI provider'**
+  String get auth_openAiCompatibleProfile;
+
+  /// No description provided for @auth_openAiCompatibleProfileHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Uses the native JSON /v1 API. Enter the root or /v1 URL; the image API uses the same address.'**
+  String get auth_openAiCompatibleProfileHint;
+
+  /// No description provided for @auth_openAiCompatibleWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Uses native JSON /v1 endpoints and validates with /v1/models. Fixed subscription values are placeholders, not your actual balance. Every generation has a base fee, even when the estimate is 0 Anlas. Final images only; no streaming previews. Native requests have no server-side budget limit. Check billing with your provider.'**
+  String get auth_openAiCompatibleWarning;
 
   /// No description provided for @auth_thirdPartyCompatibilityHint.
   ///

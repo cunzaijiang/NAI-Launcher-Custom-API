@@ -2,6 +2,7 @@ import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nai_launcher/core/agent/agent_types.dart';
 import 'package:nai_launcher/core/agent/audit/audit_sink.dart';
+import 'package:nai_launcher/data/models/prompt_assistant/prompt_assistant_models.dart';
 import 'package:nai_launcher/presentation/mcp/services/mcp_approval_coordinator.dart';
 
 import '../mcp_test_tools.dart';
@@ -9,6 +10,48 @@ import '../mcp_test_tools.dart';
 const _timeout = Duration(minutes: 5);
 
 void main() {
+  test('provider zero quote still requests MCP approval in autopilot', () {
+    fakeAsync((async) {
+      final tools = [FakeAgentTool(name: 'submit_generation')];
+      final coordinator = McpApprovalCoordinator(
+        auditSink: MemoryAgentAuditSink(),
+        estimateAnlas: (_, _) async => 0,
+        providerPricingUnknown: () => true,
+        describeFileTargets: (_, _) => const [],
+        chargeConfirmThreshold: () => null,
+        isMounted: () => true,
+      );
+      coordinator.configure(
+        fakeToolRegistry(tools, mode: AgentPermissionMode.autopilot),
+      );
+      BeforeToolCallResult? result;
+      var completed = false;
+      coordinator.controller
+          .beforeToolCall(
+            fakeBeforeToolCallContext(
+              callId: 'provider',
+              toolName: 'submit_generation',
+              args: const {'preparation_id': 'prepared', 'confirmed': true},
+              tools: tools,
+            ),
+            null,
+          )
+          .then((value) {
+            result = value;
+            completed = true;
+          });
+      async.flushMicrotasks();
+      expect(completed, isFalse);
+      expect(coordinator.current, isNotNull);
+      expect(coordinator.current!.request.estimatedAnlas, isNull);
+      coordinator.resolve('provider', false);
+      async.flushMicrotasks();
+      expect(result?.block, isTrue);
+      coordinator.dispose();
+      expect(async.pendingTimers, isEmpty);
+    });
+  });
+
   test('pending approval auto-declines at the timeout', () {
     fakeAsync((async) {
       final harness = _Harness();

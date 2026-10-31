@@ -19,6 +19,7 @@ import '../../../core/agent/resources/agent_chat_resource_draft_store.dart';
 import '../../../core/agent/resources/agent_chat_resource_reference.dart';
 import '../../../core/agent/skill_catalog.dart';
 import '../../../core/storage/local_storage_service.dart';
+import '../../../core/network/nai_api_endpoint_service.dart';
 import '../../../core/services/android_foreground_task_service.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../data/models/agent/agent_settings.dart';
@@ -62,8 +63,9 @@ import 'agent_chat_state.dart';
 export 'agent_chat_state.dart';
 export '../services/agent_api_client.dart';
 
-typedef AgentWireCompletion =
-    Stream<AgentWireEvent> Function(AgentChatRequest request);
+typedef AgentWireCompletion = Stream<AgentWireEvent> Function(
+  AgentChatRequest request,
+);
 
 final agentChatNotifierProvider =
     StateNotifierProvider<AgentChatNotifier, AgentChatState>((ref) {
@@ -223,6 +225,8 @@ class AgentChatNotifier extends StateNotifier<AgentChatState> {
     _permissionController = AgentToolPermissionController(
       auditSink: auditSink,
       estimateAnlas: _estimatePreparedAnlas,
+      providerPricingUnknown: () =>
+          _ref.read(naiApiEndpointServiceProvider).current.isOpenAiCompatible,
       describeFileTargets: _describePreparedFileTargets,
       chargeConfirmThreshold: () =>
           _ref.read(shareImageSettingsProvider).effectiveHighAnlasCostThreshold,
@@ -421,7 +425,9 @@ class AgentChatNotifier extends StateNotifier<AgentChatState> {
 
   Future<Directory?> _resolveCurrentImageProjectDirectory() {
     final resolver = _imageProjectDirectoryResolver;
-    return resolver != null ? resolver() : resolveCurrentImageProjectDirectory();
+    return resolver != null
+        ? resolver()
+        : resolveCurrentImageProjectDirectory();
   }
 
   Future<int> reloadSkills() async {
@@ -558,19 +564,17 @@ class AgentChatNotifier extends StateNotifier<AgentChatState> {
         );
       }
 
-      final entry =
-          await session.appendEntry(
-                session_types.CompactionEntry(
-                  id: session.idGenerator(),
-                  summary: compactResult.summary,
-                  retainedTail: compactResult.retainedTail,
-                  tokensBefore: compactResult.tokensBefore,
-                  details: compactResult.details,
-                  usage: compactResult.usage,
-                ),
-                'main',
-              )
-              as session_types.CompactionEntry;
+      final entry = await session.appendEntry(
+        session_types.CompactionEntry(
+          id: session.idGenerator(),
+          summary: compactResult.summary,
+          retainedTail: compactResult.retainedTail,
+          tokensBefore: compactResult.tokensBefore,
+          details: compactResult.details,
+          usage: compactResult.usage,
+        ),
+        'main',
+      ) as session_types.CompactionEntry;
       final compressed = <AgentMessage>[
         createCompactionSummaryMessage(
           entry.summary,

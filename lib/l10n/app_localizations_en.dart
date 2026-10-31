@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -452,10 +453,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get auth_nicknameHint => 'Set a recognizable name for this account';
 
   @override
-  String get auth_thirdPartyLogin => 'Third-party Site';
+  String get auth_thirdPartyLogin => 'Custom API';
 
   @override
-  String get auth_thirdPartyApiSite => 'Third-party API Site';
+  String get auth_thirdPartyApiSite => 'API base URL';
 
   @override
   String get auth_imageApiSiteOptional => 'Image API Site (optional)';
@@ -471,6 +472,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get auth_thirdPartyTokenHint =>
       'Enter the API token from the third-party site';
+
+  @override
+  String get auth_openAiCompatibleProfile => 'OpenAI-compatible NAI provider';
+
+  @override
+  String get auth_openAiCompatibleProfileHint =>
+      'Uses the native JSON /v1 API. Enter the root or /v1 URL; the image API uses the same address.';
+
+  @override
+  String get auth_openAiCompatibleWarning =>
+      'Uses native JSON /v1 endpoints and validates with /v1/models. Fixed subscription values are placeholders, not your actual balance. Every generation has a base fee, even when the estimate is 0 Anlas. Final images only; no streaming previews. Native requests have no server-side budget limit. Check billing with your provider.';
 
   @override
   String get auth_thirdPartyCompatibilityHint =>

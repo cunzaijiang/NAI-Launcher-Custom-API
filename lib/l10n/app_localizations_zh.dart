@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -433,10 +434,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get auth_nicknameHint => '为此账号设置一个便于识别的名称';
 
   @override
-  String get auth_thirdPartyLogin => '第三方站点';
+  String get auth_thirdPartyLogin => '自定义接口';
 
   @override
-  String get auth_thirdPartyApiSite => '第三方 API 站点';
+  String get auth_thirdPartyApiSite => 'API 基础地址';
 
   @override
   String get auth_imageApiSiteOptional => '图像 API 站点（可选）';
@@ -449,6 +450,17 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get auth_thirdPartyTokenHint => '请输入第三方站点提供的 API Token';
+
+  @override
+  String get auth_openAiCompatibleProfile => 'OpenAI 兼容 NAI 服务商';
+
+  @override
+  String get auth_openAiCompatibleProfileHint =>
+      '使用原生 JSON /v1 API。填写站点根地址或 /v1 地址，图像 API 使用同一地址。';
+
+  @override
+  String get auth_openAiCompatibleWarning =>
+      '使用原生 JSON /v1 接口，通过 /v1/models 验证。固定订阅数值仅为占位，不代表实际余额。每次生成均收取基础费用，即使预估为 0 Anlas。仅返回最终图像，无流式预览。原生请求没有服务端预算上限，请向服务商确认计费。';
 
   @override
   String get auth_thirdPartyCompatibilityHint =>
@@ -15956,10 +15968,10 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get auth_nicknameHint => '為此賬號設定一個便於識別的名稱';
 
   @override
-  String get auth_thirdPartyLogin => '第三方站點';
+  String get auth_thirdPartyLogin => '自訂介面';
 
   @override
-  String get auth_thirdPartyApiSite => '第三方 API 站點';
+  String get auth_thirdPartyApiSite => 'API 基礎位址';
 
   @override
   String get auth_imageApiSiteOptional => '影象 API 站點（可選）';
@@ -15972,6 +15984,17 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get auth_thirdPartyTokenHint => '請輸入第三方站點提供的 API Token';
+
+  @override
+  String get auth_openAiCompatibleProfile => 'OpenAI 相容 NAI 服務商';
+
+  @override
+  String get auth_openAiCompatibleProfileHint =>
+      '使用原生 JSON /v1 API。填寫站點根位址或 /v1 位址，影像 API 使用同一位址。';
+
+  @override
+  String get auth_openAiCompatibleWarning =>
+      '使用原生 JSON /v1 介面，透過 /v1/models 驗證。固定訂閱數值僅為佔位，不代表實際餘額。每次生成均收取基本費用，即使預估為 0 Anlas。僅回傳最終影像，無串流預覽。原生請求沒有伺服器端預算上限，請向服務商確認計費。';
 
   @override
   String get auth_thirdPartyCompatibilityHint =>

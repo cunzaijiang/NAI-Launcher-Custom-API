@@ -120,6 +120,99 @@ void main() {
       );
     });
 
+    for (final input in [
+      'https://provider.example',
+      'https://provider.example/',
+      'https://provider.example/v1',
+      'https://provider.example/v1///',
+      'https://provider.example/v1/v1/',
+    ]) {
+      test('explicit profile normalizes $input to one /v1', () {
+        final endpoint = NaiApiEndpointConfig.fromInput(
+          mainBaseUrl: input,
+          protocol: NaiApiProtocol.openAiCompatible,
+        );
+        expect(endpoint.mainBaseUrl, 'https://provider.example/v1');
+        expect(endpoint.imageBaseUrl, endpoint.mainBaseUrl);
+        expect(
+          endpoint.mainUrl('/models'),
+          'https://provider.example/v1/models',
+        );
+        expect(endpoint.isOpenAiCompatible, isTrue);
+        expect(endpoint.isOfficial, isFalse);
+      });
+    }
+
+    test(
+      'profile preserves proxy prefix and normalizes separate image URL',
+      () {
+        final endpoint = NaiApiEndpointConfig.fromInput(
+          mainBaseUrl: 'localhost:8080/proxy/v1/',
+          imageBaseUrl: 'https://images.example/proxy/',
+          protocol: NaiApiProtocol.openAiCompatible,
+        );
+        expect(endpoint.mainBaseUrl, 'http://localhost:8080/proxy/v1');
+        expect(endpoint.imageBaseUrl, 'https://images.example/proxy/v1');
+        expect(
+          endpoint.imageUrl('/images/generations'),
+          'https://images.example/proxy/v1/images/generations',
+        );
+        expect(NaiApiEndpointConfig.fromJson(endpoint.toJson()), endpoint);
+        expect(
+          NaiApiEndpointConfig.fromJson(endpoint.toJson()).hashCode,
+          endpoint.hashCode,
+        );
+      },
+    );
+
+    test('profile cannot become official and participates in equality', () {
+      const profile = NaiApiEndpointConfig(
+        mainBaseUrl: ApiConstants.baseUrl,
+        imageBaseUrl: ApiConstants.imageBaseUrl,
+        protocol: NaiApiProtocol.openAiCompatible,
+      );
+      expect(profile.isOfficial, isFalse);
+      expect(profile, isNot(NaiApiEndpointConfig.official));
+    });
+
+    test('legacy and invalid protocol JSON never opts in', () {
+      for (final protocol in [
+        null,
+        '',
+        'unknown',
+        'OpenAiCompatible',
+        true,
+        1,
+      ]) {
+        final json = <String, dynamic>{
+          'mainBaseUrl': 'https://provider.example/v1',
+          'imageBaseUrl': 'https://images.example',
+          if (protocol != null) 'protocol': protocol,
+        };
+        final endpoint = NaiApiEndpointConfig.fromJson(json);
+        expect(endpoint.protocol, NaiApiProtocol.novelAi);
+        expect(endpoint.isOpenAiCompatible, isFalse);
+        expect(endpoint.imageBaseUrl, 'https://images.example');
+      }
+      expect(NaiApiEndpointConfig.fromJson({}), NaiApiEndpointConfig.official);
+    });
+
+    test('profile JSON with no image URL uses main URL fallback', () {
+      final endpoint = NaiApiEndpointConfig.fromJson({
+        'mainBaseUrl': 'https://provider.example',
+        'protocol': 'openAiCompatible',
+      });
+      expect(endpoint.imageBaseUrl, 'https://provider.example/v1');
+    });
+
+    test('generic endpoints are not opted in by a /v1 URL', () {
+      final endpoint = NaiApiEndpointConfig.fromInput(
+        mainBaseUrl: 'https://provider.example/v1/',
+      );
+      expect(endpoint.protocol, NaiApiProtocol.novelAi);
+      expect(endpoint.mainBaseUrl, 'https://provider.example/v1');
+    });
+
     test('rejects unsupported URL schemes', () {
       expect(
         () => NaiApiEndpointConfig.fromInput(mainBaseUrl: 'ftp://example.com'),
@@ -150,34 +243,37 @@ void main() {
       );
     });
 
-    test('negative presets should match current NovelAI documented mappings', () {
-      expect(
-        UcPresets.getPresetContent(model, UcPresetType.heavy),
-        equals(
-          'lowres, artistic error, film grain, scan artifacts, worst quality, bad quality, jpeg artifacts, very displeasing, chromatic aberration, dithering, halftone, screentone, multiple views, logo, too many watermarks, negative space, blank page',
-        ),
-      );
-      expect(
-        UcPresets.getPresetContent(model, UcPresetType.heavy),
-        isNot(contains('nsfw')),
-      );
-      expect(
-        UcPresets.getPresetContent(
-          ImageModels.animeDiffusionV4Full,
-          UcPresetType.heavy,
-        ),
-        isNot(contains('blank page')),
-      );
-      expect(
-        UcPresets.getPresetContent(
-          ImageModels.animeDiffusionV3,
-          UcPresetType.light,
-        ),
-        equals(
-          'lowres, jpeg artifacts, worst quality, watermark, blurry, very displeasing',
-        ),
-      );
-    });
+    test(
+      'negative presets should match current NovelAI documented mappings',
+      () {
+        expect(
+          UcPresets.getPresetContent(model, UcPresetType.heavy),
+          equals(
+            'lowres, artistic error, film grain, scan artifacts, worst quality, bad quality, jpeg artifacts, very displeasing, chromatic aberration, dithering, halftone, screentone, multiple views, logo, too many watermarks, negative space, blank page',
+          ),
+        );
+        expect(
+          UcPresets.getPresetContent(model, UcPresetType.heavy),
+          isNot(contains('nsfw')),
+        );
+        expect(
+          UcPresets.getPresetContent(
+            ImageModels.animeDiffusionV4Full,
+            UcPresetType.heavy,
+          ),
+          isNot(contains('blank page')),
+        );
+        expect(
+          UcPresets.getPresetContent(
+            ImageModels.animeDiffusionV3,
+            UcPresetType.light,
+          ),
+          equals(
+            'lowres, jpeg artifacts, worst quality, watermark, blurry, very displeasing',
+          ),
+        );
+      },
+    );
 
     test('toApiValue should use native NovelAI preset ids explicitly', () {
       expect(UcPresets.toApiValue(UcPresetType.heavy), equals(0));
@@ -249,22 +345,19 @@ void main() {
       expect(stripped, equals('blurry background, chromatic aberration'));
     });
 
-    test(
-      'stripPresetByInt should recover user negative prompt from legacy text',
-      () {
-        const legacyPreset =
-            'nsfw, lowres, artistic error, film grain, scan artifacts, worst quality, bad quality, jpeg artifacts, very displeasing, chromatic aberration, dithering, halftone, screentone, multiple views, logo, too many watermarks, negative space, blank page';
-        const importedNegativePrompt = '$legacyPreset, custom_negative';
+    test('stripPresetByInt should recover user negative prompt from legacy text', () {
+      const legacyPreset =
+          'nsfw, lowres, artistic error, film grain, scan artifacts, worst quality, bad quality, jpeg artifacts, very displeasing, chromatic aberration, dithering, halftone, screentone, multiple views, logo, too many watermarks, negative space, blank page';
+      const importedNegativePrompt = '$legacyPreset, custom_negative';
 
-        final stripped = UcPresets.stripPresetByInt(
-          importedNegativePrompt,
-          model,
-          0,
-        );
+      final stripped = UcPresets.stripPresetByInt(
+        importedNegativePrompt,
+        model,
+        0,
+      );
 
-        expect(stripped, equals('custom_negative'));
-      },
-    );
+      expect(stripped, equals('custom_negative'));
+    });
 
     test('splitPresetByInt keeps the matched preset and the rest apart', () {
       final preset = UcPresets.getPresetContentByInt(model, 0);

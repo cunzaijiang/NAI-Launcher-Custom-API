@@ -11,6 +11,7 @@ import '../../../core/network/dio_client.dart';
 import '../../../core/network/critical_network_activity.dart';
 import '../../../core/network/js_compatible_json.dart';
 import '../../../core/network/nai_api_endpoint_service.dart';
+import '../../../core/network/nai_compatible_request.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../core/utils/decoded_image_size.dart';
 import '../../../core/utils/exif_orientation.dart';
@@ -62,6 +63,7 @@ class NAIImageEnhancementApiService {
     int scale = 2,
     void Function(int, int)? onProgress,
   }) async {
+    _requireSupportedTool('upscale');
     final upload = await ExifOrientation.bakeToPngAsync(image);
     final activity = _networkActivity.acquire(
       CriticalNetworkActivityType.cloudUpscale,
@@ -179,23 +181,30 @@ class NAIImageEnhancementApiService {
     required String model,
     double informationExtracted = 1.0,
   }) async {
+    final isCompatible = _endpointService.current.isOpenAiCompatible;
+    if (isCompatible) NaiCompatibleRequest.validateVibeModel(model);
     final upload = await ExifOrientation.bakeToPngAsync(image);
     final activity = _networkActivity.acquire(
       CriticalNetworkActivityType.vibeEncoding,
     );
     try {
-      final body = _buildImageToolMultipart(upload, <String, dynamic>{
-        'image': 'image',
+      final payload = <String, dynamic>{
+        'image': isCompatible ? base64Encode(upload) : 'image',
         'information_extracted': informationExtracted,
         'model': model,
-      });
+      };
+      final body = isCompatible
+          ? null
+          : _buildImageToolMultipart(upload, payload);
 
       final response = await _dio.post(
         _endpointService.imageUrl(ApiConstants.encodeVibeEndpoint),
-        data: body.bytes,
+        data: isCompatible ? encodeJsCompatibleJson(payload) : body!.bytes,
         options: Options(
           responseType: ResponseType.bytes,
-          contentType: body.contentType,
+          contentType: isCompatible
+              ? Headers.jsonContentType
+              : body!.contentType,
         ),
       );
 
@@ -215,6 +224,7 @@ class NAIImageEnhancementApiService {
     String? prompt,
     int defry = 0,
   }) async {
+    _requireSupportedTool('augment-image');
     final upload = await ExifOrientation.bakeToPngAsync(image);
     final activity = _networkActivity.acquire(
       CriticalNetworkActivityType.directorTool,
@@ -299,6 +309,7 @@ class NAIImageEnhancementApiService {
     Uint8List image, {
     required String annotateType,
   }) async {
+    _requireSupportedTool('annotate-image');
     try {
       final response = await _dio.post(
         _endpointService.imageUrl(ApiConstants.annotateImageEndpoint),
@@ -319,6 +330,44 @@ class NAIImageEnhancementApiService {
     }
   }
 
+  void _requireSupportedTool(String endpoint) {
+    if (_endpointService.current.isOpenAiCompatible) {
+      throw UnsupportedError(
+        'OpenAI-compatible NovelAI API does not support /$endpoint',
+      );
+    }
+  }
+
+  static String? _responseErrorDetail(Object? data) {
+    Object? decoded = data;
+    if (data is List<int>) {
+      decoded = utf8.decode(data, allowMalformed: true);
+    }
+    if (decoded is String) {
+      final text = decoded;
+      try {
+        decoded = jsonDecode(text);
+      } on FormatException {
+        return text;
+      }
+    }
+    if (decoded is Map) {
+      final nested = decoded['error'];
+      final error = nested is Map ? nested : decoded;
+      final message = error['message'];
+      final code = error['code'];
+      final param = error['param'];
+      if (message != null || code != null || param != null) {
+        return [
+          if (message != null) '$message',
+          if (code != null) 'code=$code',
+          if (param != null) 'param=$param',
+        ].join('; ');
+      }
+    }
+    return decoded == null ? null : jsonEncode(decoded);
+  }
+
   String _mapDioError(DioException e) {
     switch (e.type) {
       case DioExceptionType.connectionTimeout:
@@ -329,25 +378,7 @@ class NAIImageEnhancementApiService {
         return '网络连接错误';
       case DioExceptionType.badResponse:
         final statusCode = e.response?.statusCode;
-        final responseData = e.response?.data;
-        String? detail;
-        if (responseData is String) {
-          detail = responseData;
-        } else if (responseData is List<int>) {
-          try {
-            final text = utf8.decode(responseData, allowMalformed: true);
-            final json = jsonDecode(text);
-            if (json is Map && json.containsKey('message')) {
-              detail = json['message'] as String?;
-            } else {
-              detail = text;
-            }
-          } catch (_) {
-            detail = String.fromCharCodes(responseData);
-          }
-        } else if (responseData != null) {
-          detail = jsonEncode(responseData);
-        }
+        final detail = _responseErrorDetail(e.response?.data);
         return detail == null || detail.isEmpty
             ? '服务器返回错误: $statusCode'
             : '服务器返回错误: $statusCode ($detail)';

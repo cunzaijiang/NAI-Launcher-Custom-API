@@ -3,6 +3,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/constants/api_constants.dart';
 import '../../core/services/anlas_calculator.dart';
+import '../../core/network/nai_api_endpoint_service.dart';
+import '../../data/services/auth_provider.dart';
 import '../../core/utils/focused_inpaint_utils.dart';
 import '../../data/models/image/image_params.dart';
 import 'image_generation_provider.dart';
@@ -167,7 +169,14 @@ AsyncValue<FocusedInpaintGeometry?> focusedInpaintMaskRequestSize(Ref ref) {
 /// 蒙版外接矩形仍在后台计算时先等它落定，给出与同步计算一致的预估消耗。
 ///
 /// 界面在计算期间只有上一次的结果或"计算中"，需要确切数值的确认流程走这里。
-Future<int> readSettledEstimatedCost(ProviderContainer container) async {
+Future<int?> readSettledEstimatedCost(ProviderContainer container) async {
+  // Provider pricing is permanently unknown, not mask work to wait for.
+  if (container
+      .read(naiApiEndpointServiceProvider)
+      .current
+      .isOpenAiCompatible) {
+    return container.read(estimatedCostProvider);
+  }
   final maskGeometry = container.listen(
     focusedInpaintMaskRequestSizeProvider,
     (_, __) {},
@@ -176,8 +185,7 @@ Future<int> readSettledEstimatedCost(ProviderContainer container) async {
     while (maskGeometry.read().isLoading) {
       await container.read(focusedInpaintMaskExtentProvider.future);
     }
-    final cost = container.read(estimatedCostProvider);
-    return cost!;
+    return container.read(estimatedCostProvider);
   } finally {
     maskGeometry.close();
   }
@@ -195,6 +203,18 @@ Future<int> readSettledEstimatedCost(ProviderContainer container) async {
 int? estimatedCost(Ref ref) {
   final params = ref.watch(generationParamsNotifierProvider);
   final workflow = ref.watch(imageWorkflowControllerProvider);
+  // The endpoint service is mutable; auth transitions invalidate this quote.
+  ref.watch(authNotifierProvider);
+  final providerBilling = ref
+      .watch(naiApiEndpointServiceProvider)
+      .current
+      .isOpenAiCompatible;
+  final localUpscale =
+      workflow.isUpscale && workflow.upscale.backend != UpscaleBackend.novelai;
+  if (providerBilling && !localUpscale) {
+    // Provider base fees are unknown and cannot use NovelAI's Opus discounts.
+    return null;
+  }
   final imagesPerRequest = ref.watch(imagesPerRequestProvider);
   final subscription = ref.watch(
     subscriptionNotifierProvider.select((state) => state.subscription),

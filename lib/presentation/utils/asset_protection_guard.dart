@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/services/file_export_service.dart';
+import '../../core/network/nai_api_endpoint_service.dart';
 import '../providers/cost_estimate_provider.dart';
 import '../providers/share_image_settings_provider.dart';
 import '../widgets/common/themed_confirm_dialog.dart';
@@ -56,10 +57,7 @@ class AssetProtectionGuard {
     return ThemedConfirmDialog.show(
       context: context,
       title: l10n.settings_confirmExternalSendTitle,
-      content: l10n.settings_confirmExternalSendContent(
-        imageCount,
-        targetName,
-      ),
+      content: l10n.settings_confirmExternalSendContent(imageCount, targetName),
       confirmText: l10n.settings_confirmExternalSend,
       cancelText: l10n.common_cancel,
       type: ThemedConfirmDialogType.warning,
@@ -79,12 +77,17 @@ class AssetProtectionGuard {
       return true;
     }
 
-    final estimatedCost =
-        cost ??
-        await readSettledEstimatedCost(
-          ProviderScope.containerOf(context, listen: false),
-        );
-    if (estimatedCost < threshold) {
+    final providerBilling = ref
+        .read(naiApiEndpointServiceProvider)
+        .current
+        .isOpenAiCompatible;
+    final estimatedCost = providerBilling
+        ? null
+        : cost ??
+              await readSettledEstimatedCost(
+                ProviderScope.containerOf(context, listen: false),
+              );
+    if (estimatedCost != null && estimatedCost < threshold) {
       return true;
     }
     if (!context.mounted) {
@@ -95,7 +98,9 @@ class AssetProtectionGuard {
     return ThemedConfirmDialog.show(
       context: context,
       title: l10n.settings_highAnlasCostTitle,
-      content: l10n.settings_highAnlasCostContent(estimatedCost, threshold),
+      content: estimatedCost == null
+          ? l10n.auth_openAiCompatibleWarning
+          : l10n.settings_highAnlasCostContent(estimatedCost, threshold),
       confirmText: l10n.settings_continueGeneration,
       cancelText: l10n.common_cancel,
       type: ThemedConfirmDialogType.warning,

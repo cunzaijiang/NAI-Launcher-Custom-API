@@ -32,6 +32,7 @@ class McpApprovalCoordinator {
     describeFileTargets,
     required int? Function() chargeConfirmThreshold,
     required bool Function() isMounted,
+    bool Function()? providerPricingUnknown,
     Duration timeout = McpServerDefaults.approvalTimeout,
     DateTime Function()? clock,
     Future<void> Function()? notifyRequested,
@@ -41,6 +42,7 @@ class McpApprovalCoordinator {
     controller = AgentToolPermissionController(
       auditSink: auditSink,
       estimateAnlas: estimateAnlas,
+      providerPricingUnknown: providerPricingUnknown,
       describeFileTargets: describeFileTargets,
       chargeConfirmThreshold: chargeConfirmThreshold,
       onApprovalChanged: _handleApprovalChanged,

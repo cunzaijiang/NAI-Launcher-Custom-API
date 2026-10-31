@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/enums/generation_effort.dart';
 import '../../../../core/enums/image_model_mode.dart';
+import '../../../../core/network/nai_api_endpoint_service.dart';
 import '../../../../core/utils/localization_extension.dart';
 import '../../../../data/models/image/image_params.dart';
+import '../../../../data/services/auth_provider.dart';
 import '../../../providers/image_generation_provider.dart';
 import '../../../widgets/common/horizontal_segmented_control.dart';
 import 'generation_segmented_toggle.dart';
@@ -25,7 +27,13 @@ class ModelOptionControls extends ConsumerWidget {
         ),
       ),
     );
-    final effort = data.effort;
+    // 兼容协议不支持 Medium，存量值由模型下拉框保留并允许显式选回 High。
+    ref.watch(authNotifierProvider);
+    final compatible = ref
+        .watch(naiApiEndpointServiceProvider)
+        .current
+        .isOpenAiCompatible;
+    final effort = compatible ? null : data.effort;
     if (!data.hasFurryMode && effort == null) {
       return const SizedBox.shrink();
     }

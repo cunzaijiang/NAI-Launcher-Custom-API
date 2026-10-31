@@ -10,6 +10,7 @@ import '../../../core/constants/api_constants.dart';
 import '../../../core/network/browser_multipart_body.dart';
 import '../../../core/network/js_compatible_json.dart';
 import '../../../core/network/nai_api_endpoint_service.dart';
+import '../../../core/network/nai_compatible_request.dart';
 import '../../../core/utils/app_logger.dart';
 
 /// Owns every transport request started by one generation run.
@@ -122,6 +123,19 @@ class NaiGenerationTransport {
     NaiGenerationRequest request, {
     void Function(int, int)? onProgress,
   }) {
+    if (_endpointService.current.isOpenAiCompatible) {
+      final payload = NaiCompatibleRequest.generation(requestData);
+      return _dio.post<Uint8List>(
+        _endpointService.imageUrl(ApiConstants.generateImageEndpoint),
+        data: encodeJsCompatibleJson(payload),
+        cancelToken: request.cancelToken,
+        onReceiveProgress: onProgress,
+        options: Options(
+          responseType: ResponseType.bytes,
+          contentType: Headers.jsonContentType,
+        ),
+      );
+    }
     final body = buildGenerationMultipart(requestData);
     return _dio.post<Uint8List>(
       _endpointService.imageUrl(ApiConstants.generateImageEndpoint),
@@ -139,6 +153,18 @@ class NaiGenerationTransport {
     Map<String, dynamic> requestData,
     NaiGenerationRequest request,
   ) {
+    if (_endpointService.current.isOpenAiCompatible) {
+      final payload = NaiCompatibleRequest.generation(requestData);
+      return _dio.post<ResponseBody>(
+        _endpointService.imageUrl(ApiConstants.generateImageStreamEndpoint),
+        data: encodeJsCompatibleJson(payload),
+        cancelToken: request.cancelToken,
+        options: Options(
+          responseType: ResponseType.stream,
+          contentType: Headers.jsonContentType,
+        ),
+      );
+    }
     final body = buildGenerationMultipart(requestData);
     return _dio.post<ResponseBody>(
       _endpointService.imageUrl(ApiConstants.generateImageStreamEndpoint),

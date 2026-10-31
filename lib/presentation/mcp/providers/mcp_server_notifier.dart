@@ -16,6 +16,7 @@ import '../../../core/mcp/mcp_session_registry.dart';
 import '../../../core/mcp/mcp_token_generator.dart';
 import '../../../core/mcp/mcp_tool_executor.dart';
 import '../../../core/services/desktop_app_shutdown_service.dart';
+import '../../../core/network/nai_api_endpoint_service.dart';
 import '../../../core/services/notification_service.dart';
 import '../../../core/storage/local_storage_service.dart';
 import '../../../core/storage/secure_storage_service.dart';
@@ -34,8 +35,10 @@ import '../services/mcp_tool_call_pipeline.dart';
 
 const String _logTag = 'McpServer';
 
-typedef McpServerHostFactory =
-    McpServerHost Function(McpToolExecutor executor, String appVersion);
+typedef McpServerHostFactory = McpServerHost Function(
+  McpToolExecutor executor,
+  String appVersion,
+);
 
 enum McpServerStatus { disabled, starting, listening, error }
 
@@ -342,6 +345,8 @@ class McpServerNotifier extends StateNotifier<McpServerState> {
       );
       final approvals = McpApprovalCoordinator(
         auditSink: auditSink,
+        providerPricingUnknown: () =>
+            _ref.read(naiApiEndpointServiceProvider).current.isOpenAiCompatible,
         estimateAnlas: (toolName, args) => estimatePreparedAnlas(
           toolName,
           args,

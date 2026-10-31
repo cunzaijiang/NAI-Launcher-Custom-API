@@ -1,12 +1,15 @@
 import 'dart:io';
 import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../core/agent/agent_types.dart';
 import '../../../core/agent/harness/harness_types.dart';
 import '../../../core/agent/resources/agent_chat_resource_reference.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/model_capabilities.dart';
 import '../../../core/services/anlas_calculator.dart';
+import '../../../core/network/nai_api_endpoint_service.dart';
 import '../../../core/services/character_conversion_service.dart';
 import '../../../core/utils/inpaint_mask_utils.dart';
 import '../../../core/utils/nai_resolution_adapter.dart';
@@ -469,6 +472,10 @@ class GenerationPreparationService {
         count: count,
         autoStart: args['auto_start'] as bool? ?? true,
         estimatedAnlas: estimate,
+        providerPricingUnknown: _ref
+            .read(naiApiEndpointServiceProvider)
+            .current
+            .isOpenAiCompatible,
         arguments: canonicalArgs,
         savePath: savePathResult.valueOrNull?.path,
         savePathSource: savePathResult.valueOrNull?.source,
@@ -719,7 +726,14 @@ class GenerationPreparationService {
         'Generation preparation is not active.',
       );
     }
-    if (preparation.estimatedAnlas != 0 && args['confirmed'] != true) {
+    final providerBilling = _ref
+        .read(naiApiEndpointServiceProvider)
+        .current
+        .isOpenAiCompatible;
+    if ((providerBilling ||
+            preparation.providerPricingUnknown ||
+            preparation.estimatedAnlas != 0) &&
+        args['confirmed'] != true) {
       return agentToolError(
         'confirmation_required',
         'A paid preparation requires confirmed=true and tool permission approval.',

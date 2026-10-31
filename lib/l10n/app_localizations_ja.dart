@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -444,10 +445,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get auth_nicknameHint => 'このアカウントに認識可能な名前を設定します';
 
   @override
-  String get auth_thirdPartyLogin => 'サードパーティサイト';
+  String get auth_thirdPartyLogin => 'カスタム API';
 
   @override
-  String get auth_thirdPartyApiSite => 'サードパーティ API サイト';
+  String get auth_thirdPartyApiSite => 'API ベース URL';
 
   @override
   String get auth_imageApiSiteOptional => '画像 API サイト (オプション)';
@@ -460,6 +461,17 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get auth_thirdPartyTokenHint => 'サードパーティ サイトから API トークンを入力してください';
+
+  @override
+  String get auth_openAiCompatibleProfile => 'OpenAI 互換 NAI プロバイダー';
+
+  @override
+  String get auth_openAiCompatibleProfileHint =>
+      'ネイティブ JSON /v1 API を使用します。ルートまたは /v1 URL を入力してください。画像 API も同じ URL を使用します。';
+
+  @override
+  String get auth_openAiCompatibleWarning =>
+      'ネイティブ JSON /v1 API を使用し、/v1/models で検証します。固定のサブスクリプション値は仮の値で、実際の残高ではありません。見積もりが 0 Anlas でも、生成ごとに基本料金がかかります。最終画像のみで、ストリーミングプレビューはありません。ネイティブリクエストにサーバー側の予算上限はありません。料金はプロバイダーに確認してください。';
 
   @override
   String get auth_thirdPartyCompatibilityHint =>

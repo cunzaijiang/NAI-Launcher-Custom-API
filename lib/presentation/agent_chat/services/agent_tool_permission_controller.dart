@@ -20,12 +20,14 @@ class AgentToolPermissionController {
     required int? Function() chargeConfirmThreshold,
     required void Function(AgentToolApprovalRequest? request) onApprovalChanged,
     required bool Function() isMounted,
+    bool Function()? providerPricingUnknown,
   }) : _auditSink = auditSink,
        _estimateAnlas = estimateAnlas,
        _describeFileTargets = describeFileTargets,
        _chargeConfirmThreshold = chargeConfirmThreshold,
        _onApprovalChanged = onApprovalChanged,
-       _isMounted = isMounted;
+       _isMounted = isMounted,
+       _providerPricingUnknown = providerPricingUnknown ?? (() => false);
 
   final AgentAuditSink _auditSink;
   final Future<int?> Function(String, Map<String, dynamic>) _estimateAnlas;
@@ -35,6 +37,15 @@ class AgentToolPermissionController {
   final int? Function() _chargeConfirmThreshold;
   final void Function(AgentToolApprovalRequest?) _onApprovalChanged;
   final bool Function() _isMounted;
+  final bool Function() _providerPricingUnknown;
+
+  int? _billingEstimate(int? estimate) {
+    // Keep invalid-cost rejection; never interpret a provider quote as free or
+    // below the auto-approval threshold, including stale prepared Opus quotes.
+    if (estimate != null && estimate < 0) return estimate;
+    return _providerPricingUnknown() ? null : estimate;
+  }
+
   final Map<String, AgentPermissionDecision> _toolDecisions = {};
 
   AgentToolPermissionCatalog? _catalog;
@@ -89,7 +100,9 @@ class AgentToolPermissionController {
         args['preparation_id'] is! String;
     int? estimatedAnlas;
     if (!isNonBillingPreparation && descriptor.mayConsumeAnlas) {
-      estimatedAnlas = await _estimateAnlas(context.toolCall.name, args);
+      estimatedAnlas = _billingEstimate(
+        await _estimateAnlas(context.toolCall.name, args),
+      );
     }
     final fileTargets = _describeFileTargets(context.toolCall.name, args);
     final decision = _decideWithFileTargets(
@@ -129,7 +142,9 @@ class AgentToolPermissionController {
     final completer = Completer<bool>();
     _approvalCompleter = completer;
     _activeApprovalToolCallId = context.toolCall.id;
-    estimatedAnlas ??= await _estimateAnlas(context.toolCall.name, args);
+    estimatedAnlas ??= _billingEstimate(
+      await _estimateAnlas(context.toolCall.name, args),
+    );
     _onApprovalChanged(
       AgentToolApprovalRequest(
         toolCallId: context.toolCall.id,

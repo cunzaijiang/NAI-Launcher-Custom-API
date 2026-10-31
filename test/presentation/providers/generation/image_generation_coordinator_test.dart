@@ -19,6 +19,51 @@ void main() {
     registerFallbackValue(const ImageParams());
   });
 
+  test('profile splits saved batch sizes into single-sample requests without losing count', () async {
+    for (final size in [2, 3, 4]) {
+      final apiService = _MockNAIImageGenerationApiService();
+      final samples = <int>[];
+      final batches = <int>[];
+      when(
+        () => apiService.generateImageStream(
+          any(),
+          focusedInpaintEnabled: any(named: 'focusedInpaintEnabled'),
+          minimumContextMegaPixels: any(named: 'minimumContextMegaPixels'),
+          focusedSelectionRect: any(named: 'focusedSelectionRect'),
+          focusedContextCrop: any(named: 'focusedContextCrop'),
+        ),
+      ).thenAnswer((invocation) {
+        samples.add(
+          (invocation.positionalArguments.first as ImageParams).nSamples,
+        );
+        return Stream.value(
+          ImageStreamChunk.complete(Uint8List.fromList([1, 2, 3])),
+        );
+      });
+      final coordinator = ImageGenerationCoordinator(
+        apiService: apiService,
+        isOpenAiCompatible: true,
+      );
+      final command = GenerationCommand(
+        runId: size,
+        params: const ImageParams(nSamples: 2),
+        batchCount: 2,
+        batchSize: size,
+        prepareBatch: (batch, params) async {
+          batches.add(batch);
+          return params;
+        },
+      );
+      final events = await coordinator
+          .execute(command, coordinator.start(command))
+          .toList();
+      expect(samples, List.filled(2 * size, 1));
+      expect(batches, [0, 1]);
+      expect((events.first as GenerationStarted).totalImages, 2 * size);
+      expect((events.last as GenerationCompleted).images, hasLength(2 * size));
+    }
+  });
+
   test('prepareBatch exceptions become terminal failure events', () async {
     final apiService = _MockNAIImageGenerationApiService();
     final coordinator = ImageGenerationCoordinator(apiService: apiService);

@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/agent/agent_types.dart';
 import '../../../core/services/anlas_calculator.dart';
+import '../../../core/network/nai_api_endpoint_service.dart';
 import '../../../core/utils/isolate_pool.dart';
 import '../../../core/utils/json_utf8_stream.dart';
 import '../../../data/models/queue/replication_task.dart';
@@ -76,8 +77,7 @@ class QueueToolbox {
   DefinedAgentTool _inspectQueue() => DefinedAgentTool(
     name: 'inspect_generation_queue',
     label: 'Inspect Generation Queue',
-    description:
-        'Inspect queue execution state and safe summaries of pending, failed, and completed tasks.',
+    description: 'Inspect queue execution state and safe summaries of pending, failed, and completed tasks.',
     parameters: toolboxObject(
       properties: {
         'include_completed': {'type': 'boolean'},
@@ -182,8 +182,7 @@ class QueueToolbox {
   DefinedAgentTool _prepareControl() => DefinedAgentTool(
     name: 'prepare_generation_queue_execution',
     label: 'Prepare Generation Queue Execution',
-    description:
-        'Prepare queue start or resume and return an exact current estimated Anlas total. No task is started.',
+    description: 'Prepare queue start or resume and return an exact current estimated Anlas total. No task is started.',
     parameters: toolboxObject(
       properties: {
         'action': {
@@ -235,7 +234,14 @@ class QueueToolbox {
         'queue_preparation_id': preparation.id,
         'action': kind.name,
         'task_count': tasks.length,
-        'estimated_anlas': estimate,
+        'estimated_anlas':
+            _ref.read(naiApiEndpointServiceProvider).current.isOpenAiCompatible
+            ? null
+            : estimate,
+        if (_ref.read(naiApiEndpointServiceProvider).current.isOpenAiCompatible)
+          'billing_warning':
+              'Provider pricing is unknown. Every generation '
+              'has a base fee, even at 0 Anlas; no server-side budget limit.',
         'confirmation_required': true,
       });
     },
@@ -423,7 +429,13 @@ class QueueToolbox {
               'status': kind == QueueControlPreparationKind.start
                   ? 'running'
                   : 'resumed',
-              'estimated_anlas': preparation.estimatedAnlas,
+              'estimated_anlas':
+                  _ref
+                      .read(naiApiEndpointServiceProvider)
+                      .current
+                      .isOpenAiCompatible
+                  ? null
+                  : preparation.estimatedAnlas,
             })
           : agentToolError(error, 'Queue action could not be completed.');
     },

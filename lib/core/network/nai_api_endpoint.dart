@@ -1,5 +1,8 @@
 import '../constants/api_constants.dart';
 
+/// Protocols are explicitly selected; endpoint URLs never opt into a profile.
+enum NaiApiProtocol { novelAi, openAiCompatible }
+
 /// NAI-compatible API endpoint configuration.
 ///
 /// Official NovelAI uses separate main and image API hosts. Third-party
@@ -8,10 +11,12 @@ import '../constants/api_constants.dart';
 class NaiApiEndpointConfig {
   final String mainBaseUrl;
   final String imageBaseUrl;
+  final NaiApiProtocol protocol;
 
   const NaiApiEndpointConfig({
     required this.mainBaseUrl,
     required this.imageBaseUrl,
+    this.protocol = NaiApiProtocol.novelAi,
   });
 
   static const official = NaiApiEndpointConfig(
@@ -22,15 +27,24 @@ class NaiApiEndpointConfig {
   factory NaiApiEndpointConfig.fromInput({
     required String mainBaseUrl,
     String? imageBaseUrl,
+    NaiApiProtocol protocol = NaiApiProtocol.novelAi,
   }) {
-    final normalizedMain = _normalizeBaseUrl(mainBaseUrl);
+    String normalize(String value) {
+      final base = _normalizeBaseUrl(value);
+      if (protocol != NaiApiProtocol.openAiCompatible) return base;
+      // Keep a reverse-proxy prefix and one trailing API version segment.
+      return '${base.replaceFirst(RegExp(r'(?:/v1)+$'), '')}/v1';
+    }
+
+    final normalizedMain = normalize(mainBaseUrl);
     final normalizedImage = imageBaseUrl == null || imageBaseUrl.trim().isEmpty
         ? normalizedMain
-        : _normalizeBaseUrl(imageBaseUrl);
+        : normalize(imageBaseUrl);
 
     return NaiApiEndpointConfig(
       mainBaseUrl: normalizedMain,
       imageBaseUrl: normalizedImage,
+      protocol: protocol,
     );
   }
 
@@ -38,16 +52,27 @@ class NaiApiEndpointConfig {
     return NaiApiEndpointConfig.fromInput(
       mainBaseUrl: json['mainBaseUrl'] as String? ?? ApiConstants.baseUrl,
       imageBaseUrl:
-          json['imageBaseUrl'] as String? ?? ApiConstants.imageBaseUrl,
+          json['imageBaseUrl'] as String? ??
+          (json['protocol'] == NaiApiProtocol.openAiCompatible.name
+              ? null
+              : ApiConstants.imageBaseUrl),
+      // Missing, malformed and future values must never silently opt in.
+      protocol: json['protocol'] == NaiApiProtocol.openAiCompatible.name
+          ? NaiApiProtocol.openAiCompatible
+          : NaiApiProtocol.novelAi,
     );
   }
 
   Map<String, dynamic> toJson() => {
     'mainBaseUrl': mainBaseUrl,
     'imageBaseUrl': imageBaseUrl,
+    'protocol': protocol.name,
   };
 
+  bool get isOpenAiCompatible => protocol == NaiApiProtocol.openAiCompatible;
+
   bool get isOfficial =>
+      protocol == NaiApiProtocol.novelAi &&
       mainBaseUrl == ApiConstants.baseUrl &&
       imageBaseUrl == ApiConstants.imageBaseUrl;
 
@@ -120,13 +145,14 @@ class NaiApiEndpointConfig {
       other is NaiApiEndpointConfig &&
           runtimeType == other.runtimeType &&
           mainBaseUrl == other.mainBaseUrl &&
-          imageBaseUrl == other.imageBaseUrl;
+          imageBaseUrl == other.imageBaseUrl &&
+          protocol == other.protocol;
 
   @override
-  int get hashCode => Object.hash(mainBaseUrl, imageBaseUrl);
+  int get hashCode => Object.hash(mainBaseUrl, imageBaseUrl, protocol);
 
   @override
   String toString() {
-    return 'NaiApiEndpointConfig(mainBaseUrl: $mainBaseUrl, imageBaseUrl: $imageBaseUrl)';
+    return 'NaiApiEndpointConfig(mainBaseUrl: $mainBaseUrl, imageBaseUrl: $imageBaseUrl, protocol: ${protocol.name})';
   }
 }

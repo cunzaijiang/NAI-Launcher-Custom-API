@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import '../../../core/network/request_builders/nai_image_request_builder.dart';
 import '../../../core/utils/character_prompt_block_parser.dart';
 import '../../../core/utils/prompt_preset_resolution.dart';
 import '../../../core/utils/prompt_edit_document.dart';
@@ -108,9 +109,11 @@ class GenerationRequestPreparationService {
   const GenerationRequestPreparationService(
     this.dependencies, {
     this.preserveCharacterSnapshot = false,
+    this.isOpenAiCompatible = false,
   });
 
   final GenerationPreparationDependencies dependencies;
+  final bool isOpenAiCompatible;
 
   /// Agent confirmation and durable queue snapshots already contain the exact
   /// normalized characters and layout mode. They must not be replaced from
@@ -163,9 +166,15 @@ class GenerationRequestPreparationService {
         useCoords: characters.useCoords,
       );
     }
-    effective = await dependencies.vibes.prepare(
-      effectivePromptParams(effective),
-    );
+    effective = effectivePromptParams(effective);
+    if (isOpenAiCompatible) {
+      // Here nSamples is the UI's batch count, not the wire request size.
+      // The coordinator sends one sample per request without losing the total.
+      NAIImageRequestBuilder.validateCompatibleParams(
+        effective.copyWith(nSamples: 1),
+      );
+    }
+    effective = await dependencies.vibes.prepare(effective);
     return GenerationPreparationResult(
       params: effective,
       randomModeActive: promptPreparation.randomModeActive,

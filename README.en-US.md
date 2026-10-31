@@ -190,6 +190,8 @@ Every release includes `checksums.txt`. If an archive cannot be extracted or ins
 
 Sign in with NovelAI credentials or a **Persistent API Token**. If web security verification prevents password login, a Persistent API Token is usually more reliable. The token is stored only in the current device's secure storage.
 
+Use **Custom API** on the sign-in page for your image provider, not official login. This entry always uses the **native NAI JSON `/v1` API**: enter the root or `/v1` URL, nickname, and token. The image API uses the same address; there is no protocol switch. Login only reads `/v1/models`, with no test generation. This mode returns final images only, without streaming previews. Subscription values are not your real balance and costs are unknown. Every generation has a base fee even if the server shows 0 Anlas; native requests have no server-side budget limit. Agent/MCP billing operations require unknown-cost confirmation and cannot automatically treat 0 Anlas as free. Confirm provider billing, privacy, and capabilities; see the [custom API guide](docs/custom_api.md).
+
 ### 3. Set up the resources you use
 
 - Select your artwork folders in Settings, then open the local gallery to start scanning.
@@ -204,7 +206,7 @@ NAI Launcher does not host your account or artwork on a project-operated server.
 
 | Feature in use | Where the data goes |
 | --- | --- |
-| Generation, image-to-image, inpainting, Vibe encoding | NovelAI, including the Prompt, parameters, and source or reference images required for that request. |
+| Generation, image-to-image, inpainting, Vibe encoding | NovelAI or the third-party image API site you explicitly configure, including the Prompt, parameters, and source or reference images required for that request. Third-party tokens are sent to the entered URL; use trusted services only. |
 | Online gallery search and downloads | The third-party gallery you selected. Availability, rate limits, and content rules belong to each site. |
 | AI translation or Agent Chat | The model service you configured. Conversations, attached images, and tool results required by the task may incur provider fees. |
 | Sync and backup | Your selected Google Drive, OneDrive, GitHub, or WebDAV destination. Only explicitly selected content is uploaded. |

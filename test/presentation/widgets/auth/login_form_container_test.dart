@@ -200,29 +200,50 @@ void main() {
     },
   );
 
+  for (final width in [320.0, 600.0, 840.0, 1180.0, 1600.0]) {
+    testWidgets('fixed provider form reflows at $width with 3x text', (
+      tester,
+    ) async {
+      await _pumpThirdPartyCard(
+        tester,
+        const Locale('en'),
+        width: width,
+        textScale: 3,
+      );
+      final warning = find.byKey(const Key('third_party_openai_warning'));
+      final l10n = AppLocalizations.of(tester.element(warning))!;
+      expect(find.byType(SwitchListTile), findsNothing);
+      expect(find.byType(FloatingLabelInput), findsNWidgets(3));
+      expect(find.text(l10n.auth_imageApiSiteOptional), findsNothing);
+      expect(find.text(l10n.auth_openAiCompatibleWarning), findsOneWidget);
+      expect(find.byKey(const Key('third_party_streaming_hint')), findsNothing);
+      final mainInput = find.byType(FloatingLabelInput).first;
+      tester.widget<FloatingLabelInput>(mainInput).controller!.text =
+          'https://provider.example';
+      final warningRect = tester.getRect(warning);
+      final cardRect = tester.getRect(find.byType(ThirdPartyApiLoginCard));
+      expect(warningRect.left, greaterThanOrEqualTo(cardRect.left));
+      expect(warningRect.right, lessThanOrEqualTo(cardRect.right));
+      await tester.ensureVisible(find.text(l10n.auth_validateAndLogin));
+      expect(
+        tester.widget<FloatingLabelInput>(mainInput).controller!.text,
+        'https://provider.example',
+      );
+      expect(tester.takeException(), isNull);
+    });
+  }
   for (final locale in AppLocalizations.supportedLocales) {
-    testWidgets(
-      'third-party streaming hint keeps the exact settings path on narrow layouts for $locale',
-      (tester) async {
-        await _pumpThirdPartyCard(tester, locale);
-
-        final hintFinder = find.byKey(const Key('third_party_streaming_hint'));
-        final l10n = AppLocalizations.of(tester.element(hintFinder))!;
-        final hint = l10n.auth_thirdPartyStreamingHint;
-
-        expect(find.text(hint), findsOneWidget);
-        expect(hint, contains(l10n.settings_title));
-        expect(hint, contains(l10n.settings_generation));
-        expect(hint, contains(l10n.settings_generationOutputSection));
-        expect(hint, contains(l10n.settings_generationStreamPreview));
-
-        final hintRect = tester.getRect(hintFinder);
-        final cardRect = tester.getRect(find.byType(ThirdPartyApiLoginCard));
-        expect(hintRect.left, greaterThanOrEqualTo(cardRect.left));
-        expect(hintRect.right, lessThanOrEqualTo(cardRect.right));
-        expect(tester.takeException(), isNull);
-      },
-    );
+    testWidgets('fixed provider warning is localized for $locale', (
+      tester,
+    ) async {
+      await _pumpThirdPartyCard(tester, locale);
+      final warning = find.byKey(const Key('third_party_openai_warning'));
+      final l10n = AppLocalizations.of(tester.element(warning))!;
+      expect(find.text(l10n.auth_openAiCompatibleWarning), findsOneWidget);
+      expect(l10n.auth_openAiCompatibleWarning, contains('/v1/models'));
+      expect(l10n.auth_openAiCompatibleWarning, contains('0 Anlas'));
+      expect(tester.takeException(), isNull);
+    });
   }
 }
 
@@ -296,8 +317,13 @@ Future<void> _pumpCredentialsForm(
   await tester.pumpAndSettle();
 }
 
-Future<void> _pumpThirdPartyCard(WidgetTester tester, Locale locale) async {
-  await tester.binding.setSurfaceSize(const Size(360, 1000));
+Future<void> _pumpThirdPartyCard(
+  WidgetTester tester,
+  Locale locale, {
+  double width = 360,
+  double textScale = 2,
+}) async {
+  await tester.binding.setSurfaceSize(Size(width, 1000));
   addTearDown(() => tester.binding.setSurfaceSize(null));
 
   await tester.pumpWidget(
@@ -307,9 +333,9 @@ Future<void> _pumpThirdPartyCard(WidgetTester tester, Locale locale) async {
         locale: locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: const MediaQuery(
-          data: MediaQueryData(textScaler: TextScaler.linear(2)),
-          child: Scaffold(
+        home: MediaQuery(
+          data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
+          child: const Scaffold(
             body: SingleChildScrollView(
               padding: EdgeInsets.all(20),
               child: ThirdPartyApiLoginCard(),

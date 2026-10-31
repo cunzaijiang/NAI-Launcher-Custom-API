@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/services/anlas_calculator.dart';
+import '../../../core/network/nai_api_endpoint_service.dart';
 import '../../../data/models/image/image_params.dart';
 import '../../providers/cost_estimate_provider.dart';
 import '../../providers/image_generation_provider.dart';
@@ -19,7 +20,13 @@ class GenerationAnlasEstimator {
     int? batchSize,
   }) {
     final subscription = _ref.read(subscriptionNotifierProvider).subscription;
-    final tier = subscription?.isOpus == true ? AnlasCalculator.opusTier : 0;
+    final providerBilling = _ref
+        .read(naiApiEndpointServiceProvider)
+        .current
+        .isOpenAiCompatible;
+    final tier = !providerBilling && subscription?.isOpus == true
+        ? AnlasCalculator.opusTier
+        : 0;
     final billingSize = resolveGenerationBillingSize(
       width: params.width,
       height: params.height,

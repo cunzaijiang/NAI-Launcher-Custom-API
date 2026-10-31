@@ -259,7 +259,11 @@ String _buildRuntimeContext({
         'When cost is positive, report the exact cost and call submit_generation '
         'with confirmed=true; the application permission gate decides '
         'whether user approval is needed before execution. Do not ask a duplicate '
-        'question in chat or through ask_user_question. Unknown cost is not free. '
+        'question in chat or through ask_user_question. Unknown cost is not free: '
+        'report it as unknown and submit with confirmed=true so the application '
+        'can request charge approval. Custom API generations always have a provider '
+        'base fee, even at 0 Anlas, and native requests have no server-side budget '
+        'limit. Never infer free service or Opus entitlement from placeholder values. '
         'Use inspect/update/cancel_generation_preparation while pending. '
         'Never claim submission from a preparation result.',
     '',
