@@ -1,4 +1,4 @@
-# NAI Launcher
+# NAI Launcher Custom API
 
 <p align="center">
   <a href="README.md">简体中文</a> · <a href="README.zh-TW.md">繁體中文</a> · English
@@ -9,26 +9,49 @@
 </p>
 
 <p align="center">
-  <strong>More than image generation: your complete NovelAI creative workflow in one application.</strong>
+  <strong>An independent, Custom API-first preview fork with optional official NovelAI access.</strong>
 </p>
 
 <p align="center">
-  <a href="https://github.com/Aaalice233/Aaalice_NAI_Launcher/releases/latest"><img src="https://img.shields.io/github/v/release/Aaalice233/Aaalice_NAI_Launcher?display_name=tag&sort=semver" alt="Latest release"></a>
+  <a href="https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.1"><img src="https://img.shields.io/badge/Custom_API-custom--api--preview-blue" alt="Custom API preview"></a>
   <img src="https://img.shields.io/badge/Windows%20%7C%20macOS%20%7C%20Android-available-6f7785" alt="Supported platforms">
   <img src="https://img.shields.io/badge/license-MIT-5b8c5a" alt="MIT License">
-  <a href="https://discord.gg/R48n6GwXzD"><img src="https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white" alt="Discord community"></a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/Aaalice233/Aaalice_NAI_Launcher/releases/latest">Download latest release</a> ·
-  <a href="CHANGELOG.md">Read the changelog</a> ·
-  <a href="https://github.com/Aaalice233/Aaalice_NAI_Launcher/issues">Report an issue</a> ·
-  <a href="https://discord.gg/R48n6GwXzD">Join Discord</a>
+  <a href="https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.1">Download Custom API preview</a> ·
+  <a href="docs/releases/custom_api_preview.md">Fork release notes</a> ·
+  <a href="https://github.com/cunzaijiang/NAI-Launcher-Custom-API/issues">Report a fork issue</a>
 </p>
 
-> NAI Launcher is a community-developed third-party client, not an official NovelAI product. Bring your own NovelAI account for online features, and follow the applicable terms of service, content rules, and local laws.
+**NAI Launcher Custom API** is an independently maintained Custom API fork of upstream NAI Launcher by **cunzaijiang**, **not an official upstream release or an official NovelAI product**. See Acknowledgments for the original author and MIT attribution. Custom image services do not require a NovelAI account; official sign-in remains optional. Follow your provider's terms, content rules, and local laws.
 
-NAI Launcher is built for people who use NovelAI regularly. Generation, editing, Prompts, characters, references, galleries, queues, and Agent Chat connect in one workflow. Windows, macOS, and Android share the same core features, and local tools work before you sign in.
+The primary entry is **Custom API** on the sign-in page: enter **one API URL, a nickname, and an API key / token**, using either the site root or a `/v1` URL. Windows, macOS, and Android retain upstream local tools and creative interfaces; local tools work without signing in.
+
+## Download Custom API Preview 1
+
+The current release is **4.3.1 Custom API Preview 1** (a prerelease). [Open this fork's current preview and checksums](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.1) · [Read this fork's release notes](docs/releases/custom_api_preview.md). Use these four actual packages, not the source archives, to install:
+
+| Platform | Direct package download |
+| --- | --- |
+| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.1_Setup.exe](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.1/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.1_Setup.exe) |
+| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.1_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.1/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.1_Portable.zip) |
+| Android | [NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.1.apk](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.1/NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.1.apk) |
+| macOS | [NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.1_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.1/NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.1_Portable.zip) |
+
+> **Preview and installation risks**: Back up first. Both Windows packages are unsigned (no Authenticode); macOS has only an ad-hoc signature, no Apple Developer ID and no notarization. Android is a release-mode APK signed with an ephemeral debug key, retaining the upstream application ID: it cannot replace a differently signed upstream installation, and upgrades between preview builds are not guaranteed. Windows installation directories may overlap upstream; uninstalling can erase local data. Verify provenance and SHA-256; do not globally disable system security. This preview has not undergone end-to-end testing against real services; arbitrary third-party providers are not guaranteed to work.
+
+> **Preview 1 in-app links are NOT fixed**: The existing binaries' GitHub / check-for-updates entries still point upstream. **Do not use in-app updates; manually download and install from this README's fork download links.** This documentation-only change does not alter published packages or fix their internal links / updater logic.
+
+## Custom API support boundaries
+
+- Uses the **native NAI JSON `/v1` API**, not a generic adapter for arbitrary OpenAI image APIs. The main and image API share one URL, with no protocol switch.
+- Login only reads `/v1/models` for validation, without test generation. Only five exact model IDs are accepted: `nai-diffusion-4-full`, `nai-diffusion-4-5-full`, `nai-diffusion-4-5-curated`, `nai-diffusion-5-full`, `nai-diffusion-5-curated`.
+- **V5 Medium effort is not supported; V5 Vibe / Precise Reference features are unavailable.** Other models' reference, generation, and editing capabilities still depend on the provider; successful login does not guarantee every feature. Only final images are returned, without intermediate streaming previews.
+- Third-party balance, subscription eligibility, and costs are **unknown**. **Every generation has a base fee, even if the client or server shows 0 Anlas.** There is no server-side budget cap. Agent/MCP billing operations require unknown-cost confirmation and cannot automatically treat 0 Anlas as free. Confirm prices and limits with your provider.
+- Your API key / token, Prompts, parameters, and required images go to the URL you configure. Use trusted services only; see the [custom API guide](docs/custom_api.md).
+
+> **The inherited full feature descriptions below describe the official NovelAI route, not a promise that Custom API supports them all.** Local gallery and tag-library tools remain available. Online generation, models, references, balances, free allowances, and billing behavior depend on the selected route and the limits above.
 
 ## ✨ One complete creative workflow
 
@@ -43,7 +66,7 @@ NAI Launcher is built for people who use NovelAI regularly. Generation, editing,
 
 ## 🚀 Feature guide
 
-### 🎨 NovelAI generation and editing
+### 🎨 NovelAI generation and editing (official route)
 
 - Text-to-image, image-to-image, regular Inpaint, Focused Inpaint, Outpaint, variations, and enhancement are supported.
 - Common NovelAI V5 Curated / Full, V4.5, V4, and V3 workflows are available. Controls, defaults, Token limits, and reference features follow the selected model's capabilities.
@@ -68,6 +91,8 @@ NAI Launcher is built for people who use NovelAI regularly. Generation, editing,
 - Each Prompt Assistant provider saves its own automatic or manual concurrency mode. Automatic mode starts at 5 concurrent requests, and independent tag batches translate in parallel. Each task offers the thinking levels supported by its model. Manage providers, API keys, and models under Settings → Integrations → Model services, and task routing and thinking levels under Settings → Integrations → Prompt Assistant. Both stay on this device.
 
 ### 🧬 Vibe, Precise Reference, and image editing
+
+The online reference and editing capabilities below describe the official route. Custom API depends on the provider, and V5 Vibe and Precise Reference are unavailable. Local library management does not imply server-side generation support.
 
 - Vibe Transfer accepts images, pre-encoded Vibes, and Bundles, with information extraction and reference strength controls and model-aware encoding reuse.
 - Precise Reference supports character and style references, multi-select, batch type changes, and portable packages that include their images.
@@ -105,7 +130,7 @@ NAI Launcher is built for people who use NovelAI regularly. Generation, editing,
 
 - From a desktop sidebar or mobile drawer, the agent can search tags, organize Prompts, inspect generation history, use libraries, and prepare generation tasks.
 - Images, Vibes, and Precise References can be added directly as context. Images can also be pasted into the input with Ctrl/Cmd+V or dragged onto the panel from a file manager or browser, and Android keyboards can insert them. The agent can also prepare masks, expanded canvases, and inpaint drafts, or upscale and enhance images directly.
-- Preparation verifies the cost before generation. In Full Access, verified zero-Anlas generations proceed directly; deleting saved data and paid operations still require approval. For unattended batch work, switch to Autopilot: paid operations run directly and only ask when a single request reaches the Protection Mode high-cost threshold, while deleting saved data still requires approval.
+- **The following billing and Autopilot behavior describes the official route only; Custom API still requires unknown-cost confirmation.** Preparation verifies the cost before generation. In Full Access, verified zero-Anlas generations proceed directly; deleting saved data and paid operations still require approval. For unattended batch work, switch to Autopilot: paid operations run directly and only ask when a single request reaches the Protection Mode high-cost threshold, while deleting saved data still requires approval.
 - The default character research workflow combines online identity verification, canonical tag lookup, and gallery appearance evidence, noting disabled web access or missing evidence.
 - Customize the system prompt by adding plain-language instructions or replacing the built-in body; no placeholders are needed. The working directory, web availability, Skills, and app execution rules are added automatically, with a preview of the final prompt. Customization does not bypass app permission checks.
 - Structured questions offer three feasible directions, one Recommended marker, and a custom-answer option per question. Answer sequentially, then review and submit the full set. After two minutes without submission, all recommended options are selected automatically. New questions show a Toast, a question-mark entry icon, and an Android system notification.
@@ -136,6 +161,8 @@ NAI Launcher is built for people who use NovelAI regularly. Generation, editing,
 - Backups use readable plain data and need no separate recovery key. Check the destination's permissions before syncing.
 
 ## 🖼️ Interface preview
+
+These screenshots are inherited from upstream and are illustrations only, not evidence of this fork's Preview 1 Custom API appearance, supported capabilities, or real-service testing.
 
 ### 🖥️ Desktop
 
@@ -173,24 +200,27 @@ NAI Launcher is built for people who use NovelAI regularly. Generation, editing,
 
 ## ⚡ Download and get started
 
-### 1. Download the package for your platform
+### 1. Manually download and install the current preview
 
-Open [GitHub Releases](https://github.com/Aaalice233/Aaalice_NAI_Launcher/releases/latest):
+Use only [this fork's current preview](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.1). The filenames below match the direct links above:
 
 | Platform | File | Usage |
 | --- | --- | --- |
-| Windows | `NAI_Launcher_Windows_<version>_Setup.exe` | Installer recommended for most users. |
-| Windows | `NAI_Launcher_Windows_<version>_Portable.zip` | Portable package; extract and run. |
-| macOS | `NAI_Launcher_macOS_<version>_Portable.zip` | Extract and open `Aaalice NAI Launcher.app`. |
-| Android | `NAI_Launcher_Android_<version>.apk` | Sideload the APK. The first install may require permission to install unknown apps. |
+| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.1_Setup.exe](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.1/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.1_Setup.exe) | Unsigned installer; back up and check the installation directory first. |
+| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.1_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.1/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.1_Portable.zip) | Unsigned portable package; extract and run. |
+| Android | [NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.1.apk](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.1/NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.1.apk) | Sideload the debug-key-signed APK; permission to install unknown apps may be required. Cannot replace a differently signed upstream installation. |
+| macOS | [NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.1_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.1/NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.1_Portable.zip) | Extract and open `Aaalice NAI Launcher.app`; ad-hoc signed only and unnotarized. |
 
-Every release includes `checksums.txt`. If an archive cannot be extracted or installed, verify the downloaded file first.
+This preview includes `checksums.txt`, `release_manifest.json`, and `release_notes_custom_api.md` to verify SHA-256, sizes, and provenance. Checksums are not publisher digital signatures. Read the installation risks and in-app update warning above as well.
 
-### 2. Sign in to NovelAI
+### 2. Start with Custom API
 
-Sign in with NovelAI credentials or a **Persistent API Token**. If web security verification prevents password login, a Persistent API Token is usually more reliable. The token is stored only in the current device's secure storage.
+1. Choose **Custom API** on the sign-in page; do not enter a third-party key in official login.
+2. Enter **one API URL**, either the site root or a URL ending in `/v1`, such as `https://provider.example` or `https://provider.example/v1/`. Main and image APIs share this URL; no separate image address or protocol selection is needed.
+3. Enter the required **nickname** and **API key / token**. The key stays in device secure storage and is excluded from cloud backups, but validation sends it to the configured site.
+4. Login only requests `/v1/models`, without test generation. After validation, confirm provider billing and capabilities before actively generating. See the five-model allowlist, no-Medium, unavailable V5 references, and unknown-cost limits above.
 
-Use **Custom API** on the sign-in page for your image provider, not official login. This entry always uses the **native NAI JSON `/v1` API**: enter the root or `/v1` URL, nickname, and token. The image API uses the same address; there is no protocol switch. Login only reads `/v1/models`, with no test generation. This mode returns final images only, without streaming previews. Subscription values are not your real balance and costs are unknown. Every generation has a base fee even if the server shows 0 Anlas; native requests have no server-side budget limit. Agent/MCP billing operations require unknown-cost confirmation and cannot automatically treat 0 Anlas as free. Confirm provider billing, privacy, and capabilities; see the [custom API guide](docs/custom_api.md).
+**Optional: official NovelAI route.** For the official service, sign in with NovelAI credentials or a **Persistent API Token**. If web security verification blocks password login, use a Persistent API Token instead. Official tokens stay in device secure storage. Official model and Anlas descriptions do not promise equivalent pricing for custom services.
 
 ### 3. Set up the resources you use
 
@@ -220,14 +250,15 @@ NAI Launcher does not host your account or artwork on a project-operated server.
 ## 🆘 Support and feedback
 
 - If something goes wrong, use **Settings → About → Export diagnostic logs** and attach the exported information to your report.
-- [Open an Issue](https://github.com/Aaalice233/Aaalice_NAI_Launcher/issues) for a reproducible bug or feature request.
-- [Join Discord](https://discord.gg/R48n6GwXzD) for usage discussion and community help.
-- [View Releases](https://github.com/Aaalice233/Aaalice_NAI_Launcher/releases) to download packages, verify files, and read release notes.
+- [Open a fork Issue](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/issues) for a reproducible bug or feature request. Remove tokens and other sensitive data before sharing logs.
+- [Download this fork's current preview](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.1) and verify checksums; read the [fork release notes](docs/releases/custom_api_preview.md) for changes. Do not use Preview 1 in-app updates.
 
 ## 🙏 Acknowledgments
+
+Thanks to upstream author **Aaalice233** and [upstream NAI Launcher](https://github.com/Aaalice233/Aaalice_NAI_Launcher) for the original code, detailed feature descriptions, and interface screenshots. This fork is independently maintained by **cunzaijiang**, retaining the upstream **MIT License**, original copyright, and permission notices. Use this page for fork downloads and issues; do not report it as an official upstream release.
 
 Thanks to [NovelAI](https://novelai.net/), [Codex Gallery](https://novelai.quicktagcloud.com/), [AgIzT/NovelAI-Tag](https://github.com/AgIzT/NovelAI-Tag), [Flutter](https://flutter.dev/), [Riverpod](https://riverpod.dev/), and all contributors and testers.
 
 ## 📄 License
 
-This project is open source under the [MIT License](LICENSE).
+This fork remains open source under the [MIT License](LICENSE), retaining upstream copyright and permission notices.

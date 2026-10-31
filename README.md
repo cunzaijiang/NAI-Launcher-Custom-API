@@ -1,4 +1,4 @@
-# NAI Launcher
+# NAI Launcher Custom API
 
 <p align="center">
   简体中文 · <a href="README.zh-TW.md">繁體中文</a> · <a href="README.en-US.md">English</a>
@@ -9,26 +9,49 @@
 </p>
 
 <p align="center">
-  <strong>不只是生成图片，而是把整套 NovelAI 创作流程装进一个应用。</strong>
+  <strong>自定义图像 API 优先的独立预览分支，保留可选的 NovelAI 官方入口。</strong>
 </p>
 
 <p align="center">
-  <a href="https://github.com/Aaalice233/Aaalice_NAI_Launcher/releases/latest"><img src="https://img.shields.io/github/v/release/Aaalice233/Aaalice_NAI_Launcher?display_name=tag&sort=semver" alt="最新版本"></a>
+  <a href="https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.1"><img src="https://img.shields.io/badge/Custom_API-custom--api--preview-blue" alt="Custom API preview"></a>
   <img src="https://img.shields.io/badge/Windows%20%7C%20macOS%20%7C%20Android-可用-6f7785" alt="支持平台">
   <img src="https://img.shields.io/badge/license-MIT-5b8c5a" alt="MIT License">
-  <a href="https://discord.gg/R48n6GwXzD"><img src="https://img.shields.io/badge/Discord-加入社区-5865F2?logo=discord&logoColor=white" alt="Discord 社区"></a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/Aaalice233/Aaalice_NAI_Launcher/releases/latest">下载最新版</a> ·
-  <a href="CHANGELOG.md">查看更新记录</a> ·
-  <a href="https://github.com/Aaalice233/Aaalice_NAI_Launcher/issues">反馈问题</a> ·
-  <a href="https://discord.gg/R48n6GwXzD">加入 Discord</a>
+  <a href="https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.1">下载 Custom API 预览版</a> ·
+  <a href="docs/releases/custom_api_preview.md">本分支更新说明</a> ·
+  <a href="https://github.com/cunzaijiang/NAI-Launcher-Custom-API/issues">反馈本分支问题</a>
 </p>
 
-> NAI Launcher 是社区开发的第三方客户端，并非 NovelAI 官方产品。使用在线功能前，请准备自己的 NovelAI 账号，并遵守相关服务条款、内容规则与当地法律。
+**NAI Launcher Custom API** 是由 **cunzaijiang** 独立维护、基于 NAI Launcher 上游的 Custom API 二次开发分支，**不是上游官方发行版，也不是 NovelAI 官方产品**。原作者与 MIT 归属见文末致谢。使用自定义图像服务无需 NovelAI 账号；官方登录保留为可选路线。请遵守所用服务的条款、内容规则与当地法律。
 
-NAI Launcher 面向经常使用 NovelAI 的图像创作者。生成、改图、Prompt、角色、参考图、图库、队列和智能代理都能在同一套工作流里衔接；Windows、macOS 与 Android 共享核心能力，不登录也能先使用本地工具。
+本分支以登录页的“自定义接口”为主要入口：只需 **一个 API URL、昵称和 API Key / Token**，支持站点根地址或 `/v1` 地址。Windows、macOS 与 Android 保留上游的本地工具和创作界面，不登录也能先使用本地工具。
+
+## 下载 Custom API Preview 1
+
+当前版本为 **4.3.1 Custom API Preview 1**（预发布）。[查看本分支当前预览版及校验文件](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.1) · [阅读本分支更新说明](docs/releases/custom_api_preview.md)。请使用以下四个实际安装包，不要下载源码归档来安装：
+
+| 平台 | 直接下载安装包 |
+| --- | --- |
+| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.1_Setup.exe](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.1/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.1_Setup.exe) |
+| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.1_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.1/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.1_Portable.zip) |
+| Android | [NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.1.apk](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.1/NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.1.apk) |
+| macOS | [NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.1_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.1/NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.1_Portable.zip) |
+
+> **预览版与安装风险**：请先备份。Windows 安装版与便携版均未做 Authenticode 签名；macOS 仅 ad-hoc 签名，无 Apple Developer ID 且未公证；Android 为 release 模式、临时 debug key 签名，应用 ID 沿用上游，不能覆盖不同签名的上游安装，也不保证不同预览构建间直接覆盖安装。Windows 安装目录可能与上游重叠；卸载可能删除本地数据。请核对来源与 SHA-256，不要全局关闭系统安全保护。本预览未做真实服务端到端测试，不保证任意第三方站点可用。
+
+> **Preview 1 应用内入口尚未修复**：现有二进制中的 GitHub／检查更新入口仍指向上游。**不要使用应用内更新；请从本 README 的本分支下载链接手动下载安装。** 本次仅修正文档，不会改变已发布安装包或修复其内部链接／更新逻辑。
+
+## 自定义 API 支持边界
+
+- 使用 **NAI 原生 JSON `/v1` API**，不是任意 OpenAI 图片 API 的通用适配器；图像 API 与主 API 共用一个 URL，没有协议切换。
+- 登录仅读取 `/v1/models` 验证，不触发试画。仅接受五个精确模型 ID：`nai-diffusion-4-full`、`nai-diffusion-4-5-full`、`nai-diffusion-4-5-curated`、`nai-diffusion-5-full`、`nai-diffusion-5-curated`。
+- **不支持 V5 Medium（节约档）；V5 的 Vibe／Precise Reference 参考功能不可用。** 其他模型的参考图、生成和编辑能力仍取决于服务商；登录成功不等于所有功能可用。仅返回最终图像，没有中间流式预览。
+- 第三方余额、订阅资格和费用均视为**未知**；**每次生成都有基础费用，即使客户端或服务端显示 0 Anlas**。没有服务端预算上限；Agent/MCP 收费操作需确认未知费用，不能以 0 Anlas 自动按免费放行。请向服务商确认价格和限额。
+- API Key / Token、Prompt、参数及所需图像会发送至你填写的站点，请仅使用可信服务。详见[自定义 API 说明](docs/custom_api.md)。
+
+> **下方继承的完整功能介绍以 NovelAI 官方路线为基准，不是自定义接口全部支持的承诺。** 本地图库和词库等工具仍可使用；在线生成、模型、参考图、余额、免费额度和费用行为请以所选路线及上述限制为准。
 
 ## ✨ 一套完整的创作流程
 
@@ -43,7 +66,7 @@ NAI Launcher 面向经常使用 NovelAI 的图像创作者。生成、改图、P
 
 ## 🚀 功能全览
 
-### 🎨 NovelAI 生成与编辑
+### 🎨 NovelAI 生成与编辑（官方路线）
 
 - 支持文生图、图生图、普通 Inpaint、Focused Inpaint、Outpaint、变体和增强。
 - 支持 NovelAI V5 Curated / Full、V4.5、V4 与 V3 系列常用工作流；切换模型时，可用参数、默认值、Token 上限与参考功能会跟随模型能力变化。
@@ -68,6 +91,8 @@ NAI Launcher 面向经常使用 NovelAI 的图像创作者。生成、改图、P
 - 提示词助手的提供商可独立保存自动或手动并发模式，默认自动从 5 个请求开始调整；独立标签批次并行翻译。各任务可选择模型支持的思考等级。服务商、API Key 与模型在「设置 → 集成 → 模型服务」管理，任务路由与思考等级位于「设置 → 集成 → 提示词助手」，均保存在本机。
 
 ### 🧬 Vibe、精准参考与图像编辑
+
+以下在线参考与编辑能力描述官方路线；自定义接口受服务商限制，V5 的 Vibe 与 Precise Reference 不可用。本地资源库管理不等于服务端支持相应生成能力。
 
 - Vibe Transfer 支持图片、预编码 Vibe 与 Bundle，能够调整信息提取和参考强度，并按模型复用已有编码。
 - Precise Reference 可用于角色或风格参考，支持多选、批量修改类型，以及带图片的配置包导入导出。
@@ -105,7 +130,7 @@ NAI Launcher 面向经常使用 NovelAI 的图像创作者。生成、改图、P
 
 - 在桌面侧栏或移动端抽屉中对话，让代理查询标签、整理 Prompt、查看生成历史、操作资源库并准备生成任务。
 - 图片、Vibe 和 Precise Reference 可以直接作为上下文加入会话；图片也能在输入框按 Ctrl/Cmd+V 粘贴，或从文件管理器、浏览器拖到面板，Android 可从输入法插入。代理也能准备重绘蒙版、扩展画布与重绘草稿，或直接放大、增强图片。
-- “准备任务”和“真正生成”严格分开：准备阶段核实费用；完全访问模式下，已核实为零 Anlas 的生成直接执行，删除已保存的数据与付费操作仍需确认。需要无人值守批量出图时可切换到“全自动”：付费操作直接执行，只有单次消耗达到保护模式的高消耗阈值时才确认，删除已保存的数据仍需确认。
+- **以下费用与全自动行为仅描述官方路线；自定义接口仍须确认未知费用。** “准备任务”和“真正生成”严格分开：准备阶段核实费用；完全访问模式下，已核实为零 Anlas 的生成直接执行，删除已保存的数据与付费操作仍需确认。需要无人值守批量出图时可切换到“全自动”：付费操作直接执行，只有单次消耗达到保护模式的高消耗阈值时才确认，删除已保存的数据仍需确认。
 - 默认角色调查流程会结合联网身份核实、标准标签检索和画廊特征；联网关闭或证据不足时会说明限制。
 - 系统提示词可直接用自然语言补充要求或替换内置正文，无需占位符。工作目录、联网状态、Skills 和应用执行规则自动补充，并可预览最终内容；自定义不会绕过应用权限确认。
 - 支持逐题回答的结构化提问：每题三个可行方向、一个“推荐”标记和一个自定义入口，最后统一检查并提交。默认两分钟未提交会自动采用全部推荐选项；提问时显示 Toast、入口问号和 Android 系统通知。
@@ -136,6 +161,8 @@ NAI Launcher 面向经常使用 NovelAI 的图像创作者。生成、改图、P
 - 备份使用便于查看和迁移的明文数据，不需要额外恢复密钥；请自行确认目标空间的访问权限。
 
 ## 🖼️ 界面预览
+
+以下截图沿用上游，仅作界面示意，不代表本分支 Preview 1 的自定义接口外观、支持范围或真实服务测试结果。
 
 ### 🖥️ 桌面端
 
@@ -173,24 +200,27 @@ NAI Launcher 面向经常使用 NovelAI 的图像创作者。生成、改图、P
 
 ## ⚡ 下载与开始使用
 
-### 1. 下载对应平台的安装包
+### 1. 手动下载并安装当前预览版
 
-前往 [GitHub Releases](https://github.com/Aaalice233/Aaalice_NAI_Launcher/releases/latest)：
+下载入口仅使用[本分支当前预览版](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.1)，文件名如下（与上方直链一致）：
 
 | 平台 | 文件 | 用法 |
 | --- | --- | --- |
-| Windows | `NAI_Launcher_Windows_<version>_Setup.exe` | 推荐给大多数用户的安装版。 |
-| Windows | `NAI_Launcher_Windows_<version>_Portable.zip` | 解压后直接运行的便携版。 |
-| macOS | `NAI_Launcher_macOS_<version>_Portable.zip` | 解压后打开 `Aaalice NAI Launcher.app`。 |
-| Android | `NAI_Launcher_Android_<version>.apk` | 侧载 APK；首次安装可能需要允许当前应用安装未知来源软件。 |
+| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.1_Setup.exe](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.1/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.1_Setup.exe) | 未签名安装版；先备份并检查安装目录。 |
+| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.1_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.1/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.1_Portable.zip) | 未签名便携版；解压后直接运行。 |
+| Android | [NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.1.apk](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.1/NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.1.apk) | 侧载 debug key 签名 APK；可能需要允许安装未知来源软件，不能覆盖不同签名的上游安装。 |
+| macOS | [NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.1_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.1/NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.1_Portable.zip) | 解压后打开 `Aaalice NAI Launcher.app`；仅 ad-hoc 签名且未公证。 |
 
-每个 Release 都会提供 `checksums.txt`。如果下载后无法解压或安装，可以先核对文件校验值。
+本预览附带 `checksums.txt`、`release_manifest.json` 和 `release_notes_custom_api.md`，可核对 SHA-256、文件大小与来源；校验值不等于发布者数字签名。请同时阅读上方安装风险和应用内更新警告。
 
-### 2. 登录 NovelAI
+### 2. 优先使用“自定义接口”
 
-可以使用 NovelAI 账号密码或 **Persistent API Token** 登录。如果网页安全验证导致密码登录失败，建议改用 Persistent API Token。Token 只保存在当前设备的安全存储中。
+1. 在登录页选择 **“自定义接口”**，不要将第三方 Key 填入官方登录。
+2. 填写 **一个 API URL**：站点根地址或以 `/v1` 结尾的地址均可；例如 `https://provider.example` 或 `https://provider.example/v1/`。主 API 与图像 API 共用此地址，无需另填图像地址或选择协议。
+3. 填写必需的 **昵称** 和 **API Key / Token**。Key 仅保存在当前设备安全存储中，不进入云备份，但验证时会发送至所填站点。
+4. 登录仅请求 `/v1/models`，不会试画；通过验证后，先确认服务商计费与能力，再主动生成。五模型白名单、无 Medium、V5 参考不可用及未知费用限制见上方。
 
-自定义图像服务请使用登录页的“自定义接口”，不要把其 Token 填入官方登录。此入口固定使用 **NAI 原生 JSON `/v1` API**：填写站点根地址或 `/v1` 地址、昵称与 Token，图像 API 使用同一地址，无需选择协议。登录只读取 `/v1/models`，不试画。该模式仅返回最终图像、没有流式预览；订阅数值不代表真实余额，费用显示为未知，每次生成都有基础费用，即使服务端显示 0 Anlas；原生请求没有服务端预算上限。Agent/MCP 的收费操作需确认未知费用，不能按 0 Anlas 自动免费放行。使用前请确认服务商的计费、隐私与能力范围，详见[自定义 API 说明](docs/custom_api.md)。
+**可选：NovelAI 官方路线。** 如需官方服务，可使用 NovelAI 账号密码或 **Persistent API Token** 登录；网页安全验证导致密码登录失败时可改用 Persistent API Token。官方 Token 仅保存在当前设备安全存储中。官方模型与 Anlas 说明不适用于自定义服务的费用承诺。
 
 ### 3. 设置常用资源
 
@@ -220,14 +250,15 @@ NAI Launcher 不在项目自有服务器上托管你的账号或作品。只有�
 ## 🆘 支持与反馈
 
 - 如遇异常，请通过“设置 → 关于 → 导出诊断日志”保存排查信息，并在反馈时一并提供。
-- [提交 Issue](https://github.com/Aaalice233/Aaalice_NAI_Launcher/issues)：报告可以复现的问题或提出功能建议。
-- [加入 Discord](https://discord.gg/R48n6GwXzD)：交流使用经验、获取社区帮助。
-- [查看 Releases](https://github.com/Aaalice233/Aaalice_NAI_Launcher/releases)：下载版本、校验文件并阅读更新内容。
+- [提交本分支 Issue](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/issues)：报告可以复现的问题或提出功能建议；分享日志前请删除 Token 等敏感信息。
+- [下载本分支当前预览版](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.1)并核对校验文件；更新内容见[本分支更新说明](docs/releases/custom_api_preview.md)。不要使用 Preview 1 应用内更新。
 
 ## 🙏 致谢
+
+感谢上游作者 **Aaalice233** 及 [NAI Launcher 上游项目](https://github.com/Aaalice233/Aaalice_NAI_Launcher) 提供原始代码、详细功能介绍与界面截图。本分支由 **cunzaijiang** 独立维护，保留上游 **MIT License**、原版权和许可声明；本分支的问题与下载请使用本页入口，不要作为上游官方发行版反馈。
 
 感谢 [NovelAI](https://novelai.net/)、[法典图鉴](https://novelai.quicktagcloud.com/)、[AgIzT/NovelAI-Tag](https://github.com/AgIzT/NovelAI-Tag)、[Flutter](https://flutter.dev/)、[Riverpod](https://riverpod.dev/) 以及所有贡献者和测试用户。
 
 ## 📄 许可证
 
-本项目基于 [MIT License](LICENSE) 开源。
+本分支继续基于 [MIT License](LICENSE) 开源，并保留上游版权与许可声明。
