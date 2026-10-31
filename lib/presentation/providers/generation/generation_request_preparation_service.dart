@@ -170,11 +170,14 @@ class GenerationRequestPreparationService {
     if (isOpenAiCompatible) {
       // Here nSamples is the UI's batch count, not the wire request size.
       // The coordinator sends one sample per request without losing the total.
-      NAIImageRequestBuilder.validateCompatibleParams(
+      NAIImageRequestBuilder.validateCompatibleChatParams(
         effective.copyWith(nSamples: 1),
       );
+      // Chat sends raw reference images in the generation request. Native Vibe
+      // preparation can spend Anlas and must never run for a custom endpoint.
+    } else {
+      effective = await dependencies.vibes.prepare(effective);
     }
-    effective = await dependencies.vibes.prepare(effective);
     return GenerationPreparationResult(
       params: effective,
       randomModeActive: promptPreparation.randomModeActive,

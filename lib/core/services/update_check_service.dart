@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../data/datasources/remote/github_api_service.dart';
 import '../../../data/models/version/version_info.dart';
+import '../constants/community_links.dart';
 import '../storage/local_storage_service.dart';
 import 'app_installation_service.dart';
 
@@ -214,11 +215,14 @@ class UpdateCheckService {
 
   final DateTime Function() _now;
 
+  /// Fork releases are not compatible with upstream signed update manifests.
+  final bool isCustomApiDistribution;
+
   /// 默认仓库所有者
-  static const String defaultOwner = 'Aaalice233';
+  static const String defaultOwner = 'cunzaijiang';
 
   /// 默认仓库名称
-  static const String defaultRepo = 'Aaalice_NAI_Launcher';
+  static const String defaultRepo = 'NAI-Launcher-Custom-API';
 
   /// 前台使用期间定期发现启动后发布的新版本。
   static const Duration defaultCheckInterval = Duration(minutes: 30);
@@ -245,6 +249,7 @@ class UpdateCheckService {
     LocalStorageService? storage,
     UpdateCheckStorage? checkStorage,
     DateTime Function()? now,
+    this.isCustomApiDistribution = CommunityLinks.isCustomApiDistribution,
   }) : assert(storage == null || checkStorage == null),
        _gitHubApiService = gitHubApiService,
        _packageInfo = packageInfo,
@@ -269,6 +274,7 @@ class UpdateCheckService {
   /// 成功检查使用常规 30 分钟间隔；失败尝试只冷却 5 分钟。已经发现
   /// 新版本时，“稍后提醒”到期会绕过常规间隔，及时恢复提示。
   Future<bool> shouldCheck() async {
+    if (isCustomApiDistribution) return false;
     final now = _now();
     if (_isTemporarilySuppressed(now)) return false;
 
@@ -291,6 +297,7 @@ class UpdateCheckService {
   ///
   /// 用户明确选择“稍后提醒”或最近一次检查失败仍在冷却期时仍应保持安静。
   Future<bool> shouldCheckOnStartup() async {
+    if (isCustomApiDistribution) return false;
     return !_isTemporarilySuppressed(_now());
   }
 
@@ -316,6 +323,9 @@ class UpdateCheckService {
   /// 返回 [VersionInfo] 如果有新版本，否则返回 null
   /// 如果版本被标记为跳过，则返回 null
   Future<VersionInfo?> checkForUpdates({bool ignoreSkipped = false}) async {
+    // Do not fetch or parse either upstream signed manifests or fork metadata.
+    // The custom distribution exposes only manual downloads on its releases page.
+    if (isCustomApiDistribution) return null;
     final attemptTime = _now();
     await _storage.setLastUpdateCheckAttemptTime(attemptTime);
 

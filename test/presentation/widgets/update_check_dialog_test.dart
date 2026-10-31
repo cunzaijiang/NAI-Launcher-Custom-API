@@ -20,6 +20,72 @@ class _DialogUpdateNotifier extends UpdateStateNotifier {
 }
 
 void main() {
+  testWidgets(
+    'custom distribution shows manual updates without provider access',
+    (tester) async {
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            locale: Locale('en'),
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            home: Scaffold(body: UpdateCheckDialog()),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Custom API: manual updates'), findsOneWidget);
+      expect(
+        find.textContaining(
+          'Automatic update checks and in-app installation are disabled',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('View Release'), findsOneWidget);
+      expect(find.text('Already up to date'), findsNothing);
+      expect(find.byType(MarkdownBody), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  for (final width in [320.0, 600.0, 840.0, 1180.0, 1600.0]) {
+    testWidgets(
+      'manual update actions remain reachable at $width with 3x text',
+      (tester) async {
+        tester.view.physicalSize = Size(width, 480);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        await tester.pumpWidget(
+          MaterialApp(
+            locale: const Locale('en'),
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                textScaler: const TextScaler.linear(3),
+                viewInsets: const EdgeInsets.only(bottom: 120),
+                padding: const EdgeInsets.symmetric(vertical: 24),
+              ),
+              child: child!,
+            ),
+            home: const ProviderScope(
+              child: Scaffold(body: UpdateCheckDialog()),
+            ),
+          ),
+        );
+        await tester.pump();
+        for (final label in ['Close', 'View Release']) {
+          await tester.ensureVisible(find.text(label));
+          await tester.pump();
+          expect(find.text(label).hitTestable(), findsOneWidget);
+        }
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   testWidgets('renders GitHub Flavored Markdown release notes', (tester) async {
     const asset = ReleaseAssetInfo(
       type: ReleaseAssetType.windowsPortable,
@@ -70,7 +136,9 @@ print('updated');
           locale: Locale('en'),
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
-          home: Scaffold(body: UpdateCheckDialog()),
+          home: Scaffold(
+            body: UpdateCheckDialog(isCustomApiDistribution: false),
+          ),
         ),
       ),
     );
@@ -121,7 +189,9 @@ print('updated');
             colorScheme: colorScheme,
             textTheme: ThemeData.dark().textTheme,
           ),
-          home: const Scaffold(body: UpdateCheckDialog()),
+          home: const Scaffold(
+            body: UpdateCheckDialog(isCustomApiDistribution: false),
+          ),
         ),
       ),
     );
@@ -168,7 +238,9 @@ print('updated');
           locale: Locale('en'),
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
-          home: Scaffold(body: UpdateCheckDialog()),
+          home: Scaffold(
+            body: UpdateCheckDialog(isCustomApiDistribution: false),
+          ),
         ),
       ),
     );
@@ -210,7 +282,9 @@ print('updated');
           locale: Locale('zh'),
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
-          home: Scaffold(body: UpdateCheckDialog()),
+          home: Scaffold(
+            body: UpdateCheckDialog(isCustomApiDistribution: false),
+          ),
         ),
       ),
     );
@@ -240,7 +314,9 @@ print('updated');
           locale: Locale('en'),
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
-          home: Scaffold(body: UpdateCheckDialog()),
+          home: Scaffold(
+            body: UpdateCheckDialog(isCustomApiDistribution: false),
+          ),
         ),
       ),
     );
@@ -305,7 +381,10 @@ print('updated');
             builder: (context) => Scaffold(
               body: Center(
                 child: FilledButton(
-                  onPressed: () => UpdateCheckDialog.show(context),
+                  onPressed: () => UpdateCheckDialog.show(
+                    context,
+                    isCustomApiDistribution: false,
+                  ),
                   child: const Text('show'),
                 ),
               ),
@@ -391,7 +470,9 @@ print('updated');
           locale: Locale('en'),
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
-          home: Scaffold(body: UpdateCheckDialog()),
+          home: Scaffold(
+            body: UpdateCheckDialog(isCustomApiDistribution: false),
+          ),
         ),
       ),
     );
@@ -463,7 +544,9 @@ print('updated');
             ),
             child: child!,
           ),
-          home: const Scaffold(body: UpdateCheckDialog()),
+          home: const Scaffold(
+            body: UpdateCheckDialog(isCustomApiDistribution: false),
+          ),
         ),
       ),
     );
@@ -539,7 +622,9 @@ SHA256 校验说明。
           locale: Locale('zh'),
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
-          home: Scaffold(body: UpdateCheckDialog()),
+          home: Scaffold(
+            body: UpdateCheckDialog(isCustomApiDistribution: false),
+          ),
         ),
       ),
     );

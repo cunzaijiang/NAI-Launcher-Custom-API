@@ -1241,6 +1241,11 @@ class ImageGenerationNotifier extends _$ImageGenerationNotifier {
   }
 
   Future<ImageParams> _prepareVibesForGeneration(ImageParams params) async {
+    // Preparation already bypasses this callback for Chat. Keep the native
+    // encoding boundary safe if a future caller invokes it directly as well.
+    if (ref.read(naiApiEndpointServiceProvider).current.isOpenAiCompatible) {
+      return params;
+    }
     if (!AnlasCalculator.usesVibeReferences(params) ||
         !params.capabilities.supportsEncodedVibeTransfer) {
       return params;

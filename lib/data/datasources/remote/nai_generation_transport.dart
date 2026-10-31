@@ -10,7 +10,6 @@ import '../../../core/constants/api_constants.dart';
 import '../../../core/network/browser_multipart_body.dart';
 import '../../../core/network/js_compatible_json.dart';
 import '../../../core/network/nai_api_endpoint_service.dart';
-import '../../../core/network/nai_compatible_request.dart';
 import '../../../core/utils/app_logger.dart';
 
 /// Owns every transport request started by one generation run.
@@ -124,16 +123,8 @@ class NaiGenerationTransport {
     void Function(int, int)? onProgress,
   }) {
     if (_endpointService.current.isOpenAiCompatible) {
-      final payload = NaiCompatibleRequest.generation(requestData);
-      return _dio.post<Uint8List>(
-        _endpointService.imageUrl(ApiConstants.generateImageEndpoint),
-        data: encodeJsCompatibleJson(payload),
-        cancelToken: request.cancelToken,
-        onReceiveProgress: onProgress,
-        options: Options(
-          responseType: ResponseType.bytes,
-          contentType: Headers.jsonContentType,
-        ),
+      throw StateError(
+        'Chat drawing must use sendChat, not the native ZIP API',
       );
     }
     final body = buildGenerationMultipart(requestData);
@@ -154,15 +145,8 @@ class NaiGenerationTransport {
     NaiGenerationRequest request,
   ) {
     if (_endpointService.current.isOpenAiCompatible) {
-      final payload = NaiCompatibleRequest.generation(requestData);
-      return _dio.post<ResponseBody>(
-        _endpointService.imageUrl(ApiConstants.generateImageStreamEndpoint),
-        data: encodeJsCompatibleJson(payload),
-        cancelToken: request.cancelToken,
-        options: Options(
-          responseType: ResponseType.stream,
-          contentType: Headers.jsonContentType,
-        ),
+      throw StateError(
+        'Chat drawing must use sendChat, not the native stream API',
       );
     }
     final body = buildGenerationMultipart(requestData);
@@ -173,6 +157,32 @@ class NaiGenerationTransport {
       options: Options(
         responseType: ResponseType.stream,
         contentType: body.contentType,
+      ),
+    );
+  }
+
+  /// Chat drawing is deliberately non-streaming, including UI stream callers.
+  Future<Response<String>> sendChat(
+    Map<String, dynamic> requestData,
+    NaiGenerationRequest request, {
+    void Function(int, int)? onProgress,
+  }) {
+    if (!_endpointService.current.isOpenAiCompatible) {
+      throw StateError(
+        'Chat drawing requires the explicitly selected protocol',
+      );
+    }
+    if (requestData['stream'] != false || requestData['messages'] is! List) {
+      throw ArgumentError('Chat drawing requires messages and stream:false');
+    }
+    return _dio.post<String>(
+      _endpointService.imageUrl('/chat/completions'),
+      data: jsonEncode(requestData),
+      cancelToken: request.cancelToken,
+      onReceiveProgress: onProgress,
+      options: Options(
+        responseType: ResponseType.plain,
+        contentType: Headers.jsonContentType,
       ),
     );
   }

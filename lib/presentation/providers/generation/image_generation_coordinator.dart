@@ -397,7 +397,8 @@ class ImageGenerationCoordinator {
           if (_aborted(handle) || _skipCurrentRequest) return;
           if (chunk.hasError) {
             final error = chunk.error ?? 'Unknown stream error';
-            if (isStreamingGenerationUnsupportedError(error)) {
+            if (!isOpenAiCompatible &&
+                isStreamingGenerationUnsupportedError(error)) {
               mode = _RequestMode.fallback;
               persistFallbackMode = true;
               break;
@@ -434,6 +435,12 @@ class ImageGenerationCoordinator {
         }
         if (mode == _RequestMode.fallback || images.isEmpty) {
           if (_aborted(handle) || _skipCurrentRequest) return;
+          if (isOpenAiCompatible) {
+            throw StateError(
+              'Chat image generation returned no final image; not retrying '
+              'because the provider may already have charged the request',
+            );
+          }
           mode = _RequestMode.fallback;
           continue;
         }
@@ -445,9 +452,13 @@ class ImageGenerationCoordinator {
         return;
       } catch (error) {
         if (_aborted(handle) || _skipCurrentRequest) return;
+        // Custom providers may charge even when the response is lost. Their
+        // facade handles final-only Chat responses; never retry or switch routes
+        // here. Official endpoint retry/fallback behavior remains unchanged.
         // A server-side "Cancelled" result is a generation error. Only the
         // local run token maps cancellation to GenerationCancelled.
-        if (_isRemoteCancelled(error) ||
+        if (isOpenAiCompatible ||
+            _isRemoteCancelled(error) ||
             isDeterministicGenerationError(error) ||
             mode == _RequestMode.fallback) {
           rethrow;
@@ -501,7 +512,8 @@ class ImageGenerationCoordinator {
         if (_aborted(handle) || _skipCurrentRequest) {
           return const _RequestResult();
         }
-        if (_isRemoteCancelled(error) ||
+        if (isOpenAiCompatible ||
+            _isRemoteCancelled(error) ||
             isDeterministicGenerationError(error) ||
             attempt >= _retryDelays.length) {
           rethrow;

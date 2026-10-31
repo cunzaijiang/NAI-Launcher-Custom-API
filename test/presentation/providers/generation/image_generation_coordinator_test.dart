@@ -19,48 +19,179 @@ void main() {
     registerFallbackValue(const ImageParams());
   });
 
-  test('profile splits saved batch sizes into single-sample requests without losing count', () async {
-    for (final size in [2, 3, 4]) {
-      final apiService = _MockNAIImageGenerationApiService();
-      final samples = <int>[];
-      final batches = <int>[];
-      when(
-        () => apiService.generateImageStream(
-          any(),
-          focusedInpaintEnabled: any(named: 'focusedInpaintEnabled'),
-          minimumContextMegaPixels: any(named: 'minimumContextMegaPixels'),
-          focusedSelectionRect: any(named: 'focusedSelectionRect'),
-          focusedContextCrop: any(named: 'focusedContextCrop'),
-        ),
-      ).thenAnswer((invocation) {
-        samples.add(
-          (invocation.positionalArguments.first as ImageParams).nSamples,
+  test(
+    'profile splits saved batch sizes into single-sample requests without losing count',
+    () async {
+      for (final size in [2, 3, 4]) {
+        final apiService = _MockNAIImageGenerationApiService();
+        final samples = <int>[];
+        final batches = <int>[];
+        when(
+          () => apiService.generateImageStream(
+            any(),
+            focusedInpaintEnabled: any(named: 'focusedInpaintEnabled'),
+            minimumContextMegaPixels: any(named: 'minimumContextMegaPixels'),
+            focusedSelectionRect: any(named: 'focusedSelectionRect'),
+            focusedContextCrop: any(named: 'focusedContextCrop'),
+          ),
+        ).thenAnswer((invocation) {
+          samples.add(
+            (invocation.positionalArguments.first as ImageParams).nSamples,
+          );
+          return Stream.value(
+            ImageStreamChunk.complete(Uint8List.fromList([1, 2, 3])),
+          );
+        });
+        final coordinator = ImageGenerationCoordinator(
+          apiService: apiService,
+          isOpenAiCompatible: true,
         );
-        return Stream.value(
-          ImageStreamChunk.complete(Uint8List.fromList([1, 2, 3])),
+        final command = GenerationCommand(
+          runId: size,
+          params: const ImageParams(nSamples: 2),
+          batchCount: 2,
+          batchSize: size,
+          prepareBatch: (batch, params) async {
+            batches.add(batch);
+            return params;
+          },
+        );
+        final events = await coordinator
+            .execute(command, coordinator.start(command))
+            .toList();
+        expect(samples, List.filled(2 * size, 1));
+        expect(batches, [0, 1]);
+        expect((events.first as GenerationStarted).totalImages, 2 * size);
+        expect(
+          (events.last as GenerationCompleted).images,
+          hasLength(2 * size),
+        );
+      }
+    },
+  );
+
+  group('Chat paid request safety', () {
+    for (final failure in [
+      'timeout',
+      'API_ERROR_429',
+      'Streaming is not allowed',
+      'empty',
+    ]) {
+      test('$failure never retries or falls back from stream', () async {
+        final apiService = _MockNAIImageGenerationApiService();
+        var streamCalls = 0;
+        when(
+          () => apiService.generateImageStream(
+            any(),
+            focusedInpaintEnabled: any(named: 'focusedInpaintEnabled'),
+            minimumContextMegaPixels: any(named: 'minimumContextMegaPixels'),
+            focusedSelectionRect: any(named: 'focusedSelectionRect'),
+            focusedContextCrop: any(named: 'focusedContextCrop'),
+          ),
+        ).thenAnswer((_) {
+          streamCalls++;
+          if (failure == 'empty') return const Stream.empty();
+          if (failure == 'timeout') {
+            return Stream.error(TimeoutException('response lost'));
+          }
+          return Stream.value(ImageStreamChunk.error(failure));
+        });
+        final coordinator = ImageGenerationCoordinator(
+          apiService: apiService,
+          isOpenAiCompatible: true,
+          delay: (_) async => fail('Chat must not schedule retries'),
+        );
+        final command = GenerationCommand(
+          runId: 1,
+          params: const ImageParams(),
+          batchCount: 1,
+          batchSize: 2,
+          prepareBatch: (_, params) async => params,
+        );
+        final events = await coordinator
+            .execute(command, coordinator.start(command))
+            .toList();
+        // Two user-requested images, each attempted once; never duplicate one
+        // paid generation merely because its response was empty or lost.
+        expect(streamCalls, 2);
+        expect(events.last, isA<GenerationFailed>());
+        verifyNever(
+          () => apiService.generateImage(
+            any(),
+            onProgress: any(named: 'onProgress'),
+            focusedInpaintEnabled: any(named: 'focusedInpaintEnabled'),
+            minimumContextMegaPixels: any(named: 'minimumContextMegaPixels'),
+            focusedSelectionRect: any(named: 'focusedSelectionRect'),
+            focusedContextCrop: any(named: 'focusedContextCrop'),
+          ),
+        );
+        verifyNever(
+          () => apiService.generateImageWithEncodingsCancellable(
+            any(),
+            onProgress: any(named: 'onProgress'),
+            focusedInpaintEnabled: any(named: 'focusedInpaintEnabled'),
+            minimumContextMegaPixels: any(named: 'minimumContextMegaPixels'),
+            focusedSelectionRect: any(named: 'focusedSelectionRect'),
+            focusedContextCrop: any(named: 'focusedContextCrop'),
+          ),
         );
       });
-      final coordinator = ImageGenerationCoordinator(
-        apiService: apiService,
-        isOpenAiCompatible: true,
-      );
-      final command = GenerationCommand(
-        runId: size,
-        params: const ImageParams(nSamples: 2),
-        batchCount: 2,
-        batchSize: size,
-        prepareBatch: (batch, params) async {
-          batches.add(batch);
-          return params;
+    }
+
+    for (final cancellable in [false, true]) {
+      test(
+        'non-stream failures are attempted once (cancellable=$cancellable)',
+        () async {
+          final apiService = _MockNAIImageGenerationApiService();
+          var calls = 0;
+          Future<(List<Uint8List>, Map<int, String>)> failRequest(
+            Invocation _,
+          ) async {
+            calls++;
+            throw TimeoutException('provider may already have charged');
+          }
+
+          when(
+            () => apiService.generateImage(
+              any(),
+              onProgress: any(named: 'onProgress'),
+              focusedInpaintEnabled: any(named: 'focusedInpaintEnabled'),
+              minimumContextMegaPixels: any(named: 'minimumContextMegaPixels'),
+              focusedSelectionRect: any(named: 'focusedSelectionRect'),
+              focusedContextCrop: any(named: 'focusedContextCrop'),
+            ),
+          ).thenAnswer(failRequest);
+          when(
+            () => apiService.generateImageWithEncodingsCancellable(
+              any(),
+              onProgress: any(named: 'onProgress'),
+              focusedInpaintEnabled: any(named: 'focusedInpaintEnabled'),
+              minimumContextMegaPixels: any(named: 'minimumContextMegaPixels'),
+              focusedSelectionRect: any(named: 'focusedSelectionRect'),
+              focusedContextCrop: any(named: 'focusedContextCrop'),
+            ),
+          ).thenAnswer(failRequest);
+          final coordinator = ImageGenerationCoordinator(
+            apiService: apiService,
+            isOpenAiCompatible: true,
+            delay: (_) async => fail('Chat must not schedule retries'),
+          );
+          final command = GenerationCommand(
+            runId: 1,
+            params: const ImageParams(),
+            batchCount: 1,
+            batchSize: cancellable ? 2 : 1,
+            streamPreviewEnabled: false,
+            cancellableFallback: cancellable,
+            prepareBatch: (_, params) async => params,
+          );
+          final events = await coordinator
+              .execute(command, coordinator.start(command))
+              .toList();
+          expect(calls, command.totalImages);
+          expect(events.last, isA<GenerationFailed>());
         },
       );
-      final events = await coordinator
-          .execute(command, coordinator.start(command))
-          .toList();
-      expect(samples, List.filled(2 * size, 1));
-      expect(batches, [0, 1]);
-      expect((events.first as GenerationStarted).totalImages, 2 * size);
-      expect((events.last as GenerationCompleted).images, hasLength(2 * size));
     }
   });
 

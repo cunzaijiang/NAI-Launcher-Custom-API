@@ -962,26 +962,38 @@ abstract class AppLocalizations {
   /// No description provided for @auth_openAiCompatibleProfileHint.
   ///
   /// In en, this message translates to:
-  /// **'Uses the native JSON /v1 API. Enter the root or /v1 URL; the image API uses the same address.'**
+  /// **'Uses OpenAI Chat /v1/chat/completions with a JSON drawing payload in messages and Markdown PNG results. Enter the root or /v1 URL; one URL is used throughout.'**
   String get auth_openAiCompatibleProfileHint;
 
   /// No description provided for @auth_openAiCompatibleWarning.
   ///
   /// In en, this message translates to:
-  /// **'Uses native JSON /v1 endpoints and validates with /v1/models. Fixed subscription values are placeholders, not your actual balance. Every generation has a base fee, even when the estimate is 0 Anlas. Final images only; no streaming previews. Native requests have no server-side budget limit. Check billing with your provider.'**
+  /// **'Login validates /v1/models without generating. Drawing uses OpenAI Chat, not native /v1/ai generation endpoints. Balance and actual costs are unknown; every generation has a base fee even when the local estimate is 0 Anlas. Vibe encoding/cache is handled by the server; its budget is ignored. Final images only, no automatic retries. Confirm billing with your provider.'**
   String get auth_openAiCompatibleWarning;
 
   /// No description provided for @auth_thirdPartyCompatibilityHint.
   ///
   /// In en, this message translates to:
-  /// **'The third-party site must be compatible with the NovelAI image-generation API; the token will be sent as a Bearer token. Sites without /user/subscription log in without subscription info.'**
+  /// **'The provider must accept a JSON drawing payload inside OpenAI Chat messages and return a Markdown PNG image. Tokens are sent as Bearer tokens; login does not query /user/subscription.'**
   String get auth_thirdPartyCompatibilityHint;
 
   /// No description provided for @auth_thirdPartyStreamingHint.
   ///
   /// In en, this message translates to:
-  /// **'If the third-party site does not support streaming generation, go to Settings > Generation > Image Output and turn off Streaming preview before generating.'**
+  /// **'Custom API returns final images through OpenAI Chat, without intermediate streaming previews or automatic retries.'**
   String get auth_thirdPartyStreamingHint;
+
+  /// No description provided for @updateCustomDistributionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom API: manual updates'**
+  String get updateCustomDistributionTitle;
+
+  /// No description provided for @updateCustomDistributionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic update checks and in-app installation are disabled for this independent preview. Open this fork’s Releases page, choose its latest prerelease, verify checksums, and install manually. Its release manifest is not an upstream trusted signed update manifest.'**
+  String get updateCustomDistributionHint;
 
   /// No description provided for @anlas_thirdPartyUnavailable.
   ///

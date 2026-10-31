@@ -9,8 +9,9 @@ import 'package:nai_launcher/data/models/fixed_tag/fixed_tag_usage_snapshot.dart
 import 'package:nai_launcher/presentation/providers/generation/generation_request_preparation_service.dart';
 
 GenerationRequestPreparationService _profilePreparation(
-  Future<ImageParams> Function(ImageParams) prepareVibes,
-) => GenerationRequestPreparationService(
+  Future<ImageParams> Function(ImageParams) prepareVibes, {
+  bool isOpenAiCompatible = true,
+}) => GenerationRequestPreparationService(
   GenerationPreparationDependencies(
     prompt: GenerationPromptPreparation(
       randomModeEnabled: false,
@@ -41,7 +42,7 @@ GenerationRequestPreparationService _profilePreparation(
       ),
     ),
   ),
-  isOpenAiCompatible: true,
+  isOpenAiCompatible: isOpenAiCompatible,
 );
 
 void main() {
@@ -88,7 +89,7 @@ void main() {
   );
 
   test(
-    'profile preparation retains count and encoded cache update result',
+    'Chat preparation preserves raw references and count without native encoding',
     () async {
       var prepareCalls = 0;
       final raw = VibeReference(
@@ -109,72 +110,115 @@ void main() {
           vibeReferencesV4: [raw],
         ),
       );
-      expect(prepareCalls, 1);
+      expect(prepareCalls, 0);
       expect(result.params.nSamples, 3);
-      expect(result.params.vibeReferencesV4.single.vibeEncoding, 'AQID');
-      expect(
-        result.params.vibeReferencesV4.single.encodingModel,
-        'nai-diffusion-4-5-full',
-      );
+      expect(result.params.vibeReferencesV4.single, raw);
     },
   );
 
-  test('disabled aliases never reach expansion and request snapshots retain only active content', () async {
-    final expanded = <String>[];
-    final service = GenerationRequestPreparationService(
-      GenerationPreparationDependencies(
-        prompt: GenerationPromptPreparation(
-          randomModeEnabled: false,
-          queueExecuting: false,
-          generateAndApplyRandomPrompt: (_) async => '',
-          resolveAliases: (source) {
-            expanded.add(source);
-            return source;
-          },
-          applyFixedPositiveTags: (source) => '$source, /*disabled:fixed*/',
-          applyFixedNegativeTags: (source) => source,
-          fixedTagUsageSnapshot: const FixedTagUsageSnapshot(),
-          resolvePresets: (params) => PromptPresetResolution(
-            prompt: params.prompt,
-            negativePrompt: params.negativePrompt,
-            qualityToggle: false,
-            ucPreset: 0,
-            omitQualityTagHint: false,
-            omitUcPresetTagHint: false,
+  test(
+    'Chat preparation rejects encoded-only Vibes without native encoding',
+    () async {
+      final service = _profilePreparation((_) async {
+        fail('Native paid Vibe preparation must not run');
+      });
+      for (final raw in [null, Uint8List(0)]) {
+        await expectLater(
+          service.prepareInitial(
+            ImageParams(
+              model: 'nai-diffusion-4-5-full',
+              vibeReferencesV4: [
+                VibeReference(
+                  displayName: 'encoded-only',
+                  vibeEncoding: 'AQID',
+                  rawImageData: raw,
+                ),
+              ],
+            ),
+          ),
+          throwsA(isA<UnsupportedError>()),
+        );
+      }
+    },
+  );
+
+  test(
+    'official preparation still applies native Vibe cache updates',
+    () async {
+      var calls = 0;
+      final service = _profilePreparation((params) async {
+        calls++;
+        return params.copyWith(
+          vibeReferencesV4: const [
+            VibeReference(displayName: 'cached', vibeEncoding: 'AQID'),
+          ],
+        );
+      }, isOpenAiCompatible: false);
+      final result = await service.prepareInitial(const ImageParams());
+      expect(calls, 1);
+      expect(result.params.vibeReferencesV4.single.vibeEncoding, 'AQID');
+    },
+  );
+
+  test(
+    'disabled aliases never reach expansion and request snapshots retain only active content',
+    () async {
+      final expanded = <String>[];
+      final service = GenerationRequestPreparationService(
+        GenerationPreparationDependencies(
+          prompt: GenerationPromptPreparation(
+            randomModeEnabled: false,
+            queueExecuting: false,
+            generateAndApplyRandomPrompt: (_) async => '',
+            resolveAliases: (source) {
+              expanded.add(source);
+              return source;
+            },
+            applyFixedPositiveTags: (source) => '$source, /*disabled:fixed*/',
+            applyFixedNegativeTags: (source) => source,
+            fixedTagUsageSnapshot: const FixedTagUsageSnapshot(),
+            resolvePresets: (params) => PromptPresetResolution(
+              prompt: params.prompt,
+              negativePrompt: params.negativePrompt,
+              qualityToggle: false,
+              ucPreset: 0,
+              omitQualityTagHint: false,
+              omitUcPresetTagHint: false,
+            ),
+          ),
+          characters: GenerationCharacterPreparation(
+            read: (_) => const CharacterPreparationSnapshot(
+              characters: [
+                CharacterPrompt(
+                  prompt: 'girl, /*disabled:hat*/',
+                  negativePrompt: '/*disabled:bad*/',
+                ),
+              ],
+              useCoords: false,
+            ),
+          ),
+          vibes: GenerationVibePreparation(prepare: (params) async => params),
+          focused: GenerationFocusedPreparation(
+            read: () => const GenerationFocusedSnapshot(
+              enabled: false,
+              minimumContextMegaPixels: 0,
+            ),
           ),
         ),
-        characters: GenerationCharacterPreparation(
-          read: (_) => const CharacterPreparationSnapshot(
-            characters: [
-              CharacterPrompt(
-                prompt: 'girl, /*disabled:hat*/',
-                negativePrompt: '/*disabled:bad*/',
-              ),
-            ],
-            useCoords: false,
-          ),
-        ),
-        vibes: GenerationVibePreparation(prepare: (params) async => params),
-        focused: GenerationFocusedPreparation(
-          read: () => const GenerationFocusedSnapshot(
-            enabled: false,
-            minimumContextMegaPixels: 0,
-          ),
-        ),
-      ),
-    );
-    const original = ImageParams(
-      prompt: 'cat, /*disabled:<random:secret1,secret2>*/',
-      negativePrompt: 'bad, /*disabled:noise*/',
-    );
-    final prepared = await service.prepareInitial(original);
-    expect(expanded, ['cat', 'bad']);
-    expect(prepared.params.prompt, 'cat');
-    expect(prepared.params.negativePrompt, 'bad');
-    expect(prepared.params.characters.single.prompt, 'girl');
-    expect(prepared.params.characters.single.negativePrompt, '');
-    expect(original.prompt, contains('/*disabled:'));
-  });
+      );
+      const original = ImageParams(
+        prompt: 'cat, /*disabled:<random:secret1,secret2>*/',
+        negativePrompt: 'bad, /*disabled:noise*/',
+      );
+      final prepared = await service.prepareInitial(original);
+      expect(expanded, ['cat', 'bad']);
+      expect(prepared.params.prompt, 'cat');
+      expect(prepared.params.negativePrompt, 'bad');
+      expect(prepared.params.characters.single.prompt, 'girl');
+      expect(prepared.params.characters.single.negativePrompt, '');
+      expect(original.prompt, contains('/*disabled:'));
+    },
+  );
   test(
     'ordinary library alias insertion submits only its positive portion',
     () async {

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/constants/community_links.dart';
 import '../../../core/platform/platform_capabilities.dart';
 import '../../../core/utils/byte_format.dart';
 import '../../../core/utils/in_app_release_notes.dart';
@@ -26,12 +27,56 @@ import 'update_error_text.dart';
 /// - 加载状态指示器（检查中）
 /// - 错误状态显示
 class UpdateCheckDialog extends ConsumerWidget {
-  const UpdateCheckDialog({super.key, this.presentationManaged = false});
+  const UpdateCheckDialog({
+    super.key,
+    this.presentationManaged = false,
+    this.isCustomApiDistribution = CommunityLinks.isCustomApiDistribution,
+  });
 
   final bool presentationManaged;
+  final bool isCustomApiDistribution;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (isCustomApiDistribution) {
+      final content = AdaptiveDialogFrame(
+        maxWidth: 620,
+        maxHeight: 680,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                context.l10n.updateCustomDistributionTitle,
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 12),
+              Text(context.l10n.updateCustomDistributionHint),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(context.l10n.common_close),
+                  ),
+                  FilledButton.icon(
+                    onPressed: () => _openReleasePage(context, null),
+                    icon: const Icon(Icons.open_in_new),
+                    label: Text(context.l10n.viewReleasePage),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+      if (presentationManaged) return content;
+      return Dialog(insetPadding: const EdgeInsets.all(12), child: content);
+    }
     final state = ref.watch(updateStateProvider);
     final actions = _buildActions(context, ref, state);
     final mediaQuery = MediaQuery.of(context);
@@ -480,8 +525,8 @@ class UpdateCheckDialog extends ConsumerWidget {
         ? versionInfo.displayVersion
         : 'v${versionInfo.displayVersion}';
     final rawContentBase = Uri.parse(
-      'https://raw.githubusercontent.com/Aaalice233/'
-      'Aaalice_NAI_Launcher/$versionTag/',
+      'https://raw.githubusercontent.com/cunzaijiang/'
+      'NAI-Launcher-Custom-API/$versionTag/',
     );
     final codeBackground = colorScheme.surfaceContainerHighest;
     final codeForeground = _readableForeground(codeBackground);
@@ -612,7 +657,7 @@ class UpdateCheckDialog extends ConsumerWidget {
           : null;
     }
     return Uri.parse(
-      'https://github.com/Aaalice233/Aaalice_NAI_Launcher/blob/'
+      '${CommunityLinks.github}/blob/'
       '$versionTag/',
     ).resolveUri(uri);
   }
@@ -852,7 +897,9 @@ class UpdateCheckDialog extends ConsumerWidget {
     BuildContext context,
     VersionInfo? versionInfo,
   ) async {
-    final url = versionInfo?.htmlUrl;
+    final url = isCustomApiDistribution
+        ? CommunityLinks.releases
+        : versionInfo?.htmlUrl;
     if (url == null || url.isEmpty) return;
 
     final uri = Uri.tryParse(url);
@@ -879,14 +926,19 @@ class UpdateCheckDialog extends ConsumerWidget {
   }
 
   /// 显示更新检查弹窗
-  static Future<void> show(BuildContext context) {
+  static Future<void> show(
+    BuildContext context, {
+    bool isCustomApiDistribution = CommunityLinks.isCustomApiDistribution,
+  }) {
     return AdaptivePresenter.showForm<void>(
       context: context,
       barrierDismissible: false,
       showHeader: false,
       dialogWidth: 680,
-      builder: (context, scrollController) =>
-          const UpdateCheckDialog(presentationManaged: true),
+      builder: (context, scrollController) => UpdateCheckDialog(
+        presentationManaged: true,
+        isCustomApiDistribution: isCustomApiDistribution,
+      ),
     );
   }
 }

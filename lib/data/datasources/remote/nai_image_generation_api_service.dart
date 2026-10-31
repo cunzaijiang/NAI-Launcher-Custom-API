@@ -13,6 +13,7 @@ import '../../../core/network/browser_multipart_body.dart';
 import '../../../core/network/dio_client.dart';
 import '../../../core/network/critical_network_activity.dart';
 import '../../../core/network/nai_api_endpoint_service.dart';
+import '../../../core/network/nai_chat_image_codec.dart';
 import '../../../core/network/request_builders/nai_image_request_builder.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../models/image/image_params.dart';
@@ -201,6 +202,14 @@ class NAIImageGenerationApiService {
         focusedSelectionRect: focusedSelectionRect,
         focusedContextCrop: focusedContextCrop,
       );
+      if (command.isChatApi) {
+        final artifact = await _sendChat(
+          command,
+          request,
+          onProgress: onProgress,
+        );
+        return ([artifact], <int, String>{});
+      }
       final response = await _transport.sendZip(
         command.buildResult.requestData,
         request,
@@ -297,6 +306,18 @@ class NAIImageGenerationApiService {
         return;
       }
 
+      if (command.isChatApi) {
+        final artifact = await _sendChat(command, request);
+        if (request.cancelToken.isCancelled) {
+          yield ImageStreamChunk.error('Cancelled');
+          return;
+        }
+        yield ImageStreamChunk.complete(
+          artifact.displayImageBytes,
+          sampleIndex: 0,
+        );
+        return;
+      }
       final response = await _transport.sendStream(
         command.buildResult.requestData,
         request,
@@ -319,6 +340,43 @@ class NAIImageGenerationApiService {
     }
   }
 
+  Future<ImageGenerationArtifact> _sendChat(
+    _PreparedGeneration command,
+    NaiGenerationRequest request, {
+    void Function(int, int)? onProgress,
+  }) async {
+    if (request.cancelToken.isCancelled) throw request.cancelToken.cancelError!;
+    final payload = await NAIChatImageCodec.buildRequest(
+      params: command.responseContext.originalParams,
+      nativeRequestData: command.buildResult.requestData,
+    );
+    if (request.cancelToken.isCancelled) throw request.cancelToken.cancelError!;
+    final response = await _transport.sendChat(
+      payload,
+      request,
+      onProgress: onProgress,
+    );
+    final decoded = NAIChatImageCodec.decodeResponse(response.data ?? '');
+    AppLogger.d(
+      'Chat drawing complete: usageFields=${decoded.usage.length}, '
+          'vibeCacheCount=${decoded.vibeCacheIds.length}',
+      'ImgGen',
+    );
+    final image = await NAIChatImageCodec.withRequestMetadata(
+      decoded,
+      params: command.responseContext.originalParams,
+      requestSeed: command.buildResult.seed,
+      requestParameters: command.buildResult.requestParameters,
+    );
+    if (request.cancelToken.isCancelled) throw request.cancelToken.cancelError!;
+    final artifact = await _responseProcessor.composeImage(
+      image,
+      command.responseContext,
+    );
+    if (request.cancelToken.isCancelled) throw request.cancelToken.cancelError!;
+    return artifact;
+  }
+
   Future<_PreparedGeneration> _prepareCommand(
     ImageParams params, {
     required bool isStream,
@@ -327,6 +385,9 @@ class NAIImageGenerationApiService {
     Rect? focusedSelectionRect,
     Rect? focusedContextCrop,
   }) async {
+    if (_endpointService.current.isOpenAiCompatible) {
+      NAIChatImageCodec.validateParams(params);
+    }
     final focusedRequest = await _responseProcessor.prepareFocusedInpaint(
       params,
       enabled: focusedInpaintEnabled,
@@ -355,6 +416,7 @@ class NAIImageGenerationApiService {
         await NAIImageRequestBuilder(
           params: effectiveParams,
           isOpenAiCompatible: isCompatible,
+          useChatApi: isCompatible,
           encodeVibe: _enhancementService.encodeVibe,
           preciseReferences: preciseReferences,
         ).build(
@@ -371,6 +433,7 @@ class NAIImageGenerationApiService {
     );
 
     return _PreparedGeneration(
+      isChatApi: isCompatible,
       buildResult: buildResult,
       responseContext: NaiGenerationResponseContext(
         originalParams: params,
@@ -383,10 +446,12 @@ class NAIImageGenerationApiService {
 
 class _PreparedGeneration {
   const _PreparedGeneration({
+    required this.isChatApi,
     required this.buildResult,
     required this.responseContext,
   });
 
+  final bool isChatApi;
   final NAIImageRequestBuildResult buildResult;
   final NaiGenerationResponseContext responseContext;
 }

@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -467,19 +466,26 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get auth_openAiCompatibleProfileHint =>
-      'ネイティブ JSON /v1 API を使用します。ルートまたは /v1 URL を入力してください。画像 API も同じ URL を使用します。';
+      'OpenAI Chat /v1/chat/completions を使用します。messages に JSON 描画パラメーターを入れ、Markdown PNG 画像を受け取ります。ルートまたは /v1 URL を入力し、同じ URL を使います。';
 
   @override
   String get auth_openAiCompatibleWarning =>
-      'ネイティブ JSON /v1 API を使用し、/v1/models で検証します。固定のサブスクリプション値は仮の値で、実際の残高ではありません。見積もりが 0 Anlas でも、生成ごとに基本料金がかかります。最終画像のみで、ストリーミングプレビューはありません。ネイティブリクエストにサーバー側の予算上限はありません。料金はプロバイダーに確認してください。';
+      'ログインは /v1/models の検証のみで試し描画しません。描画は OpenAI Chat を使い、ネイティブ /v1/ai 生成 API は呼び出しません。残高と実際の料金は不明です。ローカル見積もりが 0 Anlas でも生成には基本料金がかかります。Vibe のエンコードとキャッシュはサーバーが処理し、予算フィールドは無視されます。最終画像のみで自動再試行はありません。料金をプロバイダーに確認してください。';
 
   @override
   String get auth_thirdPartyCompatibilityHint =>
-      'サードパーティ サイトは NovelAI のイメージ生成 API と互換性がある必要があります。トークンはベアラー トークンとして送信されます。/user/subscription 未実装のサイトではサブスクリプション情報を省略してログインします。';
+      'OpenAI Chat messages 内の JSON 描画パラメーターと Markdown PNG 応答に対応するプロバイダーが必要です。トークンは Bearer として送信され、ログイン時に /user/subscription は取得しません。';
 
   @override
   String get auth_thirdPartyStreamingHint =>
-      'サードパーティサイトがストリーミング生成に対応していない場合は、［設定］>［生成］>［画像出力］で［ストリーミングプレビュー］をオフにしてから生成してください。';
+      'カスタム API は OpenAI Chat で最終画像を返します。途中のストリーミングプレビューと自動再試行はありません。';
+
+  @override
+  String get updateCustomDistributionTitle => 'Custom API：手動更新';
+
+  @override
+  String get updateCustomDistributionHint =>
+      'この独立プレビューでは自動更新確認とアプリ内インストールは無効です。このフォークの Releases ページで最新のプレリリースを選び、チェックサムを確認して手動でインストールしてください。独立リリースのマニフェストは上流の信頼された署名付き更新形式ではありません。';
 
   @override
   String get anlas_thirdPartyUnavailable => 'このサイトは Anlas 残高情報を提供していません';

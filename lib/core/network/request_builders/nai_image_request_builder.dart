@@ -24,11 +24,12 @@ const int _cfgDelayReferenceLatents = 4 * 104 * 152;
 /// 官网当前所有图像模型共用的请求参数版本。
 const int _officialParamsVersion = 4;
 
-typedef EncodeVibeFn = Future<String> Function(
-  Uint8List image, {
-  required String model,
-  double informationExtracted,
-});
+typedef EncodeVibeFn =
+    Future<String> Function(
+      Uint8List image, {
+      required String model,
+      double informationExtracted,
+    });
 
 class NAIImageRequestBuildResult {
   NAIImageRequestBuildResult({
@@ -57,20 +58,23 @@ class NAIImageRequestBuilder {
     required ImageParams params,
     required this.encodeVibe,
     this.isOpenAiCompatible = false,
+    this.useChatApi = false,
     List<PreciseReference>? preciseReferences,
   }) : _originalParams = params,
        params =
-           (isOpenAiCompatible
+           (isOpenAiCompatible || useChatApi
                    ? params.copyWith(
                        model: ImageModels.resolveBaseModel(params.model),
                      )
                    : params)
                .resolveFixedSettings(),
        _preciseReferences =
-           (isOpenAiCompatible && params.preciseReferences.isNotEmpty
+           ((isOpenAiCompatible || useChatApi) &&
+                       params.preciseReferences.isNotEmpty
                    ? params.preciseReferences
                    : preciseReferences ??
                          (isOpenAiCompatible ||
+                                 useChatApi ||
                                  params.capabilities.supportsPreciseReference
                              ? params.preciseReferences
                              : <PreciseReference>[]))
@@ -80,7 +84,34 @@ class NAIImageRequestBuilder {
   final ImageParams params;
   final ImageParams _originalParams;
   final bool isOpenAiCompatible;
+
+  /// Build the normalized generation snapshot for the Chat codec, leaving raw
+  /// references to that codec. Never call native reference encoding in this mode.
+  final bool useChatApi;
   final EncodeVibeFn encodeVibe;
+
+  static void validateCompatibleChatParams(
+    ImageParams original, {
+    String? sampler,
+    List<PreciseReference> preciseReferences = const [],
+  }) {
+    // Check raw sources first so encoded-only references always fail clearly,
+    // before capability filtering can hide them or native encoding can run.
+    for (final vibe in original.enabledVibeReferencesV4) {
+      if (!vibe.canReencodeFromRawSource) {
+        throw UnsupportedError(
+          'OpenAI Chat image generation requires the original source image '
+          'for Vibe reference "${vibe.displayName}". Encoded-only NovelAI Vibe '
+          'references are not supported; import the original image instead.',
+        );
+      }
+    }
+    validateCompatibleParams(
+      original,
+      sampler: sampler,
+      preciseReferences: preciseReferences,
+    );
+  }
 
   /// Check the user's intent before official capability filters or paid encoding.
   static void validateCompatibleParams(
@@ -633,7 +664,13 @@ class NAIImageRequestBuilder {
     required String sampler,
     bool isStream = false,
   }) async {
-    if (isOpenAiCompatible) {
+    if (useChatApi) {
+      validateCompatibleChatParams(
+        _originalParams,
+        sampler: sampler,
+        preciseReferences: _preciseReferences,
+      );
+    } else if (isOpenAiCompatible) {
       validateCompatibleParams(
         _originalParams,
         sampler: sampler,
@@ -699,7 +736,7 @@ class NAIImageRequestBuilder {
     final seed = params.seed == -1 ? Random().nextInt(4294967295) : params.seed;
 
     final baseModel = ImageModels.resolveBaseModel(params.model);
-    final requestModel = isOpenAiCompatible
+    final requestModel = isOpenAiCompatible || useChatApi
         ? baseModel
         : params.action == ImageGenerationAction.infill
         ? ImageModels.resolveInpaintingModel(baseModel)
@@ -790,12 +827,16 @@ class NAIImageRequestBuilder {
       requestParameters['extra_noise_seed'] = seed - 1;
     }
 
-    final vibeEncodingMap = await buildVibeTransferParameters(
-      requestParameters,
-      isStream: isStream,
-    );
+    final vibeEncodingMap = useChatApi
+        ? <int, String>{}
+        : await buildVibeTransferParameters(
+            requestParameters,
+            isStream: isStream,
+          );
 
-    await buildPreciseReferenceParameters(requestParameters);
+    if (!useChatApi) {
+      await buildPreciseReferenceParameters(requestParameters);
+    }
 
     final requestData = orderOfficialRequest(<String, dynamic>{
       'input': effectivePrompt,

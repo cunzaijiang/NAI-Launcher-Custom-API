@@ -149,11 +149,11 @@ void main() {
 
       await tester.tapAt(const Offset(50, 400));
       await tester.pump(const Duration(milliseconds: 100));
-      expect(find.text('Checking for updates...'), findsOneWidget);
+      expect(find.text('Custom API: manual updates'), findsOneWidget);
 
-      await tester.tap(find.text('Cancel'));
+      await tester.tap(find.text('Close'));
       await tester.pumpAndSettle();
-      expect(find.text('Checking for updates...'), findsNothing);
+      expect(find.text('Custom API: manual updates'), findsNothing);
     },
   );
 

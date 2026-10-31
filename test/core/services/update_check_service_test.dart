@@ -101,12 +101,39 @@ void main() {
       installationService: _FakeInstallationService(),
       checkStorage: storage,
       now: () => now,
+      isCustomApiDistribution: false,
     );
   }
 
   setUp(() {
     now = DateTime.utc(2026, 3, 1, 8);
     storage = _FakeUpdateStorage();
+  });
+
+  test('custom distribution never fetches or parses update metadata', () async {
+    var requests = 0;
+    final service = UpdateCheckService(
+      gitHubApiService: _FakeGitHubApiService((_) async {
+        requests++;
+        throw StateError('Custom distribution must not fetch a manifest');
+      }),
+      packageInfo: packageInfo(),
+      installationService: _FakeInstallationService(),
+      checkStorage: storage,
+    );
+    storage.known = '99.0.0';
+    storage.prerelease = true;
+
+    expect(UpdateCheckService.defaultOwner, 'cunzaijiang');
+    expect(UpdateCheckService.defaultRepo, 'NAI-Launcher-Custom-API');
+    expect(await service.shouldCheck(), isFalse);
+    expect(await service.shouldCheckOnStartup(), isFalse);
+    expect(await service.shouldCheckForUpdates(), isFalse);
+    expect(await service.checkForUpdates(), isNull);
+    expect(await service.checkForUpdates(ignoreSkipped: true), isNull);
+    expect(requests, 0);
+    expect(storage.attempt, isNull);
+    expect(storage.success, isNull);
   });
 
   test('passes the persisted prerelease preference to GitHub', () async {

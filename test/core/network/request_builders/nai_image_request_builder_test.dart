@@ -15,6 +15,226 @@ import 'package:nai_launcher/data/models/vibe/vibe_reference.dart';
 import '../../../helpers/exif_orientation_fixture.dart';
 
 void main() {
+  group('Chat request preparation', () {
+    test(
+      'Chat validates unsupported user intent before any encoding',
+      () async {
+        final raw = VibeReference(
+          displayName: 'raw',
+          vibeEncoding: '',
+          rawImageData: Uint8List.fromList([1]),
+        );
+        final precise = PreciseReference(
+          image: Uint8List.fromList([1]),
+          type: PreciseRefType.character,
+        );
+        for (final params in [
+          ImageParams(
+            model: ImageModels.animeDiffusionV5Full,
+            vibeReferencesV4: [raw],
+          ),
+          ImageParams(
+            model: ImageModels.animeDiffusionV4Full,
+            preciseReferences: [precise],
+          ),
+          ImageParams(
+            model: ImageModels.animeDiffusionV45Full,
+            vibeReferencesV4: List.filled(5, raw),
+          ),
+          ImageParams(
+            model: ImageModels.animeDiffusionV45Full,
+            vibeReferencesV4: [raw],
+            preciseReferences: [precise],
+          ),
+          const ImageParams(model: ImageModels.animeDiffusionV5FullMedium),
+          const ImageParams(
+            model: ImageModels.animeDiffusionV45Full,
+            steps: 51,
+          ),
+          const ImageParams(
+            model: ImageModels.animeDiffusionV45Full,
+            nSamples: 2,
+          ),
+        ]) {
+          await expectLater(
+            NAIImageRequestBuilder(
+              params: params,
+              useChatApi: true,
+              preciseReferences: [],
+              encodeVibe:
+                  (image, {required model, informationExtracted = 1}) async {
+                    fail(
+                      'Invalid Chat intent must fail before native encoding',
+                    );
+                  },
+            ).build(sampler: Samplers.kEuler),
+            throwsA(anyOf(isA<ArgumentError>(), isA<UnsupportedError>())),
+          );
+        }
+      },
+    );
+    test(
+      'raw and cached Vibes never call native encoding in either mode',
+      () async {
+        for (final isStream in [false, true]) {
+          for (final encoding in ['', 'cached-native-encoding']) {
+            final result = await NAIImageRequestBuilder(
+              params: ImageParams(
+                model: ImageModels.animeDiffusionV45Full,
+                prompt: 'cat',
+                seed: 123,
+                vibeReferencesV4: [
+                  VibeReference(
+                    displayName: 'raw',
+                    vibeEncoding: encoding,
+                    rawImageData: Uint8List.fromList([1, 2, 3]),
+                    sourceType: VibeSourceType.naiv4vibe,
+                  ),
+                ],
+              ),
+              useChatApi: true,
+              encodeVibe:
+                  (image, {required model, informationExtracted = 1}) async {
+                    fail('Chat must not call native paid Vibe encoding');
+                  },
+            ).build(sampler: Samplers.kEuler, isStream: isStream);
+            expect(result.seed, 123);
+            expect(result.requestData['input'], result.effectivePrompt);
+            expect(result.effectivePrompt, contains('cat'));
+            expect(result.requestParameters['seed'], 123);
+            expect(result.vibeEncodingMap, isEmpty);
+            expect(
+              result.requestParameters,
+              isNot(contains('reference_image_multiple')),
+            );
+            expect(
+              result.requestParameters,
+              isNot(contains('director_reference_images')),
+            );
+          }
+        }
+      },
+    );
+
+    test(
+      'encoded-only Vibes fail before source normalization or encoding',
+      () async {
+        for (final raw in [null, Uint8List(0)]) {
+          await expectLater(
+            NAIImageRequestBuilder(
+              params: ImageParams(
+                model: ImageModels.animeDiffusionV45Full,
+                action: ImageGenerationAction.img2img,
+                sourceImage: Uint8List.fromList([0]),
+                vibeReferencesV4: [
+                  VibeReference(
+                    displayName: 'encoded-only',
+                    vibeEncoding: 'AQID',
+                    rawImageData: raw,
+                  ),
+                ],
+              ),
+              useChatApi: true,
+              encodeVibe:
+                  (image, {required model, informationExtracted = 1}) async {
+                    fail('Chat must reject before encoding');
+                  },
+            ).build(sampler: Samplers.kEuler),
+            throwsA(
+              isA<UnsupportedError>().having(
+                (error) => error.message,
+                'message',
+                contains('original source image'),
+              ),
+            ),
+          );
+        }
+      },
+    );
+
+    test(
+      'precise references are left raw for the codec without preprocessing',
+      () async {
+        final result = await NAIImageRequestBuilder(
+          params: ImageParams(
+            model: ImageModels.animeDiffusionV45Full,
+            preciseReferences: [
+              PreciseReference(
+                image: Uint8List.fromList([1, 2, 3]),
+                type: PreciseRefType.character,
+              ),
+            ],
+          ),
+          useChatApi: true,
+          encodeVibe: _fakeEncodeVibe,
+        ).build(sampler: Samplers.kEuler);
+        expect(
+          result.requestParameters,
+          isNot(contains('director_reference_images')),
+        );
+      },
+    );
+
+    test(
+      'Chat infill retains normalized source, mask, seed and base model',
+      () async {
+        for (final isStream in [false, true]) {
+          final result = await NAIImageRequestBuilder(
+            params: ImageParams(
+              model: ImageModels.animeDiffusionV45FullInpainting,
+              action: ImageGenerationAction.infill,
+              width: 64,
+              height: 64,
+              seed: 123,
+              sourceImage: _solidPngBytes(width: 128, height: 128),
+              maskImage: _solidPngBytes(width: 64, height: 64),
+              vibeReferencesV4: [
+                VibeReference(
+                  displayName: 'raw',
+                  vibeEncoding: '',
+                  rawImageData: Uint8List.fromList([1]),
+                ),
+              ],
+            ),
+            useChatApi: true,
+            encodeVibe: _fakeEncodeVibe,
+          ).build(sampler: Samplers.kEuler, isStream: isStream);
+          expect(
+            result.requestData['model'],
+            ImageModels.animeDiffusionV45Full,
+          );
+          expect(result.requestData['action'], 'infill');
+          expect(img.decodePng(result.normalizedSourceImageBytes!)!.width, 64);
+          expect(result.inpaintMaskArtifacts, isNotNull);
+          expect(
+            result.requestParameters['image'],
+            base64Encode(result.normalizedSourceImageBytes!),
+          );
+          expect(result.requestParameters['mask'], isA<String>());
+          expect(result.requestParameters['extra_noise_seed'], 122);
+          expect(result.vibeEncodingMap, isEmpty);
+        }
+      },
+    );
+
+    test('disabled encoded-only references are ignored', () async {
+      await NAIImageRequestBuilder(
+        params: const ImageParams(
+          model: ImageModels.animeDiffusionV45Full,
+          vibeReferencesV4: [
+            VibeReference(
+              displayName: 'disabled',
+              vibeEncoding: 'AQID',
+              enabled: false,
+            ),
+          ],
+        ),
+        useChatApi: true,
+        encodeVibe: _fakeEncodeVibe,
+      ).build(sampler: Samplers.kEuler);
+    });
+  });
+
   group('OpenAI-compatible native request builder', () {
     const encodedVibe = VibeReference(
       displayName: 'encoded',

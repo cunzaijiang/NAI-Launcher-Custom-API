@@ -8,15 +8,15 @@ permissions:
   contents: read
 
 concurrency:
-  group: custom-api-v4.3.1-preview.1
+  group: custom-api-v4.3.1-preview.2
   cancel-in-progress: false
 
 env:
   FLUTTER_VERSION: "3.47.5"
   PUB_HOSTED_URL: https://pub.dev
-  RELEASE_TAG: custom-api-v4.3.1-preview.1
+  RELEASE_TAG: custom-api-v4.3.1-preview.2
   RELEASE_REPOSITORY: cunzaijiang/NAI-Launcher-Custom-API
-  ASSET_VERSION: 4.3.1-custom-api-preview.1
+  ASSET_VERSION: 4.3.1-custom-api-preview.2
 
 defaults:
   run:
@@ -66,7 +66,7 @@ jobs:
           "app_version=$version" >> $env:GITHUB_OUTPUT
 
   validate:
-    name: Gate all builds on 13 custom API regression suites
+    name: Gate all builds on custom API regression suites
     needs: prepare
     runs-on: windows-2022
     timeout-minutes: 60
@@ -100,7 +100,7 @@ jobs:
           ./scripts/verify_flutter_sources.ps1
           git diff --exit-code -- pubspec.lock
           dart run tool/tag_catalog/verify_bundled_databases.dart
-      - name: Run all 13 custom API regression test files with watchdog
+      - name: Run custom API regression test files with watchdog
         timeout-minutes: 12
         run: |
           $ErrorActionPreference = 'Stop'
@@ -119,8 +119,13 @@ jobs:
             'test/presentation/providers/image_generation_provider_test.dart'
             'test/presentation/screens/generation/widgets/model_option_controls_test.dart'
             'test/presentation/widgets/auth/login_form_container_test.dart'
+            'test/core/network/nai_chat_image_codec_test.dart'
+            'test/core/services/update_check_service_test.dart'
+            'test/presentation/widgets/update_check_dialog_test.dart'
+            'test/presentation/widgets/update_dialog_layout_test.dart'
+            'test/presentation/widgets/common/adaptive_dialog_presenter_integration_test.dart'
           )
-          if ($tests.Count -ne 13) { throw 'Expected exactly 13 regression suites.' }
+          if ($tests.Count -ne 18) { throw 'Expected exactly 18 regression suites.' }
           foreach ($test in $tests) {
             if (!(Test-Path -LiteralPath $test -PathType Leaf)) { throw "Missing regression suite: $test" }
           }
@@ -377,7 +382,7 @@ jobs:
           }
           # GitHub ref creation fails atomically if another process created this tag.
           gh api --method POST "repos/$repo/git/refs" -f "ref=refs/tags/$tag" -f "sha=$env:SOURCE_SHA"
-          gh release create $tag --repo $repo --verify-tag --draft --prerelease --latest=false --title "NAI Launcher Custom API 4.3.1 Preview 1 (independent build)" --notes-file release-assets/release_notes_custom_api.md
+          gh release create $tag --repo $repo --verify-tag --draft --prerelease --latest=false --title "NAI Launcher Custom API 4.3.1 Preview 2 (OpenAI Chat build)" --notes-file release-assets/release_notes_custom_api.md
           $paths = @(Get-ChildItem -LiteralPath release-assets -File | Sort-Object Name | ForEach-Object FullName)
           # No --clobber. A partial upload stays a draft and must be inspected manually.
           gh release upload $tag @paths --repo $repo

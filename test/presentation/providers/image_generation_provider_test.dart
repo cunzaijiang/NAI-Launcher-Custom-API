@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -59,6 +60,55 @@ ProviderContainer _createAuthenticatedContainer({
 
 class FakeNAIImageEnhancementApiService extends Mock
     implements NAIImageEnhancementApiService {}
+
+class _ChatProviderAdapter implements HttpClientAdapter {
+  _ChatProviderAdapter({required this.status, required this.image});
+
+  final int status;
+  final Uint8List image;
+  final requests = <RequestOptions>[];
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    requests.add(options);
+    if (options.uri.path != '/v1/chat/completions') {
+      // Return a deterministic failure, never use sockets or a paid API.
+      return ResponseBody.fromString('Unexpected native request', 400);
+    }
+    return ResponseBody.fromString(
+      jsonEncode(
+        status == 200
+            ? {
+                'choices': [
+                  {
+                    'message': {
+                      'content':
+                          '![image](data:image/png;base64,${base64Encode(image)})',
+                    },
+                  },
+                ],
+              }
+            : {
+                'error': {
+                  'message': 'Rate limit exceeded',
+                  'code': 'rate_limit_exceeded',
+                },
+              },
+      ),
+      status,
+      headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      },
+    );
+  }
+
+  @override
+  void close({bool force = false}) {}
+}
 
 class TestSubscriptionNotifier extends SubscriptionNotifier {
   int refreshBalanceCallCount = 0;
@@ -464,6 +514,157 @@ void main() {
       },
     );
 
+    for (final streamPreview in [false, true]) {
+      for (final status in [200, 429]) {
+        test(
+          'Chat provider sends one Chat and zero native requests (preview=$streamPreview, status=$status)',
+          () async {
+            final image = _validImageBytes(width: 64, height: 64);
+            final adapter = _ChatProviderAdapter(status: status, image: image);
+            final dio = Dio()..httpClientAdapter = adapter;
+            final endpoints = NaiApiEndpointService()
+              ..setCurrent(
+                NaiApiEndpointConfig.fromInput(
+                  mainBaseUrl: 'https://compatible.invalid',
+                  protocol: NaiApiProtocol.openAiCompatible,
+                ),
+              );
+            // Use the real facade, codec and transport. The only fake is the HTTP
+            // adapter, so accidental native encoding/generation is counted too.
+            final enhancement = NAIImageEnhancementApiService(dio, endpoints);
+            final api = NAIImageGenerationApiService(
+              dio,
+              enhancement,
+              endpoints,
+            );
+            container.dispose();
+            container = _createAuthenticatedContainer(
+              overrides: [
+                naiApiEndpointServiceProvider.overrideWithValue(endpoints),
+                naiImageGenerationApiServiceProvider.overrideWithValue(api),
+                naiImageEnhancementApiServiceProvider.overrideWithValue(
+                  enhancement,
+                ),
+                subscriptionNotifierProvider.overrideWith(
+                  TestSubscriptionNotifier.new,
+                ),
+              ],
+            );
+            await container
+                .read(notificationSettingsNotifierProvider.notifier)
+                .setSoundEnabled(false);
+            await container
+                .read(imageSaveSettingsNotifierProvider.notifier)
+                .setAutoSave(false);
+            await container
+                .read(generationStreamPreviewSettingsProvider.notifier)
+                .set(streamPreview);
+            container.read(imagesPerRequestProvider.notifier).set(1);
+            final notifier = container.read(
+              imageGenerationNotifierProvider.notifier,
+            );
+            await notifier
+                .generate(
+                  ImageParams(
+                    prompt: 'Chat provider safety',
+                    model: ImageModels.animeDiffusionV45Full,
+                    width: 64,
+                    height: 64,
+                    vibeReferencesV4: [
+                      VibeReference(
+                        displayName: 'raw reference',
+                        vibeEncoding: '',
+                        rawImageData: image,
+                      ),
+                    ],
+                  ),
+                )
+                .timeout(const Duration(seconds: 5));
+            final state = container.read(imageGenerationNotifierProvider);
+            expect(adapter.requests, hasLength(1));
+            expect(adapter.requests.single.method, 'POST');
+            expect(adapter.requests.single.uri.path, '/v1/chat/completions');
+            expect(
+              adapter.requests.where(
+                (request) => request.uri.path != '/v1/chat/completions',
+              ),
+              isEmpty,
+            );
+            final payload = jsonDecode(
+              adapter.requests.single.data as String,
+            ) as Map<String, dynamic>;
+            expect(payload['stream'], false);
+            final messages = payload['messages'] as List;
+            final draw = jsonDecode(
+              (messages.single as Map)['content'] as String,
+            ) as Map<String, dynamic>;
+            final controlnet = draw['controlnet'] as Map;
+            expect(controlnet['images'], hasLength(1));
+            expect(
+              state.status,
+              status == 200
+                  ? GenerationStatus.completed
+                  : GenerationStatus.error,
+            );
+            expect(state.currentImages, hasLength(status == 200 ? 1 : 0));
+            dio.close(force: true);
+          },
+        );
+      }
+    }
+
+    test(
+      'Chat provider rejects encoded-only Vibes before all HTTP calls',
+      () async {
+        final adapter = _ChatProviderAdapter(
+          status: 200,
+          image: _validImageBytes(width: 64, height: 64),
+        );
+        final dio = Dio()..httpClientAdapter = adapter;
+        final endpoints = NaiApiEndpointService()
+          ..setCurrent(
+            NaiApiEndpointConfig.fromInput(
+              mainBaseUrl: 'https://compatible.invalid',
+              protocol: NaiApiProtocol.openAiCompatible,
+            ),
+          );
+        final enhancement = NAIImageEnhancementApiService(dio, endpoints);
+        container.dispose();
+        container = _createAuthenticatedContainer(
+          overrides: [
+            naiApiEndpointServiceProvider.overrideWithValue(endpoints),
+            naiImageGenerationApiServiceProvider.overrideWithValue(
+              NAIImageGenerationApiService(dio, enhancement, endpoints),
+            ),
+            naiImageEnhancementApiServiceProvider.overrideWithValue(
+              enhancement,
+            ),
+            subscriptionNotifierProvider.overrideWith(
+              TestSubscriptionNotifier.new,
+            ),
+          ],
+        );
+        await expectLater(
+          container
+              .read(imageGenerationNotifierProvider.notifier)
+              .generate(
+                const ImageParams(
+                  model: ImageModels.animeDiffusionV45Full,
+                  vibeReferencesV4: [
+                    VibeReference(
+                      displayName: 'encoded-only',
+                      vibeEncoding: 'AQID',
+                    ),
+                  ],
+                ),
+              ),
+          throwsA(isA<UnsupportedError>()),
+        );
+        expect(adapter.requests, isEmpty);
+        dio.close(force: true);
+      },
+    );
+
     test('profile rejects invalid Vibes through preparation before any encoding call', () async {
       final enhancement = FakeNAIImageEnhancementApiService();
       final endpoints = NaiApiEndpointService()
@@ -553,14 +754,14 @@ void main() {
             .setAutoSave(false);
         container.read(imagesPerRequestProvider.notifier).set(3);
         final runningImageCounts = <int>[];
-        final subscription = container.listen(
-          imageGenerationNotifierProvider,
-          (_, state) {
-            if (state.status == GenerationStatus.generating) {
-              runningImageCounts.add(state.totalImages);
-            }
-          },
-        );
+        final subscription = container.listen(imageGenerationNotifierProvider, (
+          _,
+          state,
+        ) {
+          if (state.status == GenerationStatus.generating) {
+            runningImageCounts.add(state.totalImages);
+          }
+        });
         addTearDown(subscription.close);
         await container
             .read(imageGenerationNotifierProvider.notifier)

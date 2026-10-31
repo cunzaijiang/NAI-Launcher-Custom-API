@@ -71,7 +71,10 @@ Future<_UpdateNotifier> _open(
         home: Scaffold(
           body: Builder(
             builder: (context) => TextButton(
-              onPressed: () => UpdateCheckDialog.show(context),
+              onPressed: () => UpdateCheckDialog.show(
+                context,
+                isCustomApiDistribution: false,
+              ),
               child: const Text('打开'),
             ),
           ),

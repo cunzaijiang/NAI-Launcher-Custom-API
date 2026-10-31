@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -456,19 +455,26 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get auth_openAiCompatibleProfileHint =>
-      '使用原生 JSON /v1 API。填写站点根地址或 /v1 地址，图像 API 使用同一地址。';
+      '使用 OpenAI Chat /v1/chat/completions：messages 内放 JSON 绘图参数，返回 Markdown PNG 图片。填写根地址或 /v1 地址，全程共用一个 URL。';
 
   @override
   String get auth_openAiCompatibleWarning =>
-      '使用原生 JSON /v1 接口，通过 /v1/models 验证。固定订阅数值仅为占位，不代表实际余额。每次生成均收取基础费用，即使预估为 0 Anlas。仅返回最终图像，无流式预览。原生请求没有服务端预算上限，请向服务商确认计费。';
+      '登录仅验证 /v1/models，不试画。绘图使用 OpenAI Chat，不调用原生 /v1/ai 生成接口。余额与实际费用未知；每次生成都有基础费用，即使本地预估为 0 Anlas。Vibe 编码与缓存由服务端处理，其预算字段被忽略。仅返回最终图像，不自动重试，请向服务商确认计费。';
 
   @override
   String get auth_thirdPartyCompatibilityHint =>
-      '第三方站点需兼容 NovelAI 图像生成 API；Token 将按 Bearer 方式发送。未实现 /user/subscription 的站点将跳过订阅信息。';
+      '服务商须支持在 OpenAI Chat messages 内接收 JSON 绘图参数，并返回 Markdown PNG 图片。Token 按 Bearer 方式发送；登录不查询 /user/subscription。';
 
   @override
   String get auth_thirdPartyStreamingHint =>
-      '如果第三方站点不支持流式生成，请前往「设置 > 生成 > 图像输出」，关闭「流式预览」后再生成。';
+      '自定义接口通过 OpenAI Chat 返回最终图像，不提供中间流式预览，也不自动重试。';
+
+  @override
+  String get updateCustomDistributionTitle => 'Custom API：手动更新';
+
+  @override
+  String get updateCustomDistributionHint =>
+      '此独立预览版已禁用自动检查更新与应用内安装。请打开本分支 Releases 页面，选择最新预发布版本，核对校验值后手动安装。本分支发布清单不是上游受信任的签名更新清单。';
 
   @override
   String get anlas_thirdPartyUnavailable => '当前站点不提供 Anlas 余额信息';
@@ -15990,19 +15996,26 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get auth_openAiCompatibleProfileHint =>
-      '使用原生 JSON /v1 API。填寫站點根位址或 /v1 位址，影像 API 使用同一位址。';
+      '使用 OpenAI Chat /v1/chat/completions：messages 內放 JSON 繪圖參數，回傳 Markdown PNG 圖片。填寫根位址或 /v1 位址，全程共用一個 URL。';
 
   @override
   String get auth_openAiCompatibleWarning =>
-      '使用原生 JSON /v1 介面，透過 /v1/models 驗證。固定訂閱數值僅為佔位，不代表實際餘額。每次生成均收取基本費用，即使預估為 0 Anlas。僅回傳最終影像，無串流預覽。原生請求沒有伺服器端預算上限，請向服務商確認計費。';
+      '登入僅驗證 /v1/models，不試畫。繪圖使用 OpenAI Chat，不呼叫原生 /v1/ai 生成介面。餘額與實際費用未知；每次生成都有基本費用，即使本機預估為 0 Anlas。Vibe 編碼與快取由伺服器處理，其預算欄位被忽略。僅回傳最終影像，不自動重試，請向服務商確認計費。';
 
   @override
   String get auth_thirdPartyCompatibilityHint =>
-      '第三方站點需相容 NovelAI 影像生成 API；Token 將按 Bearer 方式傳送。未實作 /user/subscription 的站點將略過訂閱資訊。';
+      '服務商須支援在 OpenAI Chat messages 內接收 JSON 繪圖參數，並回傳 Markdown PNG 圖片。Token 按 Bearer 方式傳送；登入不查詢 /user/subscription。';
 
   @override
   String get auth_thirdPartyStreamingHint =>
-      '若第三方站點不支援串流生成，請前往「設定 > 生成 > 影象輸出」，關閉「串流預覽」後再生成。';
+      '自訂介面透過 OpenAI Chat 回傳最終影像，不提供中間串流預覽，也不自動重試。';
+
+  @override
+  String get updateCustomDistributionTitle => 'Custom API：手動更新';
+
+  @override
+  String get updateCustomDistributionHint =>
+      '此獨立預覽版已停用自動檢查更新與應用程式內安裝。請開啟本分支 Releases 頁面，選擇最新預發佈版本，核對檢查碼後手動安裝。本分支發佈清單不是上游受信任的簽章更新清單。';
 
   @override
   String get anlas_thirdPartyUnavailable => '目前站點不提供 Anlas 餘額資訊';

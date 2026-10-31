@@ -1,42 +1,72 @@
-# NAI Launcher Custom API 4.3.1 Preview 1
+# NAI Launcher Custom API 4.3.1 Preview 2
+
+> **Preview 2 尚未发布 / 尚未發佈 / Not yet published.** 等待主发布流程上传附件并完成验证。 / Upload and verification by the main release process are pending.
+
+Tag: `custom-api-v4.3.1-preview.2` · Asset version: `4.3.1-custom-api-preview.2`
+
+[Release / 下载 / 下載](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2)
 
 ## 简体中文
 
-这是 `cunzaijiang/NAI-Launcher-Custom-API` 的独立修改版预览发布，来自 `custom-api` 分支，**不是上游官方发行版**。预览版可能存在尚未发现的问题；请先备份数据。如遇异常，请通过“设置 → 关于 → 导出诊断日志”反馈，并在反馈中删除 Token 等敏感信息。
+这是 `cunzaijiang/NAI-Launcher-Custom-API` 的独立修改版预览，**不是上游官方发行版**。可能存在尚未发现的问题，请先备份。如遇异常，请通过“设置 → 关于 → 导出诊断日志”反馈，分享前删除 Token 等敏感信息。
 
-### 自定义接口
+### Preview 2 的变化
 
-- 官方 NovelAI 登录入口保留；自定义接口使用原生 JSON `/v1` 协议，不是任意 OpenAI 图片 API 的通用适配器。
-- 登录仅验证 `/v1/models`，不触发试画。支持精确模型 ID：`nai-diffusion-4-full`、`nai-diffusion-4-5-full`、`nai-diffusion-4-5-curated`、`nai-diffusion-5-full`、`nai-diffusion-5-curated`。
-- 生成使用 `/v1/ai/generate-image`，Vibe 编码使用 `/v1/ai/encode-vibe`；服务商决定实际能力。流式端点仅返回最终图像，不提供中间预览。
-- 第三方余额、订阅资格与费用视为未知；**每次生成都有基础费用，即使客户端显示 0 Anlas**。请向服务商确认计价与限额。Token、提示词与参考图会发送至您配置的服务商，请仅使用可信地址。
+- 官方 NovelAI 登录与生成路线保持不变。自定义入口改为 **OpenAI Chat `/v1/chat/completions`**：外层 `model` / `messages`，消息内容携带 JSON 绘图 payload，结果仅接受 Markdown 内联 PNG data URI，不支持 HTTPS/HTTP 远程图片 URL。不是普通聊天，也不是任意 `/v1/images/generations` 服务通用适配器。
+- 登录只验证 `/v1/models`，不试画、不查询占位订阅。五模型精确白名单：V4 Full、V4.5 Full/Curated、V5 Full/Curated；不支持 V5 Medium 与 V5 Vibe / Precise Reference。服务商仍决定实际生成与编辑能力。
+- 自定义绘图不调用原生 `/v1/ai` 生成、流式生成或编码端点；仅最终图像，没有中间流式预览，不自动重试或协议回退。
+- Chat Vibe 发送原始参考图，由服务端编码与缓存，其预算字段被忽略。当前客户端不持久保存或复用返回的 `vibe_cache_ids`，不保证跨请求缓存复用。独立原生 Encode 工具不属于绘图链路，不能用其结果推导 Chat Vibe 能力。
+- 余额、订阅资格、实际费用仍为未知；**每次生成都有基础费用，即使本地预估为 0 Anlas**。本地预估不是服务商报价，Vibe 预算不是硬上限；Agent/MCP 需确认未知费用。Token、提示词、参数与所需图像会发送给所填服务商，请仅使用可信站点。
+- 应用内 GitHub 入口改为本分支。**独立预览版禁用自动检查更新与应用内下载安装**，“检查更新”仅提供本分支 Releases 手动下载入口；不读取或解析上游签名更新清单，也不将本分支下载清单伪装为受信任更新。请选择最新预发布版本，核对校验值并手动安装。旧 Preview 1 包不变，需手动升级。
 
-### 下载、签名与更新边界
+参考字段契约：`controlnet: {strength: 1, images: [{image, info_extracted, strength}]}` 与 `character_references` 数组；不是 `precise_reference`。
 
-- **Android APK**：重新构建的 release 模式 APK，使用本次托管 runner 临时生成的 Android debug key 签名，可安装但不是上游官方签名。应用 ID 仍为 `com.aaalice.nai_launcher`；不能覆盖不同签名的上游安装，也不保证不同预览构建之间直接覆盖安装。卸载前请备份，卸载可能删除本地数据。
-- **macOS Portable.zip**：重新构建的应用包，无 Apple Developer ID 签名且未公证；仅有 Apple silicon 运行所需的 ad-hoc 签名。Gatekeeper 可能阻止打开。只在确认来源与 SHA-256 后通过系统允许的方式打开，不要全局关闭系统安全保护。
-- **Windows Portable.zip / Setup.exe**：重新构建的 x64 应用与随包 MCP CLI，沿用仓库 NSIS 安装器配方，不使用上游证书；未做 Authenticode 签名，可能出现 SmartScreen 提示。便携版解压使用，安装版可能与已有上游应用使用相同安装目录，安装前请备份并关闭运行中的应用。
-- 四个二进制包由同一不可变源码 SHA 构建，不复制上游应用成品。应用内部基础版本仍为 `4.3.1+46`；独立预览身份由文件名、发布 tag 与清单标识。
-- 附带 `checksums.txt`、`release_manifest.json`、`release_notes_custom_api.md`。校验文件覆盖四个二进制包、清单与说明，清单记录真实 SHA-256、大小及源码 SHA。校验值不等于发布者数字签名。
-- 清单仅用于此独立预览的下载溯源，**不是上游受信任自动更新清单**。请手动安装并核对来源；本次发布不修改应用现有更新逻辑，不承诺应用内更新能获取或保留此修改版。云盘 OAuth 等需要项目自身注册的功能不随包提供上游凭据。
-- GitHub 自动提供 Source code ZIP/TAR.GZ，指向同一发布 tag；源码归档不是可直接运行的安装包，也不包含由 Git LFS 管理的完整数据库内容。
+### 下载、签名与来源边界
+
+四个包名与 [三语 README](../../README.md) 一致：
+
+| 平台 | 文件 |
+| --- | --- |
+| Windows | `NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.2_Setup.exe` |
+| Windows | `NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.2_Portable.zip` |
+| Android | `NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.2.apk` |
+| macOS | `NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.2_Portable.zip` |
+
+- 四个二进制包须从同一不可变源码 SHA 重建，不复制上游应用成品。内部基础版本仍为 `4.3.1+46`，独立预览身份由 tag、文件名及清单标识。发布是否完成、实际大小、来源 SHA 与 SHA-256 以 Release 实际附件为准，文档不代替上传验证。
+- Windows x64 Portable / NSIS Setup 无 Authenticode 签名，可能触发 SmartScreen；安装目录可能与上游重叠。macOS 仅 ad-hoc 签名，无 Apple Developer ID 且未公证，Gatekeeper 可能阻止打开。核对来源与哈希，不要全局关闭系统安全保护。
+- Android 是 release 模式、runner 临时 debug key 签名，不是上游官方签名。应用 ID 仍为 `com.aaalice.nai_launcher`；不能覆盖不同签名的上游安装，也不保证不同预览构建间直接覆盖。安装、卸载前备份，卸载可能删除本地数据。
+- 附带 `checksums.txt`、`release_manifest.json`、`release_notes_custom_api.md`。校验文件覆盖四个二进制包、清单与说明；清单记录真实 SHA-256、大小与源码 SHA。校验值不等于发布者数字签名，清单仅用于独立下载溯源，不是上游受信任签名更新格式。
+- GitHub 自动提供同 tag 的 Source code ZIP/TAR.GZ，源码归档不是安装包，也不包含完整 Git LFS 数据库。需要自有注册的云盘 OAuth 等功能不含上游凭据。
+- 没有真实服务地址、密钥或付费端到端验证；离线测试通过不保证任意第三方服务可用。具体协议与验证范围见 [custom_api.md](../custom_api.md) 和 [custom_api_verification.md](../custom_api_verification.md)。
 
 ## 繁體中文
 
-這是 `cunzaijiang/NAI-Launcher-Custom-API` 的獨立修改版預覽，**不是上游官方發行版**。請先備份資料；如遇異常，請透過「設定 → 關於 → 匯出診斷日誌」回報，並移除 Token 等敏感資訊。
+這是 `cunzaijiang/NAI-Launcher-Custom-API` 的獨立 Preview 2，**不是上游官方發行版**。請先備份；如遇異常，請透過「設定 → 關於 → 匯出診斷日誌」回報，並移除 Token 等敏感資訊。
 
-自訂介面採用原生 JSON `/v1` 協定，登入僅驗證 `/v1/models`，不試畫；支援 V4 Full、V4.5 Full/Curated、V5 Full/Curated。生成及 Vibe 能力由服務商決定，串流僅提供最終影像。第三方餘額與費用未知；**每次生成都有基本費用，即使用戶端顯示 0 Anlas**。Token、提示詞及參考圖會傳送至所填服務商，請僅使用可信位址。
+- 官方登入與生成不變。自訂繪圖使用 **OpenAI Chat `/v1/chat/completions`**，外層 `model` / `messages`，訊息內容為 JSON 繪圖 payload，僅接受 Markdown 行內 PNG data URI，不支援 HTTPS/HTTP 遠端圖片 URL；不是一般聊天或通用 `/v1/images/generations` 介接。
+- 登入只驗證 `/v1/models`，不試畫或查詢佔位訂閱。精確支援 V4 Full、V4.5 Full/Curated、V5 Full/Curated，不支援 V5 Medium 或 V5 Vibe / Precise Reference。實際能力由服務商決定。
+- 繪圖不呼叫原生 `/v1/ai` 生成、串流或編碼端點；僅最終影像，沒有中間預覽、自動重試或協定回退。Chat Vibe 傳送原始參考圖，由伺服器編碼與快取，預算欄位被忽略；目前用戶端不持久儲存或重用 `vibe_cache_ids`，不保證跨請求快取重用；獨立原生 Encode 不屬於繪圖鏈路。
+- 餘額及實際費用未知，**即使本機預估 0 Anlas，生成仍有基本費用**。本機預估不是報價，Vibe 預算不是硬上限，Agent/MCP 須確認未知費用。Token、提示詞與圖片傳送至所填服務商，請僅使用可信站點。
+- GitHub 及手動更新入口改為本分支。自動檢查與應用程式內下載安裝停用，不解析上游簽章清單或將獨立清單當作可信任更新。請從 Releases 最新預發佈版本手動下載、核對檢查碼後安裝；舊 Preview 1 套件不變。
 
-四個二進位套件由同一不可變 SHA 重建：Android release 模式 APK 使用本次 runner 臨時 debug key，不能覆蓋不同簽章的上游安裝，也不保證不同預覽可直接覆蓋；macOS 僅 ad-hoc 簽章，無 Developer ID 且未公證；Windows x64 Portable 與 NSIS Setup 均未做 Authenticode 簽章。應用程式 ID、基礎版本及安裝位置沿用原專案，安裝／解除安裝前請備份。系統可能提示安全警告，請核對來源與雜湊，不要全域停用安全保護。
+參考欄位為 `controlnet: {strength: 1, images: [{image, info_extracted, strength}]}` 與 `character_references` 陣列，不是 `precise_reference`。
 
-附帶真實檔案大小、SHA-256、來源 SHA 的獨立清單、檢查碼與說明；GitHub 自動提供來源 ZIP/TAR.GZ（不含完整 LFS 資料庫）。清單不是上游可信任自動更新中繼資料；本次不修改應用程式原有更新邏輯，請手動安裝，不保證應用程式內更新保留修改版。雲端硬碟 OAuth 等功能不含上游憑證。詳情見上方簡體中文與 `docs/custom_api.md`。
+四個套件名稱見上表，須由同一不可變來源 SHA 重建；內部版本仍為 `4.3.1+46`。Windows 無 Authenticode、macOS 僅 ad-hoc 且未公證、Android release 模式使用 runner 臨時 debug key；應用程式 ID 與安裝位置沿用上游，不能覆蓋不同簽章安裝，不保證預覽間可直接升級。安裝／解除安裝前備份，不要全域停用安全保護。
+
+實際附件、大小與雜湊以 Release 為準。`checksums.txt`、獨立清單與說明記錄來源，不是數位簽章或可信任自動更新中繼資料。來源封存檔不是安裝包且缺少完整 LFS 資料庫；不含上游雲端 OAuth 憑證。未進行真實服務或付費端對端測試。詳見 [使用說明](../custom_api.md) 與 [驗證範圍](../custom_api_verification.md)。
 
 ## English
 
-This is an independently modified preview from `cunzaijiang/NAI-Launcher-Custom-API`, branch `custom-api`, **not an official upstream release**. Back up your data first. Report problems using Settings → About → Export diagnostic logs, removing tokens and other sensitive data before sharing.
+This is independent Preview 2 from `cunzaijiang/NAI-Launcher-Custom-API`, **not an official upstream release**. Back up first. Report issues through Settings → About → Export diagnostic logs, removing tokens and other sensitive data before sharing.
 
-The custom entry uses native JSON `/v1`, not a generic OpenAI image API adapter. Login validates `/v1/models` without generating an image. Supported exact models are V4 Full, V4.5 Full/Curated, and V5 Full/Curated as listed above. Generation and Vibe capabilities depend on your provider; streaming returns final images only. Third-party balances and costs are unknown. **Every generation has a base fee, even if the client shows 0 Anlas.** Tokens, prompts, and reference images go to your configured provider; use trusted endpoints only.
+- Official login and generation remain unchanged. Custom drawing now uses **OpenAI Chat `/v1/chat/completions`**, with outer `model` / `messages`, a JSON drawing payload inside message content, and only inline Markdown PNG data URI results; HTTPS/HTTP remote image URLs are unsupported. This is not ordinary chat or a generic `/v1/images/generations` adapter.
+- Login only validates `/v1/models`, without test drawing or placeholder subscription queries. The exact allowlist is V4 Full, V4.5 Full/Curated, and V5 Full/Curated; no V5 Medium or V5 Vibe / Precise Reference. Actual capabilities depend on the provider.
+- Drawing never calls native `/v1/ai` generation, streaming or encoding endpoints. Final images only; no intermediate previews, automatic retries or protocol fallback. Chat Vibe sends raw reference images for server-side encoding/cache; its budget field is ignored. The client does not persist or reuse returned `vibe_cache_ids`; cross-request cache reuse is not guaranteed. Independent native Encode is not part of drawing.
+- Balance and actual costs are unknown. **Every generation has a base fee, even if the local estimate is 0 Anlas.** Local estimates are not provider quotes; Vibe budgets are not hard caps, and Agent/MCP requires unknown-cost confirmation. Tokens, prompts and images go to your configured provider; use trusted sites only.
+- In-app GitHub and manual update entries now point to this fork. Automatic checks and in-app download/installation are disabled. Neither upstream signed metadata nor this fork's independent manifest is parsed as a trusted update. Choose the latest prerelease on Releases, verify checksums and install manually. Existing Preview 1 packages remain unchanged.
 
-All four binary packages are rebuilt from one immutable source SHA; no upstream application binaries are republished. Android is a release-mode APK signed with an ephemeral runner debug key, not the upstream key. Its unchanged application ID prevents replacing a differently signed installation; upgrades between preview builds are not guaranteed. Back up before uninstalling, which can erase local data. macOS has only an ad-hoc signature, no Developer ID and no notarization. Windows x64 Portable and the existing NSIS Setup recipe have no Authenticode signature; installation locations can overlap upstream installations. Operating systems may warn or block launch. Check provenance and hashes; do not globally disable security protections.
+Reference fields are `controlnet: {strength: 1, images: [{image, info_extracted, strength}]}` and a `character_references` array, not `precise_reference`.
 
-The internal base version remains `4.3.1+46`; filenames, tag, and manifest identify this preview. `checksums.txt` covers the four packages, `release_manifest.json`, and `release_notes_custom_api.md`. The independent manifest records actual hashes, sizes, and source SHA; checksums are not publisher signatures. It is **not trusted upstream automatic-update metadata**. Install manually: this release does not change the app's existing updater and does not promise in-app updates will retain the modifications. Upstream credentials are not included for features such as cloud-drive OAuth. GitHub's automatic source ZIP/TAR.GZ archives reference the same tag but are not installable packages and omit full Git LFS database content. See `docs/custom_api.md` for API details.
+The four filenames are listed above and must be rebuilt from one immutable source SHA, without copying upstream binaries. The internal version remains `4.3.1+46`. Windows lacks Authenticode; macOS has ad-hoc signing only, no Developer ID or notarization; Android is release-mode with an ephemeral runner debug key. Application IDs and installation locations are inherited, preventing differently signed replacements and potentially overlapping upstream installations. Upgrades between previews are not guaranteed. Back up before installation/uninstallation, which may erase local data; do not globally disable security protections.
+
+Publication, sizes, source SHA and hashes are established by actual Release attachments, not by these notes. `checksums.txt`, `release_manifest.json` and `release_notes_custom_api.md` document provenance, not publisher signatures or trusted automatic-update metadata. GitHub source archives are not installers and omit full LFS databases. Upstream cloud OAuth credentials are not included. No real-service or paid end-to-end tests have been performed; offline passing tests cannot establish arbitrary provider compatibility. See the [API guide](../custom_api.md) and [verification scope](../custom_api_verification.md).
