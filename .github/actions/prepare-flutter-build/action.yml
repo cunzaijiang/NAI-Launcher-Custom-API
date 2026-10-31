@@ -5,6 +5,10 @@ inputs:
   flutter-version:
     description: Exact Flutter SDK version used by the repository.
     required: true
+  bootstrap-from-source:
+    description: Bootstrap the pinned official Flutter tag instead of downloading a release SDK archive.
+    required: false
+    default: "false"
   cache-namespace:
     description: Prefix used to isolate this repository's build caches.
     required: false
@@ -26,6 +30,7 @@ runs:
   using: composite
   steps:
     - name: Setup Flutter
+      if: inputs.bootstrap-from-source != 'true'
       id: flutter
       uses: subosito/flutter-action@v2
       with:
@@ -34,6 +39,64 @@ runs:
         cache: ${{ inputs.cache-flutter-sdk }}
         pub-cache: ${{ inputs.cache-pub-dependencies }}
         pub-cache-key: "${{ inputs.cache-namespace }}-flutter-pub-:os:-:channel:-:version:-:arch:-:hash:"
+
+    - name: Checkout official Flutter source
+      if: inputs.bootstrap-from-source == 'true'
+      uses: actions/checkout@v6
+      with:
+        repository: flutter/flutter
+        ref: ${{ inputs.flutter-version }}
+        fetch-depth: 1
+        fetch-tags: true
+        persist-credentials: false
+        path: tool/.tmp/flutter-sdk
+
+    - name: Bootstrap and verify official Flutter source
+      if: inputs.bootstrap-from-source == 'true'
+      shell: pwsh
+      env:
+        REQUESTED_FLUTTER_VERSION: ${{ inputs.flutter-version }}
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $expectedVersion = '3.47.5'
+        $expectedFramework = '6a19cca56475dbfba1478ee68d7bd0c2ef891da1'
+        $expectedEngine = 'af7e796e161ae0bb1ff0758c71a7105418bd9ded'
+        if ($env:REQUESTED_FLUTTER_VERSION -ne $expectedVersion) {
+          throw "Source bootstrap is pinned to Flutter $expectedVersion."
+        }
+        $sdk = Join-Path $env:GITHUB_WORKSPACE 'tool/.tmp/flutter-sdk'
+        $head = & git -C $sdk rev-parse HEAD
+        if ($LASTEXITCODE -ne 0 -or $head -ne $expectedFramework) {
+          throw 'Official Flutter framework commit mismatch.'
+        }
+        $tag = & git -C $sdk rev-parse "refs/tags/${expectedVersion}^{commit}"
+        if ($LASTEXITCODE -ne 0 -or $tag -ne $expectedFramework) {
+          throw 'Official Flutter release tag mismatch.'
+        }
+        $engine = (Get-Content -LiteralPath "$sdk/bin/internal/engine.version" -Raw -Encoding UTF8).Trim()
+        if ($engine -ne $expectedEngine) {
+          throw 'Official Flutter engine pin mismatch.'
+        }
+        ./scripts/verify_flutter_sources.ps1
+        $bin = Join-Path $sdk 'bin'
+        Add-Content -LiteralPath $env:GITHUB_PATH -Value $bin -Encoding UTF8
+        $env:PATH = "$bin$([IO.Path]::PathSeparator)$env:PATH"
+        # Bootstrap separately so first-run progress cannot contaminate machine JSON.
+        & flutter --suppress-analytics --version
+        if ($LASTEXITCODE -ne 0) {
+          throw 'Official Flutter source bootstrap failed.'
+        }
+        $machineOutput = & flutter --suppress-analytics --version --machine
+        if ($LASTEXITCODE -ne 0) {
+          throw 'Unable to read the bootstrapped Flutter version.'
+        }
+        $version = ($machineOutput -join "`n") | ConvertFrom-Json
+        if ($version.frameworkVersion -ne $expectedVersion -or
+            $version.frameworkRevision -ne $expectedFramework -or
+            $version.engineRevision -ne $expectedEngine) {
+          throw 'Bootstrapped Flutter framework/engine identity mismatch.'
+        }
+        $machineOutput | Write-Output
 
     - name: Restore generated-code cache
       uses: actions/cache@v6

@@ -12,13 +12,23 @@ on:
         options:
           - debug
           - release
+      publish-release:
+        description: Publish a custom API Windows portable pre-release (release mode only)
+        required: true
+        default: false
+        type: boolean
+      release-tag:
+        description: New custom-api-v<version>-preview.<number> tag (never use v* tags)
+        required: true
+        default: custom-api-v4.3.1-preview.1
+        type: string
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
-  group: windows-portable-${{ github.ref }}-${{ inputs.build-mode || 'release' }}
-  cancel-in-progress: true
+  group: windows-portable-${{ inputs.publish-release && inputs.release-tag || format('{0}-{1}', github.ref, inputs.build-mode || 'release') }}
+  cancel-in-progress: false
 
 env:
   FLUTTER_VERSION: "3.47.5"
@@ -45,6 +55,28 @@ jobs:
         uses: actions/checkout@v6
         with:
           lfs: false
+
+      - name: Validate pre-release request
+        if: inputs.publish-release
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.release-tag }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:GITHUB_REPOSITORY -cne 'cunzaijiang/NAI-Launcher-Custom-API') {
+            throw 'Publishing is only allowed in cunzaijiang/NAI-Launcher-Custom-API.'
+          }
+          if ($env:BUILD_MODE -cne 'release') {
+            throw 'Pre-release publishing requires build-mode=release.'
+          }
+          # This namespace cannot trigger the upstream release.yml v* tag workflow.
+          if ($env:RELEASE_TAG -cnotmatch '\Acustom-api-v[0-9]+\.[0-9]+\.[0-9]+-preview\.[1-9][0-9]*\z') {
+            throw 'Use a new custom-api-v<major>.<minor>.<patch>-preview.<number> tag.'
+          }
+
+      - name: Verify official Flutter dependency sources
+        shell: pwsh
+        run: ./scripts/verify_flutter_sources.ps1
 
       - name: Download verified bundled database
         shell: pwsh
@@ -77,15 +109,44 @@ jobs:
             -DirectoryPath $env:BUNDLE_PATH `
             -ExpectedVersion $version
 
+      # Tests must run even when the exact portable bundle was restored.
       - name: Prepare incremental Flutter build
-        if: steps.portable-cache.outputs.cache-hit != 'true'
         uses: ./.github/actions/prepare-flutter-build
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
+          bootstrap-from-source: "true"
           cache-namespace: ${{ env.WINDOWS_CACHE_NAMESPACE }}
           cache-flutter-sdk: ${{ vars.WINDOWS_FLUTTER_SDK_CACHE || 'true' }}
           cache-pub-dependencies: ${{ vars.WINDOWS_PUB_CACHE || 'true' }}
-          cache-windows-build: "true"
+          # Do not overwrite an exact bundle with the incremental native cache.
+          cache-windows-build: ${{ steps.portable-cache.outputs.cache-hit != 'true' && 'true' || 'false' }}
+
+      - name: Run custom API regression tests (600 second watchdog)
+        shell: pwsh
+        timeout-minutes: 11
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tests = @(
+            'test/core/constants/api_constants_test.dart'
+            'test/core/network/request_builders/nai_image_request_builder_test.dart'
+            'test/data/datasources/remote/nai_auth_api_service_test.dart'
+            'test/data/datasources/remote/nai_compatible_transport_test.dart'
+            'test/presentation/agent_chat/services/agent_tool_permission_controller_test.dart'
+            'test/presentation/agent_chat/services/generation_toolbox_test.dart'
+            'test/presentation/mcp/services/mcp_approval_coordinator_test.dart'
+            'test/presentation/providers/cost_estimate_provider_test.dart'
+            'test/presentation/providers/image_generation_provider_test.dart'
+            'test/presentation/providers/generation/generation_request_preparation_service_test.dart'
+            'test/presentation/providers/generation/image_generation_coordinator_test.dart'
+            'test/presentation/screens/generation/widgets/model_option_controls_test.dart'
+            'test/presentation/widgets/auth/login_form_container_test.dart'
+          )
+          # Use a child pwsh because the watchdog exits with the Flutter exit code.
+          & pwsh -NoProfile -File ./scripts/run_flutter_tests.ps1 `
+            -Path ($tests -join ',') -NoPub -TimeoutSeconds 600
+          if ($LASTEXITCODE -ne 0) {
+            throw "Custom API regression tests failed (exit $LASTEXITCODE)."
+          }
 
       - name: Setup NuGet
         if: steps.portable-cache.outputs.cache-hit != 'true'
@@ -143,11 +204,107 @@ jobs:
           path: ${{ env.BUNDLE_PATH }}
           key: ${{ env.WINDOWS_CACHE_NAMESPACE }}-portable-v${{ env.PORTABLE_RECIPE_VERSION }}-${{ runner.os }}-${{ env.FLUTTER_VERSION }}-${{ inputs.build-mode || 'release' }}-${{ steps.build-inputs.outputs.fingerprint }}
 
+      - name: Create portable SHA-256 checksum
+        id: checksum
+        shell: pwsh
+        env:
+          ARCHIVE_PATH: ${{ steps.package.outputs.archive-path }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $hash = (Get-FileHash -LiteralPath $env:ARCHIVE_PATH -Algorithm SHA256).Hash.ToLowerInvariant()
+          $checksumPath = "$env:ARCHIVE_PATH.sha256"
+          $archiveName = [IO.Path]::GetFileName($env:ARCHIVE_PATH)
+          "$hash  $archiveName" | Set-Content -LiteralPath $checksumPath -Encoding utf8NoBOM
+          "checksum-path=$checksumPath" >> $env:GITHUB_OUTPUT
+
       - name: Upload Windows portable artifact
         uses: actions/upload-artifact@v6
         with:
           name: nai-launcher-windows-${{ inputs.build-mode || 'release' }}-portable
-          path: ${{ steps.package.outputs.archive-path }}
+          path: |
+            ${{ steps.package.outputs.archive-path }}
+            ${{ steps.checksum.outputs.checksum-path }}
           if-no-files-found: error
           retention-days: 7
           compression-level: 0
+
+      # Default success() ensures publishing cannot run after a failed test,
+      # package verification, checksum, cache save, or Actions artifact upload.
+      - name: Publish custom API Windows portable pre-release
+        if: inputs.publish-release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ inputs.release-tag }}
+          SOURCE_REF: ${{ github.ref }}
+          ARCHIVE_PATH: ${{ steps.package.outputs.archive-path }}
+          CHECKSUM_PATH: ${{ steps.checksum.outputs.checksum-path }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Get-Command gh -ErrorAction Stop | Out-Null
+          $sourceSha = (& git rev-parse --verify 'HEAD^{commit}').Trim()
+          if ($LASTEXITCODE -ne 0 -or $sourceSha -cne $env:GITHUB_SHA) {
+            throw 'Checkout commit does not match the workflow source SHA.'
+          }
+
+          # Fail closed: only a definite HTTP 404 means the tag/release is free.
+          # Auth, network and rate-limit errors must not be treated as absence.
+          function Assert-GitHubResourceAbsent([string]$Endpoint) {
+            $response = (& gh api --include $Endpoint 2>&1) -join "`n"
+            $exitCode = $LASTEXITCODE
+            if ($exitCode -eq 0) {
+              throw "Refusing to reuse an existing tag or release: $env:RELEASE_TAG"
+            }
+            if ($response -notmatch '(?m)^HTTP/\S+ 404(?:\s|$)') {
+              throw "Cannot safely verify release availability: $response"
+            }
+          }
+          Assert-GitHubResourceAbsent "repos/$env:GH_REPO/git/ref/tags/$env:RELEASE_TAG"
+          Assert-GitHubResourceAbsent "repos/$env:GH_REPO/releases/tags/$env:RELEASE_TAG"
+
+          $notesPath = Join-Path $env:RUNNER_TEMP 'custom-api-windows-release-notes.md'
+          @"
+          ## 自定义接口 Windows 便携预览版 / Custom API Windows portable preview
+
+          > 这是修改源码的 CI 构建，不是上游官方发行版。定向回归测试通过不代表已验证真实第三方 API；未进行付费 API、实际出图或 Vibe 编码验证，也未进行人工 Windows 启动验收。
+          > Modified-source CI build, not an upstream official release. Regression tests do not verify live providers. No paid API, real image generation, Vibe encoding, or manual Windows launch verification was performed.
+
+          ### 运行 / Run
+          - 下载 Portable.zip 并完整解压到可写的新文件夹，然后运行 nai_launcher.exe；不要在 ZIP 内运行，也不要只复制 EXE。保留 DLL、data、assets 及所有随包文件。
+          - Download Portable.zip, extract the entire folder, then run nai_launcher.exe. Do not run inside the ZIP or copy only the EXE; retain all bundled DLLs and data/assets.
+          - 此程序未签名，Windows SmartScreen/杀毒软件可能警告。请核对来源与 .sha256 校验文件，了解风险后再运行；校验值不等于代码签名或安全保证。
+          - Unsigned binary: Windows SmartScreen/antivirus may warn. Verify the source and SHA-256 checksum before deciding to run; a checksum is not a signature or security guarantee.
+
+          ### 自定义接口 / Custom API
+          - 登录时选择“自定义接口”，填写可信服务的根地址或 /v1 地址、昵称及 API Key；无需独立图像地址。不会内置服务地址或真实密钥。
+          - Choose Custom API and enter a trusted root or /v1 URL, nickname and API key. No separate image URL is needed; no service address or real key is bundled.
+          - 登录仅检查 GET /v1/models；生成使用原生 JSON /v1/ai/generate-image，而非任意 OpenAI 图片接口。余额与费用未知不代表免费，每次生成都可能收费，请先向服务商确认。
+          - Login checks GET /v1/models only; generation uses native JSON /v1/ai/generate-image, not arbitrary OpenAI image APIs. Unknown balance/cost does not mean free: confirm all charges with your provider.
+          - [完整使用说明 / Full instructions](https://github.com/$env:GH_REPO/blob/$sourceSha/docs/custom_api.md)
+
+          ### 构建来源 / Build provenance
+          - Source ref: $env:SOURCE_REF
+          - Source SHA: $sourceSha
+          - Build mode: $env:BUILD_MODE
+          - Flutter SDK: $env:FLUTTER_VERSION (official source)
+          - [CI run](https://github.com/$env:GH_REPO/actions/runs/$env:GITHUB_RUN_ID)
+
+          发布仅使用 custom-api-* 标签，不触发上游 v* 正式发布流程，不替换 latest；已有 tag/release 一律拒绝复用。若发布中断留下 draft/tag，请先人工核查，再选择新的 preview 编号；不会覆盖已有资产。
+          Only custom-api-* tags are used, never upstream v* tags or latest. Existing tags/releases are refused. If interrupted, inspect any draft/tag and choose a new preview number; assets are never overwritten.
+          "@ | Set-Content -LiteralPath $notesPath -Encoding utf8NoBOM
+
+          # Stage as a draft so incomplete uploads are not advertised as runnable.
+          & gh release create $env:RELEASE_TAG --repo $env:GH_REPO `
+            --target $sourceSha --draft --prerelease --latest=false `
+            --title "Custom API $env:RELEASE_TAG - Windows portable preview" `
+            --notes-file $notesPath
+          if ($LASTEXITCODE -ne 0) { throw 'Failed to create a new draft pre-release.' }
+
+          # gh upload refuses duplicate asset names by default; never use --clobber.
+          & gh release upload $env:RELEASE_TAG $env:ARCHIVE_PATH $env:CHECKSUM_PATH --repo $env:GH_REPO
+          if ($LASTEXITCODE -ne 0) { throw 'Asset upload failed; the pre-release remains a draft for inspection.' }
+
+          & gh release edit $env:RELEASE_TAG --repo $env:GH_REPO --draft=false --prerelease --latest=false
+          if ($LASTEXITCODE -ne 0) { throw 'Failed to publish the completed draft pre-release.' }
+          "Published pre-release: https://github.com/$env:GH_REPO/releases/tag/$env:RELEASE_TAG" >> $env:GITHUB_STEP_SUMMARY
