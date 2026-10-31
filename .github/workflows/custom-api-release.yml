@@ -216,7 +216,7 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $PSNativeCommandUseErrorActionPreference = $true
-          flutter build macos --release --no-pub --config-only
+          flutter build macos --release --config-only
           # Do not require an upstream Developer ID, signing team, or private key.
           xcodebuild -workspace macos/Runner.xcworkspace -scheme Runner -configuration Release -derivedDataPath build/macos CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
           $app = 'build/macos/Build/Products/Release/Aaalice NAI Launcher.app'
@@ -240,7 +240,7 @@ jobs:
             Remove-Item "Env:$name" -ErrorAction SilentlyContinue
           }
           if (Test-Path -LiteralPath android/key.properties) { throw 'Unexpected Android signing configuration.' }
-          flutter build apk --release --no-pub
+          flutter build apk --release
           $apk = 'build/app/outputs/flutter-apk/app-release.apk'
           if (!(Test-Path -LiteralPath $apk) -or (Get-Item -LiteralPath $apk).Length -le 0) { throw 'APK is missing or empty.' }
           $buildTools = Get-ChildItem "$env:ANDROID_HOME/build-tools" -Directory | Sort-Object { [version]($_.Name -replace '-.*$', '') } -Descending
