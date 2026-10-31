@@ -552,6 +552,16 @@ void main() {
             .read(imageSaveSettingsNotifierProvider.notifier)
             .setAutoSave(false);
         container.read(imagesPerRequestProvider.notifier).set(3);
+        final runningImageCounts = <int>[];
+        final subscription = container.listen(
+          imageGenerationNotifierProvider,
+          (_, state) {
+            if (state.status == GenerationStatus.generating) {
+              runningImageCounts.add(state.totalImages);
+            }
+          },
+        );
+        addTearDown(subscription.close);
         await container
             .read(imageGenerationNotifierProvider.notifier)
             .generate(
@@ -562,9 +572,13 @@ void main() {
             );
         final state = container.read(imageGenerationNotifierProvider);
         expect(samples, List.filled(6, 1));
+        expect(runningImageCounts, isNotEmpty);
+        expect(runningImageCounts, everyElement(6));
         expect(state.status, GenerationStatus.completed);
         expect(state.currentImages, hasLength(6));
-        expect(state.totalImages, 6);
+        expect(state.displayImages, hasLength(6));
+        expect(state.currentImage, 0);
+        expect(state.totalImages, 0);
       },
     );
 
