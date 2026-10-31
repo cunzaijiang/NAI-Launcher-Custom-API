@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/network/nai_api_endpoint_service.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../data/datasources/remote/nai_image_generation_api_service.dart';
 import '../../../data/models/image/image_params.dart';
@@ -310,9 +311,14 @@ class BatchGenerationNotifier extends _$BatchGenerationNotifier {
     final processor = dlss.automaticSnapshot();
     final api = ref.read(naiImageGenerationApiServiceProvider);
     final streamPreview = ref.read(generationStreamPreviewSettingsProvider);
+    final isOpenAiCompatible = ref
+        .read(naiApiEndpointServiceProvider)
+        .current
+        .isOpenAiCompatible;
     var reported = false;
     return () => ImageGenerationService(
       apiService: api,
+      isOpenAiCompatible: isOpenAiCompatible,
       postprocess: processor,
       onPostprocessError: (error) {
         if (!reported) {

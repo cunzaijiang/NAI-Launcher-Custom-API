@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/network/nai_api_endpoint_service.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../data/datasources/remote/nai_image_generation_api_service.dart';
 import '../../../data/models/image/image_params.dart';
@@ -115,6 +116,10 @@ class StreamGenerationNotifier extends _$StreamGenerationNotifier {
     final dlss = ref.read(dlssProvider);
     final service = ImageGenerationService(
       apiService: ref.read(naiImageGenerationApiServiceProvider),
+      isOpenAiCompatible: ref
+          .read(naiApiEndpointServiceProvider)
+          .current
+          .isOpenAiCompatible,
       postprocess: dlss.automaticSnapshot(),
       onPostprocessError: dlss.reportEnhancementError,
       streamPreviewEnabled: ref.read(generationStreamPreviewSettingsProvider),

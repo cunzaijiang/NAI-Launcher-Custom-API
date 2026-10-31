@@ -33,6 +33,54 @@ void main() {
       reset(mockApiService);
     });
 
+    group('Chat paid request safety', () {
+      for (final streamPreview in [false, true]) {
+        for (final batch in [false, true]) {
+          test(
+            '429 is attempted once per image (preview=$streamPreview, batch=$batch)',
+            () async {
+              var streamCalls = 0;
+              var nonStreamCalls = 0;
+              when(() => mockApiService.generateImageStream(any())).thenAnswer((
+                _,
+              ) {
+                streamCalls++;
+                return Stream.value(ImageStreamChunk.error('API_ERROR_429'));
+              });
+              when(
+                () => mockApiService.generateImage(
+                  any(),
+                  onProgress: any(named: 'onProgress'),
+                ),
+              ).thenAnswer((_) async {
+                nonStreamCalls++;
+                throw StateError('API_ERROR_429');
+              });
+              service = ImageGenerationService(
+                apiService: mockApiService,
+                isOpenAiCompatible: true,
+                streamPreviewEnabled: streamPreview,
+                delay: (_) async => fail('Chat must not schedule retries'),
+              );
+              final result = batch
+                  ? await service.generateBatch(
+                      const ImageParams(),
+                      batchCount: 1,
+                      batchSize: 2,
+                    )
+                  : await service.generateSingle(const ImageParams());
+              final requestedImages = batch ? 2 : 1;
+              expect(streamCalls, streamPreview ? requestedImages : 0);
+              expect(nonStreamCalls, streamPreview ? 0 : requestedImages);
+              expect(result.isSuccess, isFalse);
+              expect(result.error, contains('API_ERROR_429'));
+              expect(result.images, isEmpty);
+            },
+          );
+        }
+      }
+    });
+
     group('generateSingle', () {
       test('should return successful result with generated image', () async {
         const params = ImageParams(
@@ -86,9 +134,8 @@ void main() {
       test('should return error result when stream throws error', () async {
         const params = ImageParams(prompt: 'test prompt');
 
-        when(
-          () => mockApiService.generateImageStream(any()),
-        ).thenAnswer((_) => Stream.error(Exception('Stream error')));
+        when(() => mockApiService.generateImageStream(any()))
+            .thenAnswer((_) => Stream.error(Exception('Stream error')));
 
         final result = await service.generateSingle(params);
 
@@ -241,9 +288,9 @@ void main() {
         await service.generateSingle(params);
 
         final capturedParams =
-            verify(
-                  () => mockApiService.generateImageStream(captureAny()),
-                ).captured.single
+            verify(() => mockApiService.generateImageStream(captureAny()))
+                    .captured
+                    .single
                 as ImageParams;
         expect(capturedParams.nSamples, 1);
       });
@@ -276,18 +323,17 @@ void main() {
         final imageBytes1 = Uint8List.fromList([1, 2, 3]);
         final imageBytes2 = Uint8List.fromList([4, 5, 6]);
 
-        when(() => mockApiService.generateImageStream(any())).thenAnswer((
-          invocation,
-        ) {
-          final capturedParams =
-              invocation.positionalArguments[0] as ImageParams;
-          // Return different bytes based on seed
-          if (capturedParams.seed == 42) {
-            return Stream.value(ImageStreamChunk.complete(imageBytes1));
-          } else {
-            return Stream.value(ImageStreamChunk.complete(imageBytes2));
-          }
-        });
+        when(() => mockApiService.generateImageStream(any()))
+            .thenAnswer((invocation) {
+              final capturedParams =
+                  invocation.positionalArguments[0] as ImageParams;
+              // Return different bytes based on seed
+              if (capturedParams.seed == 42) {
+                return Stream.value(ImageStreamChunk.complete(imageBytes1));
+              } else {
+                return Stream.value(ImageStreamChunk.complete(imageBytes2));
+              }
+            });
 
         final result = await service.generateBatch(
           params,
@@ -335,12 +381,11 @@ void main() {
 
         final completer = Completer<void>();
 
-        when(() => mockApiService.generateImageStream(any())).thenAnswer((
-          _,
-        ) async* {
-          await completer.future;
-          yield ImageStreamChunk.complete(imageBytes);
-        });
+        when(() => mockApiService.generateImageStream(any()))
+            .thenAnswer((_) async* {
+              await completer.future;
+              yield ImageStreamChunk.complete(imageBytes);
+            });
 
         when(() => mockApiService.cancelGeneration(any())).thenReturn(null);
 
@@ -396,14 +441,13 @@ void main() {
 
           final capturedSeeds = <int>[];
 
-          when(() => mockApiService.generateImageStream(any())).thenAnswer((
-            invocation,
-          ) {
-            final capturedParams =
-                invocation.positionalArguments[0] as ImageParams;
-            capturedSeeds.add(capturedParams.seed);
-            return Stream.value(ImageStreamChunk.complete(imageBytes));
-          });
+          when(() => mockApiService.generateImageStream(any()))
+              .thenAnswer((invocation) {
+                final capturedParams =
+                    invocation.positionalArguments[0] as ImageParams;
+                capturedSeeds.add(capturedParams.seed);
+                return Stream.value(ImageStreamChunk.complete(imageBytes));
+              });
 
           await service.generateBatch(params, batchCount: 2, batchSize: 2);
 
@@ -462,12 +506,11 @@ void main() {
           final releaseStream = Completer<void>();
           final imageBytes = Uint8List.fromList([1, 2, 3]);
 
-          when(() => mockApiService.generateImageStream(any())).thenAnswer((
-            _,
-          ) async* {
-            await releaseStream.future;
-            yield ImageStreamChunk.complete(imageBytes);
-          });
+          when(() => mockApiService.generateImageStream(any()))
+              .thenAnswer((_) async* {
+                await releaseStream.future;
+                yield ImageStreamChunk.complete(imageBytes);
+              });
           when(() => mockApiService.cancelGeneration(any())).thenReturn(null);
 
           final future = service.generateSingle(params);
@@ -606,9 +649,8 @@ void main() {
       test('should handle unrelated stream errors gracefully', () async {
         const params = ImageParams(prompt: 'test prompt');
 
-        when(
-          () => mockApiService.generateImageStream(any()),
-        ).thenAnswer((_) => Stream.error(Exception('Temporary error')));
+        when(() => mockApiService.generateImageStream(any()))
+            .thenAnswer((_) => Stream.error(Exception('Temporary error')));
 
         final result = await service.generateSingle(params);
 

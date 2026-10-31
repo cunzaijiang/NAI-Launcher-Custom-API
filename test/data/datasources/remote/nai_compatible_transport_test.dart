@@ -315,6 +315,68 @@ void main() {
     },
   );
 
+  test('invalid edit numeric ranges never reach the adapter', () async {
+    final source = _png(64, 64);
+    final mask = Uint8List.fromList(
+      img.encodePng(
+        img.Image(width: 64, height: 64)..clear(img.ColorRgb8(255, 255, 255)),
+      ),
+    );
+    for (final params in [
+      ImageParams(
+        action: ImageGenerationAction.img2img,
+        sourceImage: source,
+        strength: 0,
+      ),
+      ImageParams(
+        action: ImageGenerationAction.img2img,
+        sourceImage: source,
+        strength: 1,
+      ),
+      ImageParams(
+        action: ImageGenerationAction.img2img,
+        sourceImage: source,
+        noise: 1,
+      ),
+      ImageParams(
+        action: ImageGenerationAction.img2img,
+        sourceImage: source,
+        noise: double.nan,
+      ),
+      ImageParams(
+        action: ImageGenerationAction.infill,
+        sourceImage: source,
+        maskImage: mask,
+        inpaintStrength: 0,
+      ),
+      ImageParams(
+        action: ImageGenerationAction.infill,
+        sourceImage: source,
+        maskImage: mask,
+        inpaintStrength: double.infinity,
+      ),
+    ]) {
+      await expectLater(
+        service.generateImage(
+          params.copyWith(
+            model: 'nai-diffusion-4-5-full',
+            width: 64,
+            height: 64,
+          ),
+        ),
+        throwsA(
+          isA<ArgumentError>().having(
+            (error) => error.toString(),
+            'detail',
+            contains('finite number in'),
+          ),
+        ),
+      );
+    }
+    expect(adapter.requests, isEmpty);
+    expect(activity.isActive, false);
+  });
+
   test('encoded-only Vibe fails explicitly before network', () async {
     await expectLater(
       service.generateImage(

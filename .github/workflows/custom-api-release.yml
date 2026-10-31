@@ -120,12 +120,13 @@ jobs:
             'test/presentation/screens/generation/widgets/model_option_controls_test.dart'
             'test/presentation/widgets/auth/login_form_container_test.dart'
             'test/core/network/nai_chat_image_codec_test.dart'
+            'test/core/services/image_generation_service_test.dart'
             'test/core/services/update_check_service_test.dart'
             'test/presentation/widgets/update_check_dialog_test.dart'
             'test/presentation/widgets/update_dialog_layout_test.dart'
             'test/presentation/widgets/common/adaptive_dialog_presenter_integration_test.dart'
           )
-          if ($tests.Count -ne 18) { throw 'Expected exactly 18 regression suites.' }
+          if ($tests.Count -ne 19) { throw 'Expected exactly 19 regression suites.' }
           foreach ($test in $tests) {
             if (!(Test-Path -LiteralPath $test -PathType Leaf)) { throw "Missing regression suite: $test" }
           }

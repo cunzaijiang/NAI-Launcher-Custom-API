@@ -30,16 +30,17 @@ class ImageGenerationResult {
       ImageGenerationResult(images: const [], error: message);
 }
 
-typedef GenerationProgressCallback =
-    void Function(
-      int current,
-      int total,
-      double progress, {
-      Uint8List? previewImage,
-    });
+typedef GenerationProgressCallback = void Function(
+  int current,
+  int total,
+  double progress, {
+  Uint8List? previewImage,
+});
 
-typedef GenerationStepProgressCallback =
-    void Function(int? currentStep, int? totalSteps);
+typedef GenerationStepProgressCallback = void Function(
+  int? currentStep,
+  int? totalSteps,
+);
 
 /// Backward-compatible facade over [ImageGenerationCoordinator].
 ///
@@ -55,11 +56,13 @@ class ImageGenerationService {
     ],
     Future<void> Function(Duration) delay = Future<void>.delayed,
     this.streamPreviewEnabled = true,
+    bool isOpenAiCompatible = false,
     ImagePostprocessor? postprocess,
     void Function(Object)? onPostprocessError,
   }) : _apiService = apiService,
        _coordinator = ImageGenerationCoordinator(
          apiService: apiService,
+         isOpenAiCompatible: isOpenAiCompatible,
          retryDelays: retryDelays,
          delay: delay,
          postprocess: postprocess,

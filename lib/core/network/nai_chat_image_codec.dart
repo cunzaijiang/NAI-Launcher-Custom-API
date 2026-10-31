@@ -75,6 +75,8 @@ abstract final class NAIChatImageCodec {
       throw ArgumentError('Chat inpainting requires a mask');
     }
     if (params.action == ImageGenerationAction.img2img) {
+      _validateRange(native['strength'], 'i2i.strength', 0.01, 0.99);
+      _validateRange(native['noise'], 'i2i.noise', 0, 0.99);
       draw['i2i'] = {
         'image': native['image'],
         'strength': native['strength'],
@@ -83,10 +85,13 @@ abstract final class NAIChatImageCodec {
           'seed': native['extra_noise_seed'],
       };
     } else if (params.action == ImageGenerationAction.infill) {
+      final strength =
+          native['inpaintImg2ImgStrength'] ?? params.inpaintStrength;
+      _validateRange(strength, 'inpaint.strength', 0.01, 1);
       draw['inpaint'] = {
         'image': native['image'],
         'mask': native['mask'],
-        'strength': native['inpaintImg2ImgStrength'] ?? params.inpaintStrength,
+        'strength': strength,
         if (native['extra_noise_seed'] != null)
           'seed': native['extra_noise_seed'],
       };
@@ -141,6 +146,16 @@ abstract final class NAIChatImageCodec {
       ],
       'stream': false,
     };
+  }
+
+  static void _validateRange(Object? value, String field, num min, num max) {
+    if (value is! num || !value.isFinite || value < min || value > max) {
+      throw ArgumentError.value(
+        value,
+        field,
+        'Chat drawing $field must be a finite number in [$min, $max]',
+      );
+    }
   }
 
   static List<Map<String, dynamic>> _characters(Map<String, dynamic> native) {
