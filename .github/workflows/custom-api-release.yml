@@ -218,7 +218,7 @@ jobs:
           $PSNativeCommandUseErrorActionPreference = $true
           flutter build macos --release --config-only
           # Do not require an upstream Developer ID, signing team, or private key.
-          xcodebuild -workspace macos/Runner.xcworkspace -scheme Runner -configuration Release -derivedDataPath build/macos CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+          xcodebuild -workspace macos/Runner.xcworkspace -scheme Runner -configuration Release -derivedDataPath build/macos CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO 'OTHER_CFLAGS=$(inherited) -include TargetConditionals.h' build
           $app = 'build/macos/Build/Products/Release/Aaalice NAI Launcher.app'
           if (!(Test-Path -LiteralPath $app -PathType Container)) { throw 'macOS app bundle is missing.' }
           ./scripts/build_mcp_cli.ps1 -OutputPath "$app/Contents/MacOS/nai_launcher_mcp"

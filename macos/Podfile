@@ -38,15 +38,5 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_macos_build_settings(target)
-
-    # 2.11.0 public headers test TARGET_OS_OSX before importing an SDK header.
-    # Initialize it for both Objective-C and Swift's Clang module importer.
-    if target.name == 'video_player_avfoundation'
-      target.build_configurations.each do |config|
-        settings = config.build_settings
-        settings['OTHER_CFLAGS'] = Array(settings['OTHER_CFLAGS'] || '$(inherited)') + ['-include', 'TargetConditionals.h']
-        settings['OTHER_SWIFT_FLAGS'] = Array(settings['OTHER_SWIFT_FLAGS'] || '$(inherited)') + ['-Xcc', '-include', '-Xcc', 'TargetConditionals.h']
-      end
-    end
   end
 end
