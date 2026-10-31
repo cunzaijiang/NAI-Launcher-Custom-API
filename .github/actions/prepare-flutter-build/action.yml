@@ -51,7 +51,7 @@ runs:
           throw 'Source bootstrap is pinned to Flutter 3.47.5.'
         }
         $sdk = Join-Path $env:GITHUB_WORKSPACE 'tool/.tmp/flutter-sdk'
-        & git clone --depth 1 --branch $env:REQUESTED_FLUTTER_VERSION https://github.com/flutter/flutter.git $sdk
+        & git -c core.longpaths=true clone --depth 1 --branch $env:REQUESTED_FLUTTER_VERSION https://github.com/flutter/flutter.git $sdk
         if ($LASTEXITCODE -ne 0) {
           throw 'Unable to clone the pinned official Flutter source.'
         }
