@@ -381,7 +381,10 @@ jobs:
           $paths = @(Get-ChildItem -LiteralPath release-assets -File | Sort-Object Name | ForEach-Object FullName)
           # No --clobber. A partial upload stays a draft and must be inspected manually.
           gh release upload $tag @paths --repo $repo
-          $release = (gh api "repos/$repo/releases/tags/$tag") | ConvertFrom-Json
+          $releasePages = (gh api --paginate --slurp "repos/$repo/releases?per_page=100") | ConvertFrom-Json
+          $matchingReleases = @($releasePages | ForEach-Object { $_ } | Where-Object tag_name -EQ $tag)
+          if ($matchingReleases.Count -ne 1) { throw 'Expected exactly one matching draft release.' }
+          $release = (gh api "repos/$repo/releases/$($matchingReleases[0].id)") | ConvertFrom-Json
           if (!$release.draft -or !$release.prerelease -or $release.assets.Count -ne 7) { throw 'Draft release has unexpected state or assets.' }
           foreach ($asset in $release.assets) {
             $local = Get-Item -LiteralPath "release-assets/$($asset.name)"
