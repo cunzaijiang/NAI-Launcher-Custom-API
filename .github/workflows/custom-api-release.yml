@@ -1,0 +1,405 @@
+name: Custom API Preview Release
+
+# Deliberately separate from upstream's v* tag workflow. Dispatch on custom-api.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: custom-api-v4.3.1-preview.1
+  cancel-in-progress: false
+
+env:
+  FLUTTER_VERSION: "3.47.5"
+  PUB_HOSTED_URL: https://pub.dev
+  RELEASE_TAG: custom-api-v4.3.1-preview.1
+  RELEASE_REPOSITORY: cunzaijiang/NAI-Launcher-Custom-API
+  ASSET_VERSION: 4.3.1-custom-api-preview.1
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  prepare:
+    name: Lock preview source identity
+    if: github.repository == 'cunzaijiang/NAI-Launcher-Custom-API' && github.ref == 'refs/heads/custom-api'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      source_sha: ${{ steps.identity.outputs.source_sha }}
+      app_version: ${{ steps.identity.outputs.app_version }}
+    steps:
+      - name: Checkout dispatch commit without LFS payloads
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.sha }}
+          lfs: false
+          persist-credentials: false
+      - name: Verify immutable source and preview version
+        id: identity
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          $sha = (git rev-parse --verify 'HEAD^{commit}').Trim().ToLowerInvariant()
+          if ($sha -cne $env:EXPECTED_SHA -or $sha -notmatch '^[0-9a-f]{40}$') {
+            throw 'Checkout is not the immutable dispatch commit.'
+          }
+          $version = (Select-String -LiteralPath pubspec.yaml -Pattern '^version:\s*(\S+)\s*$').Matches.Groups[1].Value
+          if ($version -notmatch '^4\.3\.1\+[0-9]+$') {
+            throw "Expected upstream base version 4.3.1 with a numeric build number; found $version."
+          }
+          if (!(Test-Path -LiteralPath docs/releases/custom_api_preview.md -PathType Leaf)) {
+            throw 'Preview release notes are missing from this source commit.'
+          }
+          # matching-refs returns [] for a missing tag; API/auth failures stay fatal.
+          $refs = (gh api "repos/$env:RELEASE_REPOSITORY/git/matching-refs/tags/$env:RELEASE_TAG") | ConvertFrom-Json
+          if (@($refs | Where-Object ref -EQ "refs/tags/$env:RELEASE_TAG").Count -ne 0) {
+            throw 'Preview tag already exists. Never overwrite a published or failed preview; use a new tag.'
+          }
+          "source_sha=$sha" >> $env:GITHUB_OUTPUT
+          "app_version=$version" >> $env:GITHUB_OUTPUT
+
+  validate:
+    name: Gate all builds on 13 custom API regression suites
+    needs: prepare
+    runs-on: windows-2022
+    timeout-minutes: 60
+    steps:
+      - name: Checkout immutable preview source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ needs.prepare.outputs.source_sha }}
+          lfs: false
+          persist-credentials: false
+      - name: Verify source commit
+        env:
+          EXPECTED_SHA: ${{ needs.prepare.outputs.source_sha }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          if ((git rev-parse HEAD).Trim() -cne $env:EXPECTED_SHA) { throw 'Source SHA mismatch.' }
+      - name: Download hash-verified bundled database
+        run: ./scripts/prepare_bundled_database.ps1
+      - name: Prepare exact official Flutter source and generated code
+        uses: ./.github/actions/prepare-flutter-build
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          bootstrap-from-source: "true"
+          cache-namespace: custom-api-preview-validation
+          cache-windows-build: "false"
+      - name: Validate bundled database and locked dependency sources
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          ./scripts/verify_flutter_sources.ps1
+          git diff --exit-code -- pubspec.lock
+          dart run tool/tag_catalog/verify_bundled_databases.dart
+      - name: Run all 13 custom API regression test files with watchdog
+        timeout-minutes: 12
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          $tests = @(
+            'test/core/constants/api_constants_test.dart'
+            'test/core/network/request_builders/nai_image_request_builder_test.dart'
+            'test/data/datasources/remote/nai_auth_api_service_test.dart'
+            'test/data/datasources/remote/nai_compatible_transport_test.dart'
+            'test/presentation/agent_chat/services/agent_tool_permission_controller_test.dart'
+            'test/presentation/agent_chat/services/generation_toolbox_test.dart'
+            'test/presentation/mcp/services/mcp_approval_coordinator_test.dart'
+            'test/presentation/providers/cost_estimate_provider_test.dart'
+            'test/presentation/providers/generation/generation_request_preparation_service_test.dart'
+            'test/presentation/providers/generation/image_generation_coordinator_test.dart'
+            'test/presentation/providers/image_generation_provider_test.dart'
+            'test/presentation/screens/generation/widgets/model_option_controls_test.dart'
+            'test/presentation/widgets/auth/login_form_container_test.dart'
+          )
+          if ($tests.Count -ne 13) { throw 'Expected exactly 13 regression suites.' }
+          foreach ($test in $tests) {
+            if (!(Test-Path -LiteralPath $test -PathType Leaf)) { throw "Missing regression suite: $test" }
+          }
+          ./scripts/run_flutter_tests.ps1 -Path $tests -TimeoutSeconds 600 -Concurrency 4 -NoPub
+
+  build:
+    name: Build ${{ matrix.platform }} from validated source
+    needs: [prepare, validate]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows
+            runner: windows-2022
+          - platform: macos
+            runner: macos-14
+          - platform: android
+            runner: ubuntu-24.04
+    steps:
+      - name: Checkout identical immutable preview source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ needs.prepare.outputs.source_sha }}
+          lfs: false
+          persist-credentials: false
+      - name: Verify checked out source
+        env:
+          EXPECTED_SHA: ${{ needs.prepare.outputs.source_sha }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          if ((git rev-parse HEAD).Trim() -cne $env:EXPECTED_SHA) { throw 'Source SHA mismatch.' }
+      - name: Download hash-verified bundled database
+        run: ./scripts/prepare_bundled_database.ps1
+      - name: Setup Android JDK
+        if: matrix.platform == 'android'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Setup Windows NuGet
+        if: matrix.platform == 'windows'
+        uses: NuGet/setup-nuget@v4
+        with:
+          nuget-version: latest
+      - name: Install existing Windows installer toolchain
+        if: matrix.platform == 'windows'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          # The repository recipe is NSIS (.nsi), not Inno Setup (.iss).
+          choco install nsis -y --no-progress
+          ./scripts/verify_nuget.ps1
+      - name: Verify macOS CocoaPods
+        if: matrix.platform == 'macos'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          pod --version
+      - name: Prepare exact official Flutter source and generated code
+        uses: ./.github/actions/prepare-flutter-build
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          bootstrap-from-source: "true"
+          cache-namespace: custom-api-preview-${{ matrix.platform }}
+          cache-windows-build: "false"
+      - name: Validate bundled database and unchanged lockfile
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          ./scripts/verify_flutter_sources.ps1
+          git diff --exit-code -- pubspec.lock
+          dart run tool/tag_catalog/verify_bundled_databases.dart
+      - name: Build and package Windows portable and installer
+        if: matrix.platform == 'windows'
+        env:
+          APP_VERSION: ${{ needs.prepare.outputs.app_version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          flutter build windows --release --no-pub
+          ./scripts/build_mcp_cli.ps1 -OutputPath build/windows/x64/runner/Release/nai_launcher_mcp.exe
+          ./scripts/package_windows_release.ps1 -Version $env:APP_VERSION -SkipFlutterBuild -DistDir tool/.tmp/custom-api-packages
+          $portable = "tool/.tmp/custom-api-packages/NAI_Launcher_Windows_$($env:APP_VERSION)_Portable.zip"
+          ./scripts/verify_windows_portable_package.ps1 -ArchivePath $portable -ExpectedVersion $env:APP_VERSION
+          New-Item -ItemType Directory -Path release-assets -Force | Out-Null
+          Copy-Item -LiteralPath $portable -Destination "release-assets/NAI_Launcher_Custom_API_Windows_$($env:ASSET_VERSION)_Portable.zip"
+          Copy-Item -LiteralPath "tool/.tmp/custom-api-packages/NAI_Launcher_Windows_$($env:APP_VERSION)_Setup.exe" -Destination "release-assets/NAI_Launcher_Custom_API_Windows_$($env:ASSET_VERSION)_Setup.exe"
+      - name: Build and package macOS portable (ad-hoc only, not notarized)
+        if: matrix.platform == 'macos'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          flutter build macos --release --no-pub --config-only
+          # Do not require an upstream Developer ID, signing team, or private key.
+          xcodebuild -workspace macos/Runner.xcworkspace -scheme Runner -configuration Release -derivedDataPath build/macos CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+          $app = 'build/macos/Build/Products/Release/Aaalice NAI Launcher.app'
+          if (!(Test-Path -LiteralPath $app -PathType Container)) { throw 'macOS app bundle is missing.' }
+          ./scripts/build_mcp_cli.ps1 -OutputPath "$app/Contents/MacOS/nai_launcher_mcp"
+          # Apple silicon requires an ad-hoc signature; this is NOT Developer ID signing.
+          codesign --force --deep --sign - $app
+          codesign --verify --deep --strict $app
+          New-Item -ItemType Directory -Path release-assets -Force | Out-Null
+          ditto -c -k --sequesterRsrc --keepParent $app "release-assets/NAI_Launcher_Custom_API_macOS_$($env:ASSET_VERSION)_Portable.zip"
+      - name: Build and verify installable debug-signed release-mode Android APK
+        if: matrix.platform == 'android'
+        env:
+          APP_VERSION: ${{ needs.prepare.outputs.app_version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          # android/app/build.gradle intentionally falls back to signingConfigs.debug.
+          # No upstream or personal release keystore is read, embedded, or required.
+          foreach ($name in @('ANDROID_KEYSTORE_PATH', 'ANDROID_KEYSTORE_PASSWORD', 'ANDROID_KEY_ALIAS', 'ANDROID_KEY_PASSWORD')) {
+            Remove-Item "Env:$name" -ErrorAction SilentlyContinue
+          }
+          if (Test-Path -LiteralPath android/key.properties) { throw 'Unexpected Android signing configuration.' }
+          flutter build apk --release --no-pub
+          $apk = 'build/app/outputs/flutter-apk/app-release.apk'
+          if (!(Test-Path -LiteralPath $apk) -or (Get-Item -LiteralPath $apk).Length -le 0) { throw 'APK is missing or empty.' }
+          $buildTools = Get-ChildItem "$env:ANDROID_HOME/build-tools" -Directory | Sort-Object { [version]($_.Name -replace '-.*$', '') } -Descending
+          $signer = $buildTools | ForEach-Object { Join-Path $_.FullName 'apksigner' } | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+          $aapt = $buildTools | ForEach-Object { Join-Path $_.FullName 'aapt' } | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+          if (!$signer -or !$aapt) { throw 'Android verification tools are unavailable.' }
+          $certificate = (& $signer verify --verbose --print-certs $apk) -join "`n"
+          if ($certificate -notmatch 'CN=Android Debug' -or $certificate -notmatch 'Number of signers: 1(?:\s|$)') {
+            throw 'Expected exactly one preview debug signer, never an upstream release identity.'
+          }
+          $badging = (& $aapt dump badging $apk) -join "`n"
+          $parts = $env:APP_VERSION -split '\+'
+          if (!$badging.Contains("name='com.aaalice.nai_launcher'") -or
+              !$badging.Contains("versionName='$($parts[0])'") -or !$badging.Contains("versionCode='$($parts[1])'")) {
+            throw 'Android package or app version mismatch.'
+          }
+          New-Item -ItemType Directory -Path release-assets -Force | Out-Null
+          Copy-Item -LiteralPath $apk -Destination "release-assets/NAI_Launcher_Custom_API_Android_$($env:ASSET_VERSION).apk"
+      - name: Require nonempty platform packages
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $files = @(Get-ChildItem -LiteralPath release-assets -File)
+          $expectedCount = if ('${{ matrix.platform }}' -eq 'windows') { 2 } else { 1 }
+          if ($files.Count -ne $expectedCount -or @($files | Where-Object Length -LE 0).Count -ne 0) {
+            throw 'Missing, extra, or empty platform packages.'
+          }
+      - name: Upload rebuilt preview packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: custom-api-${{ matrix.platform }}-${{ needs.prepare.outputs.source_sha }}
+          path: release-assets/*
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+
+  publish:
+    name: Verify complete assets and publish one independent prerelease
+    needs: [prepare, validate, build]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_SHA: ${{ needs.prepare.outputs.source_sha }}
+      APP_VERSION: ${{ needs.prepare.outputs.app_version }}
+    steps:
+      - name: Checkout identical source for release notes
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ needs.prepare.outputs.source_sha }}
+          lfs: false
+          persist-credentials: false
+      - name: Download all three platform artifacts from this run only
+        uses: actions/download-artifact@v4
+        with:
+          pattern: custom-api-*-${{ needs.prepare.outputs.source_sha }}
+          path: release-assets
+          merge-multiple: true
+      - name: Generate truthful independent preview manifest, notes, and checksums
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          if ((git rev-parse HEAD).Trim() -cne $env:SOURCE_SHA) { throw 'Source SHA mismatch.' }
+          $expected = @(
+            @{ fileName = "NAI_Launcher_Custom_API_Android_$($env:ASSET_VERSION).apk"; platform = 'android'; type = 'android-apk'; signing = 'ephemeral-debug-key-not-upstream' }
+            @{ fileName = "NAI_Launcher_Custom_API_macOS_$($env:ASSET_VERSION)_Portable.zip"; platform = 'macos'; type = 'macos-portable'; signing = 'ad-hoc-no-developer-id-not-notarized' }
+            @{ fileName = "NAI_Launcher_Custom_API_Windows_$($env:ASSET_VERSION)_Portable.zip"; platform = 'windows'; type = 'windows-portable'; signing = 'unsigned' }
+            @{ fileName = "NAI_Launcher_Custom_API_Windows_$($env:ASSET_VERSION)_Setup.exe"; platform = 'windows'; type = 'windows-installer'; signing = 'unsigned' }
+          )
+          $files = @(Get-ChildItem -LiteralPath release-assets -File -Recurse)
+          if ($files.Count -ne 4) { throw 'Expected exactly four rebuilt binary packages.' }
+          $assets = @(foreach ($item in $expected) {
+            $file = Get-Item -LiteralPath "release-assets/$($item.fileName)"
+            if ($file.Length -le 0) { throw "Empty package: $($file.Name)" }
+            [ordered]@{
+              platform = $item.platform
+              type = $item.type
+              fileName = $file.Name
+              downloadUrl = "https://github.com/$env:RELEASE_REPOSITORY/releases/download/$env:RELEASE_TAG/$([uri]::EscapeDataString($file.Name))"
+              sha256 = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+              size = $file.Length
+              signing = $item.signing
+            }
+          })
+          $notes = Get-Content -LiteralPath docs/releases/custom_api_preview.md -Raw -Encoding UTF8
+          $notes += "`n`nSource commit: ``$env:SOURCE_SHA```nApp version: ``$env:APP_VERSION```nRelease tag: ``$env:RELEASE_TAG```n"
+          $notes | Set-Content -LiteralPath release-assets/release_notes_custom_api.md -Encoding utf8NoBOM
+          # Deliberately NOT the upstream automatic-update manifest contract.
+          # No upstream signing identity, signed update metadata, or fake signature.
+          [ordered]@{
+            schemaVersion = 1
+            distribution = 'independent-custom-api-preview'
+            repository = $env:RELEASE_REPOSITORY
+            branch = 'custom-api'
+            tag = $env:RELEASE_TAG
+            version = $env:ASSET_VERSION
+            appVersion = $env:APP_VERSION
+            sourceSHA = $env:SOURCE_SHA
+            flutterVersion = $env:FLUTTER_VERSION
+            prerelease = $true
+            upstreamOfficial = $false
+            automaticUpdatesSupported = $false
+            generatedAt = [DateTime]::UtcNow.ToString('o')
+            releaseNotesFile = 'release_notes_custom_api.md'
+            assets = $assets
+          } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath release-assets/release_manifest.json -Encoding utf8NoBOM
+          # Covers all four packages, manifest, and notes; never hashes itself.
+          $lines = @(Get-ChildItem -LiteralPath release-assets -File | Sort-Object Name | ForEach-Object {
+            "$((Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant())  $($_.Name)"
+          })
+          if ($lines.Count -ne 6) { throw 'Expected six checksummed assets.' }
+          $lines | Set-Content -LiteralPath release-assets/checksums.txt -Encoding utf8NoBOM
+          if (@(Get-ChildItem -LiteralPath release-assets -File).Count -ne 7) { throw 'Expected exactly seven release assets.' }
+          foreach ($line in $lines) {
+            $hash, $name = $line -split '  ', 2
+            $file = Get-Item -LiteralPath "release-assets/$name"
+            if ($file.Length -le 0 -or (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant() -cne $hash) {
+              throw "Asset checksum or size validation failed: $name"
+            }
+          }
+      - name: Create never-overwritten tag and draft, upload, verify, then publish
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          $repo = $env:RELEASE_REPOSITORY
+          $tag = $env:RELEASE_TAG
+          # Recheck immediately before writes. Any API/auth/network failure aborts.
+          $refs = (gh api "repos/$repo/git/matching-refs/tags/$tag") | ConvertFrom-Json
+          if (@($refs | Where-Object ref -EQ "refs/tags/$tag").Count -ne 0) { throw 'Tag already exists; refusing to clobber it.' }
+          $releases = (gh api --paginate --slurp "repos/$repo/releases?per_page=100") | ConvertFrom-Json
+          foreach ($page in $releases) {
+            if (@($page | Where-Object tag_name -EQ $tag).Count -ne 0) { throw 'Release already exists, including drafts; refusing to reuse it.' }
+          }
+          # GitHub ref creation fails atomically if another process created this tag.
+          gh api --method POST "repos/$repo/git/refs" -f "ref=refs/tags/$tag" -f "sha=$env:SOURCE_SHA"
+          gh release create $tag --repo $repo --verify-tag --draft --prerelease --latest=false --title "NAI Launcher Custom API 4.3.1 Preview 1 (independent build)" --notes-file release-assets/release_notes_custom_api.md
+          $paths = @(Get-ChildItem -LiteralPath release-assets -File | Sort-Object Name | ForEach-Object FullName)
+          # No --clobber. A partial upload stays a draft and must be inspected manually.
+          gh release upload $tag @paths --repo $repo
+          $release = (gh api "repos/$repo/releases/tags/$tag") | ConvertFrom-Json
+          if (!$release.draft -or !$release.prerelease -or $release.assets.Count -ne 7) { throw 'Draft release has unexpected state or assets.' }
+          foreach ($asset in $release.assets) {
+            $local = Get-Item -LiteralPath "release-assets/$($asset.name)"
+            if ($asset.state -ne 'uploaded' -or $asset.size -ne $local.Length -or $asset.size -le 0) { throw 'Uploaded asset size/state mismatch.' }
+          }
+          # Verify bytes downloaded from GitHub, not only local upload input.
+          $verifyDir = Join-Path $env:RUNNER_TEMP 'custom-api-upload-verification'
+          New-Item -ItemType Directory -Path $verifyDir | Out-Null
+          gh release download $tag --repo $repo --dir $verifyDir
+          foreach ($local in Get-ChildItem -LiteralPath release-assets -File) {
+            $remote = Get-Item -LiteralPath (Join-Path $verifyDir $local.Name)
+            if ($remote.Length -ne $local.Length -or
+                (Get-FileHash -LiteralPath $remote.FullName -Algorithm SHA256).Hash -cne (Get-FileHash -LiteralPath $local.FullName -Algorithm SHA256).Hash) {
+              throw "Uploaded bytes differ: $($local.Name)"
+            }
+          }
+          $ref = (gh api "repos/$repo/git/ref/tags/$tag") | ConvertFrom-Json
+          if ($ref.object.type -ne 'commit' -or $ref.object.sha -cne $env:SOURCE_SHA) { throw 'Preview tag identity changed.' }
+          # This is the ONLY activation step, reached after all builds and checks pass.
+          gh release edit $tag --repo $repo --draft=false --prerelease --latest=false
+          "Published independent preview: https://github.com/$repo/releases/tag/$tag" >> $env:GITHUB_STEP_SUMMARY

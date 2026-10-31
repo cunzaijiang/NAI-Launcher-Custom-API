@@ -42,14 +42,19 @@ runs:
 
     - name: Checkout official Flutter source
       if: inputs.bootstrap-from-source == 'true'
-      uses: actions/checkout@v6
-      with:
-        repository: flutter/flutter
-        ref: ${{ inputs.flutter-version }}
-        fetch-depth: 1
-        fetch-tags: true
-        persist-credentials: false
-        path: tool/.tmp/flutter-sdk
+      shell: pwsh
+      env:
+        REQUESTED_FLUTTER_VERSION: ${{ inputs.flutter-version }}
+      run: |
+        $ErrorActionPreference = 'Stop'
+        if ($env:REQUESTED_FLUTTER_VERSION -cne '3.47.5') {
+          throw 'Source bootstrap is pinned to Flutter 3.47.5.'
+        }
+        $sdk = Join-Path $env:GITHUB_WORKSPACE 'tool/.tmp/flutter-sdk'
+        & git clone --depth 1 --branch $env:REQUESTED_FLUTTER_VERSION https://github.com/flutter/flutter.git $sdk
+        if ($LASTEXITCODE -ne 0) {
+          throw 'Unable to clone the pinned official Flutter source.'
+        }
 
     - name: Bootstrap and verify official Flutter source
       if: inputs.bootstrap-from-source == 'true'
@@ -81,12 +86,14 @@ runs:
         $bin = Join-Path $sdk 'bin'
         Add-Content -LiteralPath $env:GITHUB_PATH -Value $bin -Encoding UTF8
         $env:PATH = "$bin$([IO.Path]::PathSeparator)$env:PATH"
+        $flutter = Join-Path $bin $(if ($IsWindows) { 'flutter.bat' } else { 'flutter' })
+        # Use this checkout explicitly; Unix runners execute the official Bash entrypoint.
         # Bootstrap separately so first-run progress cannot contaminate machine JSON.
-        & flutter --suppress-analytics --version
+        & $flutter --suppress-analytics --version
         if ($LASTEXITCODE -ne 0) {
           throw 'Official Flutter source bootstrap failed.'
         }
-        $machineOutput = & flutter --suppress-analytics --version --machine
+        $machineOutput = & $flutter --suppress-analytics --version --machine
         if ($LASTEXITCODE -ne 0) {
           throw 'Unable to read the bootstrapped Flutter version.'
         }
