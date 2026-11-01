@@ -261,8 +261,9 @@ String _buildRuntimeContext({
         'whether user approval is needed before execution. Do not ask a duplicate '
         'question in chat or through ask_user_question. Unknown cost is not free: '
         'report it as unknown and submit with confirmed=true so the application '
-        'can request charge approval. Custom API generations always have a provider '
-        'base fee, even at 0 Anlas, and native requests have no server-side budget '
+        'can request charge approval. Custom API generations may incur base and '
+        'additional fees depending on provider rules; a standard 0 Anlas estimate '
+        'does not guarantee free service. Native requests have no server-side budget '
         'limit. Never infer free service or Opus entitlement from placeholder values. '
         'Use inspect/update/cancel_generation_preparation while pending. '
         'Never claim submission from a preparation result.',

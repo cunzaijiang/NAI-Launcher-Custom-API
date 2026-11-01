@@ -5,6 +5,8 @@ import 'package:nai_launcher/core/utils/localization_extension.dart';
 import 'package:nai_launcher/presentation/providers/generation/image_generation_selectors.dart';
 import 'package:nai_launcher/presentation/widgets/common/themed_button.dart';
 import 'package:nai_launcher/presentation/widgets/common/anlas_cost_badge.dart';
+import 'package:nai_launcher/presentation/widgets/common/provider_pricing_summary.dart';
+import 'package:nai_launcher/presentation/providers/provider_pricing_provider.dart';
 
 /// 集成价格徽章的生成按钮
 class GenerateButtonWithCost extends ConsumerWidget {
@@ -69,7 +71,21 @@ class GenerateButtonWithCost extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final primaryButton = _buildPrimaryButton(context);
+    final providerPricing = ref.watch(customProviderPricingVisibleProvider);
+    final button = _buildPrimaryButton(
+      context,
+      providerPricing: providerPricing,
+    );
+    final primaryButton = providerPricing && showCost && !requiresLogin
+        ? Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              button,
+              const SizedBox(height: 4),
+              ProviderPricingSummary(isGenerating: isGenerating),
+            ],
+          )
+        : button;
 
     final skipButton = ThemedButton(
       onPressed: onSkipCurrent,
@@ -108,7 +124,10 @@ class GenerateButtonWithCost extends ConsumerWidget {
     );
   }
 
-  Widget _buildPrimaryButton(BuildContext context) {
+  Widget _buildPrimaryButton(
+    BuildContext context, {
+    required bool providerPricing,
+  }) {
     final theme = Theme.of(context);
     final cancelTheme = theme.copyWith(
       colorScheme: theme.colorScheme.copyWith(
@@ -177,7 +196,7 @@ class GenerateButtonWithCost extends ConsumerWidget {
                       ? context.l10n.generation_generate
                       : _generateLabelText(context),
                 ),
-                if (showCost && !requiresLogin)
+                if (showCost && !requiresLogin && !providerPricing)
                   AnlasCostBadge(isGenerating: isLoading),
               ],
             ),

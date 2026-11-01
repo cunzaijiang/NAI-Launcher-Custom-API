@@ -8,15 +8,15 @@ permissions:
   contents: read
 
 concurrency:
-  group: custom-api-v4.3.1-preview.2
+  group: custom-api-v4.3.1-preview.3
   cancel-in-progress: false
 
 env:
   FLUTTER_VERSION: "3.47.5"
   PUB_HOSTED_URL: https://pub.dev
-  RELEASE_TAG: custom-api-v4.3.1-preview.2
+  RELEASE_TAG: custom-api-v4.3.1-preview.3
   RELEASE_REPOSITORY: cunzaijiang/NAI-Launcher-Custom-API
-  ASSET_VERSION: 4.3.1-custom-api-preview.2
+  ASSET_VERSION: 4.3.1-custom-api-preview.3
 
 defaults:
   run:
@@ -125,8 +125,17 @@ jobs:
             'test/presentation/widgets/update_check_dialog_test.dart'
             'test/presentation/widgets/update_dialog_layout_test.dart'
             'test/presentation/widgets/common/adaptive_dialog_presenter_integration_test.dart'
+            'test/core/services/provider_pricing_service_test.dart'
+            'test/core/services/provider_generation_usage_store_test.dart'
+            'test/presentation/providers/provider_pricing_provider_test.dart'
+            'test/presentation/providers/provider_billing_provider_test.dart'
+            'test/presentation/widgets/common/provider_price_badge_test.dart'
+            'test/presentation/widgets/generation/provider_billing_summary_test.dart'
+            'test/presentation/widgets/common/anlas_cost_badge_test.dart'
+            'test/presentation/screens/generation/widgets/generation_controls/generate_button_test.dart'
+            'test/data/datasources/remote/nai_image_generation_api_service_test.dart'
           )
-          if ($tests.Count -ne 19) { throw 'Expected exactly 19 regression suites.' }
+          if ($tests.Count -ne 28) { throw 'Expected exactly 28 regression suites.' }
           foreach ($test in $tests) {
             if (!(Test-Path -LiteralPath $test -PathType Leaf)) { throw "Missing regression suite: $test" }
           }
@@ -383,7 +392,7 @@ jobs:
           }
           # GitHub ref creation fails atomically if another process created this tag.
           gh api --method POST "repos/$repo/git/refs" -f "ref=refs/tags/$tag" -f "sha=$env:SOURCE_SHA"
-          gh release create $tag --repo $repo --verify-tag --draft --prerelease --latest=false --title "NAI Launcher Custom API 4.3.1 Preview 2 (OpenAI Chat build)" --notes-file release-assets/release_notes_custom_api.md
+          gh release create $tag --repo $repo --verify-tag --draft --prerelease --latest=false --title "NAI Launcher Custom API 4.3.1 Preview 3 (OpenAI Chat build)" --notes-file release-assets/release_notes_custom_api.md
           $paths = @(Get-ChildItem -LiteralPath release-assets -File | Sort-Object Name | ForEach-Object FullName)
           # No --clobber. A partial upload stays a draft and must be inspected manually.
           gh release upload $tag @paths --repo $repo

@@ -1,5 +1,7 @@
 # NAI Launcher Custom API
 
+> **Preview3 已完成本地验证，正在准备发布，尚未发布。** GitHub 上传发布已获授权，发布准备正在进行；Preview3 下载将在实际发布并回验附件后更新。计划 tag：`custom-api-v4.3.1-preview.3`；文件名版本：`4.3.1-custom-api-preview.3`。本页动态定价说明针对本地开发中的 Preview3，不适用于下方仍可下载的旧 Preview2（不含动态定价）。本地验证：28 文件 604 tests 全通过（`00:19`，exit `0`）；额外 3 文件 Agent 文案 17 tests 全通过；30 文件 scoped analyze `No issues`，共审阅 41 文件。[实际验证记录与未验证项](docs/custom_api_verification.md)。
+
 <p align="center">
   简体中文 · <a href="README.zh-TW.md">繁體中文</a> · <a href="README.en-US.md">English</a>
 </p>
@@ -19,7 +21,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2">下载 Custom API 预览版</a> ·
+  <a href="https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2">下载旧 Preview2（无动态定价）</a> ·
   <a href="docs/releases/custom_api_preview.md">本分支更新说明</a> ·
   <a href="https://github.com/cunzaijiang/NAI-Launcher-Custom-API/issues">反馈本分支问题</a>
 </p>
@@ -28,9 +30,9 @@
 
 本分支以登录页的“自定义接口”为主要入口：只需 **一个 API URL、昵称和 API Key / Token**，支持站点根地址或 `/v1` 地址。Windows、macOS 与 Android 保留上游的本地工具和创作界面，不登录也能先使用本地工具。
 
-## 下载 Custom API Preview 2
+## 旧 Preview2 回退下载（不含动态定价）
 
-**4.3.1 Custom API Preview 2 已公开发布。** [发布页面与校验文件](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2) · [阅读本分支更新说明](docs/releases/custom_api_preview.md)。请使用以下四个实际安装包，不要下载源码归档来安装：
+**旧版 4.3.1 Custom API Preview2 已公开发布，仅作为回退下载，不含 Preview3 动态定价。** [发布页面与校验文件](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2) · [阅读本分支更新说明](docs/releases/custom_api_preview.md)。请使用以下四个实际安装包，不要下载源码归档来安装：
 
 | 平台 | 直接下载安装包 |
 | --- | --- |
@@ -41,7 +43,7 @@
 
 > **预览版与安装风险**：请先备份。Windows 安装版与便携版均未做 Authenticode 签名；macOS 仅 ad-hoc 签名，无 Apple Developer ID 且未公证；Android 为 release 模式、临时 debug key 签名，应用 ID 沿用上游，不能覆盖不同签名的上游安装，也不保证不同预览构建间直接覆盖安装。Windows 安装目录可能与上游重叠；卸载可能删除本地数据。请核对来源与 SHA-256，不要全局关闭系统安全保护。本预览未做真实服务端到端测试，不保证任意第三方站点可用。
 
-> **Preview 2 更新方式**：应用内 GitHub 入口指向本分支；自动检查更新与应用内下载安装已禁用，“检查更新”只提供本分支 [Releases 页面](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases)的手动下载入口。独立预览清单不兼容上游签名更新格式，不会作为可信自动更新解析。旧 Preview 1 包不会因此改变，请从本页手动升级。
+> **旧 Preview2 与本地 Preview3 的更新边界**：应用内 GitHub 入口指向本分支；自动检查更新与应用内下载安装已禁用，“检查更新”只提供本分支 [Releases 页面](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases)的手动下载入口。独立预览清单不兼容上游签名更新格式，不会作为可信自动更新解析。旧 Preview 1 包不会因此改变，请从本页手动升级。
 
 ## 自定义 API 支持边界
 
@@ -49,7 +51,10 @@
 - 登录仅读取 `/v1/models` 验证，不触发试画。仅接受五个精确模型 ID：`nai-diffusion-4-full`、`nai-diffusion-4-5-full`、`nai-diffusion-4-5-curated`、`nai-diffusion-5-full`、`nai-diffusion-5-curated`。
 - **不支持 V5 Medium（节约档）；V5 的 Vibe／Precise Reference 参考功能不可用。** 其他模型的参考图、生成和编辑能力仍取决于服务商；登录成功不等于所有功能可用。仅返回最终图像，没有中间流式预览，失败不自动重试。
 - **Chat Vibe 将原始参考图交给服务端编码与缓存；其预算字段会被忽略。** 当前客户端不持久保存或复用返回的 `vibe_cache_ids`，不保证跨请求缓存复用。 自定义绘图不调用原生 `/v1/ai` 生成或编码端点；独立 Encode 操作不属于绘图链路，不能据此推断 Chat Vibe 能力。
-- 第三方余额、订阅资格和费用均视为**未知**；**每次生成都有基础费用，即使本地预估为 0 Anlas**。本地预估不是服务商报价，Vibe 预算不是硬上限；Agent/MCP 收费操作需确认未知费用，不能以 0 Anlas 自动按免费放行。请向服务商确认价格和限额。
+- **Preview3 动态定价仅适用于精确 origin `https://api.cunzaijiang.cn`**（根地址或 `/v1` 入口，不接受其他站点、子域或代理路径前缀）。独立客户端公开 GET `https://api.cunzaijiang.cn/api/pricing`，不发送 API Key、Authorization 或 Cookie，不跟随重定向；定价读取不是登录或试画。仅解析 V4.5 Full/Curated、V5 Full/Curated 四个模型的受限白名单表达式，不使用 `eval`；未知表达式、模型或站点显示未知，不猜价格，也不把此来源的规则套到其他站点。
+- 保存 `pricing_version` 与获取时间，设备本地持久缓存 TTL 为 1 小时，不进入云备份；已补每小时自动刷新，首次获取失败后每小时重试。点击／触屏或键盘激活价格徽标只刷新价格；刷新失败保留最近成功规则并提示离线／过期，无法估价时显示 `--`。按用户明确要求，报价与 usage 计算值只显示**无单位原始数字**，不显示 USD、CNY 或货币符号，不推断币种。
+- 同步规则所描述的 **NAI4.5 标准基础值为 0，仍可能有附加费用；NAI5 基础值为 0.05**，这些数值随同步费率变化，不是硬编码的稳定承诺。服务商专属 extra-Anlas 估算在有效面积 `≤1048576` 且实际步数 `≤28` 时基础部分为 0，超出则使用现有面积／步数公式；可用的 Precise Reference 每张加 5，Vibe 编码每张每次请求估计 0–2（服务端缓存未知，超过四张的附加费另计），批量按所有独立请求求和。详见[定价公式与边界](docs/custom_api.md)。
+- 响应费用展示使用实际返回的原始 `p` / `c` 代入同步表达式，**不是实际钱包账单**；保留 `p=100000` 与表达式要求 `p=1` 不一致的警告，不改写 usage 来迎合预估。余额、订阅资格和钱包实扣仍未知；官方整数 Anlas 与授权门槛不变，Agent/MCP 仍须确认未知费用，不能因预估为 0 自动按免费放行。Vibe 预算不是硬上限，请向服务商确认价格和限额。
 - API Key / Token、Prompt、参数及所需图像会发送至你填写的站点，请仅使用可信服务。详见[自定义 API 说明](docs/custom_api.md)。
 
 > **下方继承的完整功能介绍以 NovelAI 官方路线为基准，不是自定义接口全部支持的承诺。** 本地图库和词库等工具仍可使用；在线生成、模型、参考图、余额、免费额度和费用行为请以所选路线及上述限制为准。
@@ -163,7 +168,7 @@
 
 ## 🖼️ 界面预览
 
-以下截图沿用上游，仅作界面示意，不代表本分支 Preview 2 的自定义接口外观、支持范围或真实服务测试结果。
+以下截图沿用上游，仅作界面示意，不代表本分支 Preview2／Preview3 的自定义接口外观、支持范围或真实服务测试结果。
 
 ### 🖥️ 桌面端
 
@@ -201,9 +206,9 @@
 
 ## ⚡ 下载与开始使用
 
-### 1. 手动下载并安装当前预览版
+### 1. Preview3 发布前仅提供旧 Preview2 回退安装
 
-Preview 2 已公开发布；请查看[发布页面](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2)，文件名如下（与上方直链一致）：
+旧 Preview2 已公开发布，但不含动态定价；Preview3 尚未发布。回退安装请查看[发布页面](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2)，文件名如下（与上方直链一致）：
 
 | 平台 | 文件 | 用法 |
 | --- | --- | --- |
@@ -212,14 +217,14 @@ Preview 2 已公开发布；请查看[发布页面](https://github.com/cunzaijia
 | Android | [NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.2.apk](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.2/NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.2.apk) | 侧载 debug key 签名 APK；可能需要允许安装未知来源软件，不能覆盖不同签名的上游安装。 |
 | macOS | [NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.2_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.2/NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.2_Portable.zip) | 解压后打开 `Aaalice NAI Launcher.app`；仅 ad-hoc 签名且未公证。 |
 
-本预览附带 `checksums.txt`、`release_manifest.json` 和 `release_notes_custom_api.md`，可核对 SHA-256、文件大小与来源；校验值不等于发布者数字签名。请同时阅读上方安装风险和应用内更新警告。
+旧 Preview2 附带 `checksums.txt`、`release_manifest.json` 和 `release_notes_custom_api.md`，可核对 SHA-256、文件大小与来源；校验值不等于发布者数字签名。请同时阅读上方安装风险和应用内更新警告。
 
 ### 2. 优先使用“自定义接口”
 
 1. 在登录页选择 **“自定义接口”**，不要将第三方 Key 填入官方登录。
 2. 填写 **一个 API URL**：站点根地址或以 `/v1` 结尾的地址均可；例如 `https://provider.example` 或 `https://provider.example/v1/`。主 API 与图像 API 共用此地址，无需另填图像地址或选择协议。
 3. 填写必需的 **昵称** 和 **API Key / Token**。Key 仅保存在当前设备安全存储中，不进入云备份，但验证时会发送至所填站点。
-4. 登录仅请求 `/v1/models`，不会试画；通过验证后，先确认服务商计费与能力，再主动生成。五模型白名单、无 Medium、V5 参考不可用及未知费用限制见上方。
+4. 登录验证仅请求 `/v1/models`，不会试画；Preview3 在受支持站点另行公开读取定价，不使用 Key。通过验证后，先确认服务商计费与能力，再主动生成。五模型白名单、无 Medium、V5 参考不可用及未知费用限制见上方。
 
 **可选：NovelAI 官方路线。** 如需官方服务，可使用 NovelAI 账号密码或 **Persistent API Token** 登录；网页安全验证导致密码登录失败时可改用 Persistent API Token。官方 Token 仅保存在当前设备安全存储中。官方模型与 Anlas 说明不适用于自定义服务的费用承诺。
 
@@ -238,6 +243,7 @@ NAI Launcher 不在项目自有服务器上托管你的账号或作品。只有�
 | 使用的功能 | 数据会发送到哪里 |
 | --- | --- |
 | 生成、图生图、重绘、Vibe 编码 | NovelAI 或你显式配置的第三方图像 API 站点；包括本次请求所需的 Prompt、参数和源图或参考图。第三方 Token 会发送到所填地址，请仅使用可信服务。 |
+| Preview3 公开定价读取 | 仅精确 origin `https://api.cunzaijiang.cn` 的公开 `/api/pricing`；不发送 Key、Cookie、Prompt 或图片，不进行生成。 |
 | 在线画廊搜索与下载 | 你选择的第三方图库；可用性、限流和内容规则由各站点决定。 |
 | AI 翻译或智能代理 | 你配置的模型服务；对话、附加图片和完成任务所需的工具结果可能产生服务费用。 |
 | 同步与备份 | 你选择的 Google Drive、OneDrive、GitHub 或 WebDAV；只上传明确勾选的内容。 |
@@ -252,7 +258,7 @@ NAI Launcher 不在项目自有服务器上托管你的账号或作品。只有�
 
 - 如遇异常，请通过“设置 → 关于 → 导出诊断日志”保存排查信息，并在反馈时一并提供。
 - [提交本分支 Issue](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/issues)：报告可以复现的问题或提出功能建议；分享日志前请删除 Token 等敏感信息。
-- [Preview 2 发布页](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2)并核对校验文件；更新内容见[本分支更新说明](docs/releases/custom_api_preview.md)。请手动升级；Preview 2 不支持应用内安装更新。
+- [旧 Preview2 回退发布页（无动态定价）](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2)并核对校验文件；更新内容见[本分支更新说明](docs/releases/custom_api_preview.md)。Preview3 尚未发布；当前发行版仅支持本分支手动下载，不支持应用内安装更新。
 
 ## 🙏 致谢
 

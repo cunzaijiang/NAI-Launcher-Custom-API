@@ -77,7 +77,8 @@ class QueueToolbox {
   DefinedAgentTool _inspectQueue() => DefinedAgentTool(
     name: 'inspect_generation_queue',
     label: 'Inspect Generation Queue',
-    description: 'Inspect queue execution state and safe summaries of pending, failed, and completed tasks.',
+    description:
+        'Inspect queue execution state and safe summaries of pending, failed, and completed tasks.',
     parameters: toolboxObject(
       properties: {
         'include_completed': {'type': 'boolean'},
@@ -182,7 +183,8 @@ class QueueToolbox {
   DefinedAgentTool _prepareControl() => DefinedAgentTool(
     name: 'prepare_generation_queue_execution',
     label: 'Prepare Generation Queue Execution',
-    description: 'Prepare queue start or resume and return an exact current estimated Anlas total. No task is started.',
+    description:
+        'Prepare queue start or resume and return an exact current estimated Anlas total. No task is started.',
     parameters: toolboxObject(
       properties: {
         'action': {
@@ -240,8 +242,9 @@ class QueueToolbox {
             : estimate,
         if (_ref.read(naiApiEndpointServiceProvider).current.isOpenAiCompatible)
           'billing_warning':
-              'Provider pricing is unknown. Every generation '
-              'has a base fee, even at 0 Anlas; no server-side budget limit.',
+              'Provider pricing is unknown. Base and additional fees may apply '
+              'depending on provider rules; a standard 0 Anlas estimate does not '
+              'guarantee free service. No server-side budget limit.',
         'confirmation_required': true,
       });
     },

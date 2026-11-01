@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/cost_estimate_provider.dart';
+import '../../providers/provider_pricing_provider.dart';
+import 'provider_price_badge.dart';
 
 /// Anlas 成本徽章
 ///
@@ -10,13 +12,15 @@ import '../../providers/cost_estimate_provider.dart';
 class AnlasCostBadge extends ConsumerWidget {
   final bool isGenerating;
 
-  const AnlasCostBadge({
-    super.key,
-    required this.isGenerating,
-  });
+  const AnlasCostBadge({super.key, required this.isGenerating});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (ref.watch(customProviderPricingVisibleProvider)) {
+      return isGenerating
+          ? const SizedBox.shrink()
+          : const ProviderPriceBadge();
+    }
     final isFree = ref.watch(isFreeGenerationProvider);
 
     // 生成中或免费时不显示

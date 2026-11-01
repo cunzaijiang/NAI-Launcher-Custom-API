@@ -9,6 +9,54 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String providerPrice_estimate(String amount) {
+    return '预计 $amount';
+  }
+
+  @override
+  String get providerBillingFromUsage => '按返回用量计算';
+
+  @override
+  String get providerBillingNotWallet => '根据公开价格和返回用量计算，非账户实际扣费';
+
+  @override
+  String get providerBillingEncodingMismatch => '计费用量与 Anlas 编码约定不一致';
+
+  @override
+  String get providerBillingUnknown => '返回用量无法计价';
+
+  @override
+  String get providerBillingModelMissing => '响应未返回计费模型';
+
+  @override
+  String get providerPrice_refresh => '刷新服务商价格';
+
+  @override
+  String get providerPrice_refreshing => '正在刷新服务商价格…';
+
+  @override
+  String get providerPrice_unknown => '此请求的服务商价格未知。';
+
+  @override
+  String providerPrice_details(
+    String base,
+    String additional,
+    String version,
+    String updated,
+  ) {
+    return '模型基础价格：$base\n每 1 Anlas 附加价格：$additional\n规则版本：$version\n更新时间：$updated';
+  }
+
+  @override
+  String get providerPrice_cached => '已缓存的公开价格';
+
+  @override
+  String get providerPrice_stale => '离线或缓存价格已过期，请刷新核实。';
+
+  @override
+  String get providerPrice_disclaimer => '仅为预估，不代表实际扣费。Vibe 区间取决于服务商每次请求的缓存状态。';
+
+  @override
   String get sidebarSort_title => '排序方式';
 
   @override
@@ -459,7 +507,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get auth_openAiCompatibleWarning =>
-      '登录仅验证 /v1/models，不试画。绘图使用 OpenAI Chat，不调用原生 /v1/ai 生成接口。余额与实际费用未知；每次生成都有基础费用，即使本地预估为 0 Anlas。Vibe 编码与缓存由服务端处理，其预算字段被忽略。仅返回最终图像，不自动重试，请向服务商确认计费。';
+      '登录仅验证 /v1/models，不试画。绘图使用 OpenAI Chat，不调用原生 /v1/ai 生成接口。余额与实际费用未知。是否产生基础费与额外费用取决于服务商规则；标准 Anlas 预估为 0 不保证免费。Vibe 编码与缓存由服务端处理，其预算字段被忽略。仅返回最终图像，不自动重试，请向服务商确认计费。';
 
   @override
   String get auth_thirdPartyCompatibilityHint =>
@@ -15550,6 +15598,54 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   AppLocalizationsZhHant() : super('zh_Hant');
 
   @override
+  String providerPrice_estimate(String amount) {
+    return '預計 $amount';
+  }
+
+  @override
+  String get providerBillingFromUsage => '依回傳用量計算';
+
+  @override
+  String get providerBillingNotWallet => '依公開價格和回傳用量計算，非帳戶實際扣費';
+
+  @override
+  String get providerBillingEncodingMismatch => '計費用量與 Anlas 編碼約定不一致';
+
+  @override
+  String get providerBillingUnknown => '回傳用量無法計價';
+
+  @override
+  String get providerBillingModelMissing => '回應未回傳計費模型';
+
+  @override
+  String get providerPrice_refresh => '重新整理服務商價格';
+
+  @override
+  String get providerPrice_refreshing => '正在重新整理服務商價格…';
+
+  @override
+  String get providerPrice_unknown => '此請求的服務商價格未知。';
+
+  @override
+  String providerPrice_details(
+    String base,
+    String additional,
+    String version,
+    String updated,
+  ) {
+    return '模型基本價格：$base\n每 1 Anlas 附加價格：$additional\n規則版本：$version\n更新時間：$updated';
+  }
+
+  @override
+  String get providerPrice_cached => '已快取的公開價格';
+
+  @override
+  String get providerPrice_stale => '離線或快取價格已過期，請重新整理確認。';
+
+  @override
+  String get providerPrice_disclaimer => '僅為預估，不代表實際扣費。Vibe 區間取決於服務商每次請求的快取狀態。';
+
+  @override
   String get sidebarSort_title => '排序方式';
 
   @override
@@ -16000,7 +16096,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get auth_openAiCompatibleWarning =>
-      '登入僅驗證 /v1/models，不試畫。繪圖使用 OpenAI Chat，不呼叫原生 /v1/ai 生成介面。餘額與實際費用未知；每次生成都有基本費用，即使本機預估為 0 Anlas。Vibe 編碼與快取由伺服器處理，其預算欄位被忽略。僅回傳最終影像，不自動重試，請向服務商確認計費。';
+      '登入僅驗證 /v1/models，不試畫。繪圖使用 OpenAI Chat，不呼叫原生 /v1/ai 生成介面。餘額與實際費用未知。是否產生基本費與額外費用取決於服務商規則；標準 Anlas 預估為 0 不保證免費。Vibe 編碼與快取由伺服器處理，其預算欄位被忽略。僅回傳最終影像，不自動重試，請向服務商確認計費。';
 
   @override
   String get auth_thirdPartyCompatibilityHint =>

@@ -241,7 +241,15 @@ void main() {
       final l10n = AppLocalizations.of(tester.element(warning))!;
       expect(find.text(l10n.auth_openAiCompatibleWarning), findsOneWidget);
       expect(l10n.auth_openAiCompatibleWarning, contains('/v1/models'));
-      expect(l10n.auth_openAiCompatibleWarning, contains('0 Anlas'));
+      expect(l10n.auth_openAiCompatibleWarning, contains('Anlas'));
+      expect(l10n.auth_openAiCompatibleWarning, contains('0'));
+      final freeWarning = switch (locale.toLanguageTag()) {
+        'ja' => '無料とは限りません',
+        'zh' => '不保证免费',
+        'zh-Hant' => '不保證免費',
+        _ => 'does not guarantee free generation',
+      };
+      expect(l10n.auth_openAiCompatibleWarning, contains(freeWarning));
       expect(tester.takeException(), isNull);
     });
   }

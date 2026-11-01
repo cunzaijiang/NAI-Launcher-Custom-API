@@ -9,6 +9,60 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String providerPrice_estimate(String amount) {
+    return 'Estimated $amount';
+  }
+
+  @override
+  String get providerBillingFromUsage => 'Calculated from returned usage';
+
+  @override
+  String get providerBillingNotWallet =>
+      'Calculated from public pricing and returned usage, not an actual account charge';
+
+  @override
+  String get providerBillingEncodingMismatch =>
+      'Billing usage does not match the Anlas encoding convention';
+
+  @override
+  String get providerBillingUnknown => 'Returned usage cannot be priced';
+
+  @override
+  String get providerBillingModelMissing =>
+      'The response did not include a billing model';
+
+  @override
+  String get providerPrice_refresh => 'Refresh provider pricing';
+
+  @override
+  String get providerPrice_refreshing => 'Refreshing provider pricing…';
+
+  @override
+  String get providerPrice_unknown =>
+      'Provider pricing is unavailable for this request.';
+
+  @override
+  String providerPrice_details(
+    String base,
+    String additional,
+    String version,
+    String updated,
+  ) {
+    return 'Model base price: $base\nPer 1 Anlas: $additional\nRules version: $version\nUpdated: $updated';
+  }
+
+  @override
+  String get providerPrice_cached => 'Cached public pricing';
+
+  @override
+  String get providerPrice_stale =>
+      'Offline or stale cached pricing; refresh to verify.';
+
+  @override
+  String get providerPrice_disclaimer =>
+      'Estimate only, not an actual charge. Vibe ranges depend on the provider\'s per-request cache.';
+
+  @override
   String get sidebarSort_title => 'Sort by';
 
   @override
@@ -481,7 +535,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get auth_openAiCompatibleWarning =>
-      'Login validates /v1/models without generating. Drawing uses OpenAI Chat, not native /v1/ai generation endpoints. Balance and actual costs are unknown; every generation has a base fee even when the local estimate is 0 Anlas. Vibe encoding/cache is handled by the server; its budget is ignored. Final images only, no automatic retries. Confirm billing with your provider.';
+      'Login validates /v1/models without generating. Drawing uses OpenAI Chat, not native /v1/ai generation endpoints. Balance and actual costs are unknown. Base and additional fees may apply depending on the provider\'s rules; a standard estimate of 0 Anlas does not guarantee free generation. Vibe encoding/cache is handled by the server; its budget is ignored. Final images only, no automatic retries. Confirm billing with your provider.';
 
   @override
   String get auth_thirdPartyCompatibilityHint =>

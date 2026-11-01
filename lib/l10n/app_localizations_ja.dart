@@ -9,6 +9,56 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
+  String providerPrice_estimate(String amount) {
+    return '推定 $amount';
+  }
+
+  @override
+  String get providerBillingFromUsage => '返された使用量から計算';
+
+  @override
+  String get providerBillingNotWallet =>
+      '公開料金と返された使用量による計算であり、実際のアカウント請求額ではありません';
+
+  @override
+  String get providerBillingEncodingMismatch => '請求使用量が Anlas のエンコード規約と一致しません';
+
+  @override
+  String get providerBillingUnknown => '返された使用量から料金を計算できません';
+
+  @override
+  String get providerBillingModelMissing => 'レスポンスに請求モデルが含まれていません';
+
+  @override
+  String get providerPrice_refresh => 'プロバイダー料金を更新';
+
+  @override
+  String get providerPrice_refreshing => 'プロバイダー料金を更新中…';
+
+  @override
+  String get providerPrice_unknown => 'このリクエストのプロバイダー料金は不明です。';
+
+  @override
+  String providerPrice_details(
+    String base,
+    String additional,
+    String version,
+    String updated,
+  ) {
+    return 'モデル基本料金：$base\n1 Anlas ごとの追加料金：$additional\nルールバージョン：$version\n更新日時：$updated';
+  }
+
+  @override
+  String get providerPrice_cached => 'キャッシュ済みの公開料金';
+
+  @override
+  String get providerPrice_stale => 'オフライン、または料金キャッシュが期限切れです。更新して確認してください。';
+
+  @override
+  String get providerPrice_disclaimer =>
+      '推定値であり、実際の請求額ではありません。Vibe の範囲は各リクエストのプロバイダー側キャッシュに依存します。';
+
+  @override
   String get sidebarSort_title => '並び順';
 
   @override
@@ -470,7 +520,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get auth_openAiCompatibleWarning =>
-      'ログインは /v1/models の検証のみで試し描画しません。描画は OpenAI Chat を使い、ネイティブ /v1/ai 生成 API は呼び出しません。残高と実際の料金は不明です。ローカル見積もりが 0 Anlas でも生成には基本料金がかかります。Vibe のエンコードとキャッシュはサーバーが処理し、予算フィールドは無視されます。最終画像のみで自動再試行はありません。料金をプロバイダーに確認してください。';
+      'ログインは /v1/models の検証のみで試し描画しません。描画は OpenAI Chat を使い、ネイティブ /v1/ai 生成 API は呼び出しません。残高と実際の料金は不明です。基本料金や追加料金の有無はプロバイダーのルールによります。標準の Anlas 見積もりが 0 でも無料とは限りません。Vibe のエンコードとキャッシュはサーバーが処理し、予算フィールドは無視されます。最終画像のみで自動再試行はありません。料金をプロバイダーに確認してください。';
 
   @override
   String get auth_thirdPartyCompatibilityHint =>

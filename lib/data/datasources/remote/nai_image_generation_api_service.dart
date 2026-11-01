@@ -9,15 +9,20 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/constants/api_constants.dart';
 import '../../../core/models/image_generation_artifact.dart';
+import '../../../core/models/provider_generation_usage.dart';
+import '../../../core/services/provider_generation_usage_store.dart';
+import '../../../core/services/provider_pricing_service.dart';
 import '../../../core/network/browser_multipart_body.dart';
 import '../../../core/network/dio_client.dart';
 import '../../../core/network/critical_network_activity.dart';
+import '../../../core/network/nai_api_endpoint.dart';
 import '../../../core/network/nai_api_endpoint_service.dart';
 import '../../../core/network/nai_chat_image_codec.dart';
 import '../../../core/network/request_builders/nai_image_request_builder.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../models/image/image_params.dart';
 import '../../models/image/image_stream_chunk.dart';
+import '../../services/auth_provider.dart';
 import 'nai_generation_response_processor.dart';
 import 'nai_generation_transport.dart';
 import 'nai_image_enhancement_api_service.dart';
@@ -34,7 +39,10 @@ class NAIImageGenerationApiService {
     this._enhancementService,
     NaiApiEndpointService endpointService, [
     CriticalNetworkActivityCoordinator? networkActivity,
-  ]) : _endpointService = endpointService,
+    ProviderGenerationUsageStore? usageStore,
+    this._pricingService,
+  ]) : _usageStore = usageStore,
+       _endpointService = endpointService,
        _transport = NaiGenerationTransport(dio, endpointService),
        _responseProcessor = NaiGenerationResponseProcessor(),
        _networkActivity =
@@ -47,6 +55,8 @@ class NAIImageGenerationApiService {
   final NaiGenerationTransport _transport;
   final NaiGenerationResponseProcessor _responseProcessor;
   final CriticalNetworkActivityCoordinator _networkActivity;
+  final ProviderGenerationUsageStore? _usageStore;
+  final ProviderPricingService? _pricingService;
   var _legacyCancellationEpoch = 0;
 
   static T withCancellationLease<T>(
@@ -202,6 +212,7 @@ class NAIImageGenerationApiService {
         focusedSelectionRect: focusedSelectionRect,
         focusedContextCrop: focusedContextCrop,
       );
+      _validatePreparedSession(command, request);
       if (command.isChatApi) {
         final artifact = await _sendChat(
           command,
@@ -306,6 +317,7 @@ class NAIImageGenerationApiService {
         return;
       }
 
+      _validatePreparedSession(command, request);
       if (command.isChatApi) {
         final artifact = await _sendChat(command, request);
         if (request.cancelToken.isCancelled) {
@@ -340,6 +352,19 @@ class NAIImageGenerationApiService {
     }
   }
 
+  void _validatePreparedSession(
+    _PreparedGeneration command,
+    NaiGenerationRequest request,
+  ) {
+    if (command.endpoint != _endpointService.current ||
+        command.usageSessionEpoch != (_usageStore?.sessionEpoch ?? 0)) {
+      request.cancelToken.cancel(
+        'Generation session changed during preparation',
+      );
+    }
+    if (request.cancelToken.isCancelled) throw request.cancelToken.cancelError!;
+  }
+
   Future<ImageGenerationArtifact> _sendChat(
     _PreparedGeneration command,
     NaiGenerationRequest request, {
@@ -350,7 +375,9 @@ class NAIImageGenerationApiService {
       params: command.responseContext.originalParams,
       nativeRequestData: command.buildResult.requestData,
     );
-    if (request.cancelToken.isCancelled) throw request.cancelToken.cancelError!;
+    _validatePreparedSession(command, request);
+    final requestedAt = DateTime.now().toUtc();
+    final endpoint = command.endpoint;
     final response = await _transport.sendChat(
       payload,
       request,
@@ -374,6 +401,29 @@ class NAIImageGenerationApiService {
       command.responseContext,
     );
     if (request.cancelToken.isCancelled) throw request.cancelToken.cancelError!;
+    if (endpoint == _endpointService.current) {
+      _usageStore?.record(
+        ProviderGenerationUsage(
+          endpoint: endpoint.imageBaseUrl,
+          requestedModel: payload['model'] as String,
+          responseModel: decoded.model,
+          requestId:
+              decoded.requestId ?? response.headers.value('x-request-id'),
+          requestedAt: requestedAt,
+          sessionEpoch: command.usageSessionEpoch,
+          catalogSnapshot: command.pricingCatalog,
+          promptTokens: ProviderGenerationUsage.parseTokenCount(
+            decoded.usage['prompt_tokens'],
+          ),
+          completionTokens: ProviderGenerationUsage.parseTokenCount(
+            decoded.usage['completion_tokens'],
+          ),
+          totalTokens: ProviderGenerationUsage.parseTokenCount(
+            decoded.usage['total_tokens'],
+          ),
+        ),
+      );
+    }
     return artifact;
   }
 
@@ -385,7 +435,10 @@ class NAIImageGenerationApiService {
     Rect? focusedSelectionRect,
     Rect? focusedContextCrop,
   }) async {
-    if (_endpointService.current.isOpenAiCompatible) {
+    final endpoint = _endpointService.current;
+    final usageSessionEpoch = _usageStore?.sessionEpoch ?? 0;
+    final pricingCatalog = _pricingService?.currentCatalog;
+    if (endpoint.isOpenAiCompatible) {
       NAIChatImageCodec.validateParams(params);
     }
     final focusedRequest = await _responseProcessor.prepareFocusedInpaint(
@@ -400,7 +453,7 @@ class NAIImageGenerationApiService {
       focusedRequest,
     );
 
-    final isCompatible = _endpointService.current.isOpenAiCompatible;
+    final isCompatible = endpoint.isOpenAiCompatible;
     if (!isCompatible &&
         effectiveParams.hasVibeReferencesV4 &&
         effectiveParams.hasPreciseReferences) {
@@ -433,6 +486,9 @@ class NAIImageGenerationApiService {
     );
 
     return _PreparedGeneration(
+      endpoint: endpoint,
+      usageSessionEpoch: usageSessionEpoch,
+      pricingCatalog: pricingCatalog,
       isChatApi: isCompatible,
       buildResult: buildResult,
       responseContext: NaiGenerationResponseContext(
@@ -446,11 +502,17 @@ class NAIImageGenerationApiService {
 
 class _PreparedGeneration {
   const _PreparedGeneration({
+    required this.endpoint,
+    required this.usageSessionEpoch,
+    required this.pricingCatalog,
     required this.isChatApi,
     required this.buildResult,
     required this.responseContext,
   });
 
+  final NaiApiEndpointConfig endpoint;
+  final int usageSessionEpoch;
+  final ProviderPricingCatalog? pricingCatalog;
   final bool isChatApi;
   final NAIImageRequestBuildResult buildResult;
   final NaiGenerationResponseContext responseContext;
@@ -465,5 +527,17 @@ NAIImageGenerationApiService naiImageGenerationApiService(Ref ref) {
   final dio = ref.watch(dioClientProvider);
   final enhancementService = ref.watch(naiImageEnhancementApiServiceProvider);
   final endpointService = ref.watch(naiApiEndpointServiceProvider);
-  return NAIImageGenerationApiService(dio, enhancementService, endpointService);
+  final usageStore = ref.watch(providerGenerationUsageStoreProvider);
+  ref.listen(
+    authNotifierProvider.select((auth) => (auth.status, auth.accountId)),
+    (previous, next) => usageStore.clear(),
+  );
+  return NAIImageGenerationApiService(
+    dio,
+    enhancementService,
+    endpointService,
+    null,
+    usageStore,
+    ref.watch(providerPricingServiceProvider),
+  );
 }

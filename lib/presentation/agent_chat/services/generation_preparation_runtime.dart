@@ -71,8 +71,9 @@ class GenerationPreparation {
       if (providerPricingUnknown) ...{
         'provider_pricing_unknown': true,
         'billing_warning':
-            'Every generation has a provider base fee, even at '
-            '0 Anlas. Native requests have no server-side budget limit.',
+            'Base and additional fees may apply depending on provider rules; '
+            'a standard 0 Anlas estimate does not guarantee free service. '
+            'Native requests have no server-side budget limit.',
       },
       'count': count,
       'batch_size': batchSize,

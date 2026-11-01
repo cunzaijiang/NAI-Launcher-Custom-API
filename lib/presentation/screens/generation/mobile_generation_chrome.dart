@@ -9,6 +9,8 @@ import '../../themes/design_tokens.dart';
 import '../../widgets/anlas/anlas_balance_chip.dart';
 import '../../widgets/anlas/opus_usage_chip.dart';
 import '../../widgets/common/anlas_cost_badge.dart';
+import '../../widgets/common/provider_pricing_summary.dart';
+import '../../providers/provider_pricing_provider.dart';
 import '../../widgets/common/owned_scroll_controller.dart';
 import '../../widgets/common/themed_button.dart';
 import '../../widgets/common/themed_scaffold.dart';
@@ -76,9 +78,7 @@ class MobileGenerationChrome extends ConsumerWidget {
                 onPressed: controller.openParameterDrawer,
                 tooltip: context.l10n.generation_paramsSettings,
               ),
-              AgentChatEntryButton(
-                onPressed: controller.openAgentChat,
-              ),
+              AgentChatEntryButton(onPressed: controller.openAgentChat),
               IconButton(
                 key: const ValueKey('generation-history-drawer-action'),
                 icon: const Icon(Icons.history_rounded),
@@ -273,7 +273,7 @@ class _FullscreenHeaderTitle extends StatelessWidget {
   }
 }
 
-class _MobileGenerateButton extends StatelessWidget {
+class _MobileGenerateButton extends ConsumerWidget {
   const _MobileGenerateButton({
     required this.isGenerating,
     required this.showCancel,
@@ -307,7 +307,8 @@ class _MobileGenerateButton extends StatelessWidget {
   bool get _showCancelAction => showCancel || _isPreparing;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final providerPricing = ref.watch(customProviderPricingVisibleProvider);
     final theme = Theme.of(context);
     final cancelTheme = theme.copyWith(
       colorScheme: theme.colorScheme.copyWith(
@@ -319,7 +320,7 @@ class _MobileGenerateButton extends StatelessWidget {
     );
     // Krita 占用时启动器自身没有可取消的任务，只能转圈禁用等待。
     final isLoading = isGenerating && !_showCancelAction;
-    final primaryButton = AnimatedTheme(
+    final button = AnimatedTheme(
       data: _showCancelAction ? cancelTheme : theme,
       duration: MediaQuery.disableAnimationsOf(context)
           ? Duration.zero
@@ -367,7 +368,7 @@ class _MobileGenerateButton extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                 ),
-                if (showCost && !requiresLogin)
+                if (showCost && !requiresLogin && !providerPricing)
                   AnlasCostBadge(isGenerating: isLoading),
               ],
             ),
@@ -392,6 +393,16 @@ class _MobileGenerateButton extends StatelessWidget {
         style: ThemedButtonStyle.filled,
       ),
     );
+    final primaryButton = providerPricing && showCost && !requiresLogin
+        ? Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              button,
+              const SizedBox(height: 4),
+              ProviderPricingSummary(isGenerating: isGenerating),
+            ],
+          )
+        : button;
     if (!_canSkipCurrentBatch) return primaryButton;
     final progress = '${batchStatus.currentImage}/${batchStatus.totalImages}';
     final skipButton = ThemedButton(

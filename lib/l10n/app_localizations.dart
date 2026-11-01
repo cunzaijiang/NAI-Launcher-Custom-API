@@ -101,6 +101,89 @@ abstract class AppLocalizations {
     Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant'),
   ];
 
+  /// No description provided for @providerPrice_estimate.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated {amount}'**
+  String providerPrice_estimate(String amount);
+
+  /// No description provided for @providerBillingFromUsage.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculated from returned usage'**
+  String get providerBillingFromUsage;
+
+  /// No description provided for @providerBillingNotWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculated from public pricing and returned usage, not an actual account charge'**
+  String get providerBillingNotWallet;
+
+  /// No description provided for @providerBillingEncodingMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Billing usage does not match the Anlas encoding convention'**
+  String get providerBillingEncodingMismatch;
+
+  /// No description provided for @providerBillingUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Returned usage cannot be priced'**
+  String get providerBillingUnknown;
+
+  /// No description provided for @providerBillingModelMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'The response did not include a billing model'**
+  String get providerBillingModelMissing;
+
+  /// No description provided for @providerPrice_refresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh provider pricing'**
+  String get providerPrice_refresh;
+
+  /// No description provided for @providerPrice_refreshing.
+  ///
+  /// In en, this message translates to:
+  /// **'Refreshing provider pricing…'**
+  String get providerPrice_refreshing;
+
+  /// No description provided for @providerPrice_unknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Provider pricing is unavailable for this request.'**
+  String get providerPrice_unknown;
+
+  /// No description provided for @providerPrice_details.
+  ///
+  /// In en, this message translates to:
+  /// **'Model base price: {base}\nPer 1 Anlas: {additional}\nRules version: {version}\nUpdated: {updated}'**
+  String providerPrice_details(
+    String base,
+    String additional,
+    String version,
+    String updated,
+  );
+
+  /// No description provided for @providerPrice_cached.
+  ///
+  /// In en, this message translates to:
+  /// **'Cached public pricing'**
+  String get providerPrice_cached;
+
+  /// No description provided for @providerPrice_stale.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline or stale cached pricing; refresh to verify.'**
+  String get providerPrice_stale;
+
+  /// No description provided for @providerPrice_disclaimer.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimate only, not an actual charge. Vibe ranges depend on the provider\'s per-request cache.'**
+  String get providerPrice_disclaimer;
+
   /// No description provided for @sidebarSort_title.
   ///
   /// In en, this message translates to:
@@ -968,7 +1051,7 @@ abstract class AppLocalizations {
   /// No description provided for @auth_openAiCompatibleWarning.
   ///
   /// In en, this message translates to:
-  /// **'Login validates /v1/models without generating. Drawing uses OpenAI Chat, not native /v1/ai generation endpoints. Balance and actual costs are unknown; every generation has a base fee even when the local estimate is 0 Anlas. Vibe encoding/cache is handled by the server; its budget is ignored. Final images only, no automatic retries. Confirm billing with your provider.'**
+  /// **'Login validates /v1/models without generating. Drawing uses OpenAI Chat, not native /v1/ai generation endpoints. Balance and actual costs are unknown. Base and additional fees may apply depending on the provider\'s rules; a standard estimate of 0 Anlas does not guarantee free generation. Vibe encoding/cache is handled by the server; its budget is ignored. Final images only, no automatic retries. Confirm billing with your provider.'**
   String get auth_openAiCompatibleWarning;
 
   /// No description provided for @auth_thirdPartyCompatibilityHint.

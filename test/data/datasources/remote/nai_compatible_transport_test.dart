@@ -7,6 +7,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 import 'package:nai_launcher/core/enums/precise_ref_type.dart';
+import 'package:nai_launcher/core/services/provider_generation_usage_store.dart';
 import 'package:nai_launcher/core/network/critical_network_activity.dart';
 import 'package:nai_launcher/core/network/nai_api_endpoint.dart';
 import 'package:nai_launcher/core/network/nai_api_endpoint_service.dart';
@@ -27,6 +28,7 @@ void main() {
   late NaiGenerationTransport transport;
   late NAIImageGenerationApiService service;
   late CriticalNetworkActivityCoordinator activity;
+  late ProviderGenerationUsageStore usageStore;
 
   setUp(() {
     adapter = _RecordingAdapter();
@@ -40,14 +42,135 @@ void main() {
       );
     transport = NaiGenerationTransport(dio, endpoints);
     activity = CriticalNetworkActivityCoordinator();
+    usageStore = ProviderGenerationUsageStore();
+    addTearDown(usageStore.dispose);
     service = NAIImageGenerationApiService(
       dio,
       NAIImageEnhancementApiService(dio, endpoints),
       endpoints,
       activity,
+      usageStore,
     );
   });
   tearDown(() => dio.close(force: true));
+
+  test('records raw response usage and model, not client encodings', () async {
+    final body = jsonDecode(utf8.decode(_chatResponse(_png(64, 64)))) as Map;
+    body['model'] = 'nai-diffusion-4-5-full';
+    body['id'] = 'response-42';
+    body['usage'] = {
+      'prompt_tokens': 100000,
+      'completion_tokens': 1850000,
+      'total_tokens': 1950000,
+    };
+    adapter.response = Uint8List.fromList(utf8.encode(jsonEncode(body)));
+    final before = DateTime.now().toUtc();
+    await service.generateImage(
+      const ImageParams(model: 'nai-diffusion-4-5-full'),
+    );
+    final usage = usageStore.latest!;
+    expect(usage.promptTokens, 100000);
+    expect(usage.completionTokens, 1850000);
+    expect(usage.totalTokens, 1950000);
+    expect(usage.actualModel, 'nai-diffusion-4-5-full');
+    expect(usage.requestId, 'response-42');
+    expect(usage.endpoint, 'https://compatible.invalid/v1');
+    expect(usage.requestedAt.isBefore(before), false);
+    expect(usage.sessionEpoch, usageStore.sessionEpoch);
+  });
+
+  test('failed response leaves latest success intact', () async {
+    await service.generateImage(const ImageParams());
+    final latest = usageStore.latest;
+    adapter.response = Uint8List.fromList(utf8.encode('{bad JSON'));
+    await expectLater(
+      service.generateImage(const ImageParams()),
+      throwsA(isA<FormatException>()),
+    );
+    expect(usageStore.latest, same(latest));
+  });
+
+  test('session change discards an in-flight successful response', () async {
+    adapter.pending = Completer<ResponseBody>();
+    final generation = service.generateImage(const ImageParams());
+    await adapter.started.future;
+    usageStore.clear();
+    adapter.pending!.complete(
+      ResponseBody.fromBytes(_chatResponse(_png(64, 64)), 200),
+    );
+    await generation;
+    expect(usageStore.latest, isNull);
+  });
+
+  for (final stream in [false, true]) {
+    for (final changeEndpoint in [false, true]) {
+      for (final changeAtRead in [1, 2]) {
+        test(
+          '${stream ? "stream" : "non-stream"} cancels '
+          '${changeEndpoint ? "endpoint" : "account epoch"} change during '
+          '${changeAtRead == 1 ? "command" : "Chat payload"} preparation',
+          () async {
+            final originalEndpoint = endpoints.current;
+            final guardedEndpoints = _PreparationEndpointService((read) {
+              if (read != changeAtRead) return;
+              scheduleMicrotask(() {
+                if (changeEndpoint) {
+                  endpoints.setCurrent(
+                    NaiApiEndpointConfig.fromInput(
+                      mainBaseUrl: 'https://next-account.invalid',
+                      protocol: NaiApiProtocol.openAiCompatible,
+                    ),
+                  );
+                } else {
+                  usageStore.clear();
+                }
+              });
+            })..setCurrent(originalEndpoint);
+            endpoints = guardedEndpoints;
+            service = NAIImageGenerationApiService(
+              dio,
+              NAIImageEnhancementApiService(dio, endpoints),
+              endpoints,
+              activity,
+              usageStore,
+            );
+            const params = ImageParams(model: 'nai-diffusion-4-5-full');
+            if (stream) {
+              final chunks = await service.generateImageStream(params).toList();
+              expect(chunks, hasLength(1));
+              expect(chunks.single.error, isNotNull);
+            } else {
+              await expectLater(
+                service.generateImage(params),
+                throwsA(
+                  isA<DioException>().having(
+                    (error) => error.type,
+                    'type',
+                    DioExceptionType.cancel,
+                  ),
+                ),
+              );
+            }
+            expect(adapter.requests, isEmpty);
+            expect(usageStore.latest, isNull);
+            expect(activity.isActive, false);
+          },
+        );
+      }
+    }
+  }
+
+  test('endpoint change discards an in-flight successful response', () async {
+    adapter.pending = Completer<ResponseBody>();
+    final generation = service.generateImage(const ImageParams());
+    await adapter.started.future;
+    endpoints.resetToOfficial();
+    adapter.pending!.complete(
+      ResponseBody.fromBytes(_chatResponse(_png(64, 64)), 200),
+    );
+    await generation;
+    expect(usageStore.latest, isNull);
+  });
 
   test(
     'all five models post only Chat with serialized drawing parameters',
@@ -752,6 +875,22 @@ Uint8List _chatResponse(
     }),
   ),
 );
+
+/// Schedule a session change on the next async boundary after a particular
+/// endpoint read, without real timers, plugins, image workers or network.
+class _PreparationEndpointService extends NaiApiEndpointService {
+  _PreparationEndpointService(this.onRead);
+
+  final void Function(int read) onRead;
+  int _reads = 0;
+
+  @override
+  NaiApiEndpointConfig get current {
+    final endpoint = super.current;
+    onRead(++_reads);
+    return endpoint;
+  }
+}
 
 class _RecordingAdapter implements HttpClientAdapter {
   final requests = <RequestOptions>[];

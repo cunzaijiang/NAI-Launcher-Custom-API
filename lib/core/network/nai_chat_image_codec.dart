@@ -282,6 +282,8 @@ abstract final class NAIChatImageCodec {
       height: height,
       seed: seedMatch == null ? null : int.tryParse(seedMatch.group(1)!),
       usage: usage is Map ? Map<String, dynamic>.from(usage) : const {},
+      model: decoded['model'] is String ? decoded['model'] as String : null,
+      requestId: decoded['id'] is String ? decoded['id'] as String : null,
       vibeCacheIds: cacheIds is List
           ? cacheIds.whereType<String>().toList()
           : const [],
@@ -346,6 +348,8 @@ class NAIChatImageResponse {
     required this.height,
     this.seed,
     this.usage = const {},
+    this.model,
+    this.requestId,
     this.vibeCacheIds = const [],
   });
 
@@ -354,5 +358,7 @@ class NAIChatImageResponse {
   final int height;
   final int? seed;
   final Map<String, dynamic> usage;
+  final String? model;
+  final String? requestId;
   final List<String> vibeCacheIds;
 }
