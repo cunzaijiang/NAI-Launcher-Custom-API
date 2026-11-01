@@ -279,6 +279,12 @@ class ImageGenerationState {
   /// 一次生成调用是否仍在进行：从点击到整条调用结算（含读盘、编码、跑批与收尾）。
   final bool isSubmitting;
 
+  /// 图像已生成，正在保存/同步相册；仍持有提交锁，但不是生成或准备。
+  final bool isSaving;
+
+  /// 保存失败不改写已完成的生成结果，UI 单独反馈并允许手动重试保存。
+  final String? saveErrorMessage;
+
   const ImageGenerationState({
     this.status = GenerationStatus.idle,
     this.currentImages = const [],
@@ -297,6 +303,8 @@ class ImageGenerationState {
     this.displayWidth,
     this.displayHeight,
     this.isSubmitting = false,
+    this.isSaving = false,
+    this.saveErrorMessage,
   });
 
   ImageGenerationState copyWith({
@@ -319,6 +327,9 @@ class ImageGenerationState {
     int? displayWidth,
     int? displayHeight,
     bool? isSubmitting,
+    bool? isSaving,
+    String? saveErrorMessage,
+    bool clearSaveError = false,
   }) {
     return ImageGenerationState(
       status: status ?? this.status,
@@ -345,13 +356,17 @@ class ImageGenerationState {
       displayWidth: displayWidth ?? this.displayWidth,
       displayHeight: displayHeight ?? this.displayHeight,
       isSubmitting: isSubmitting ?? this.isSubmitting,
+      isSaving: isSaving ?? this.isSaving,
+      saveErrorMessage: clearSaveError
+          ? null
+          : (saveErrorMessage ?? this.saveErrorMessage),
     );
   }
 
   bool get isGenerating => status == GenerationStatus.generating;
 
   /// 已提交但还没开跑：读盘、Vibe 编码、随机词都发生在这一段。
-  bool get isPreparing => isSubmitting && !isGenerating;
+  bool get isPreparing => isSubmitting && status == GenerationStatus.idle;
 
   /// 忙区间，用于挡住重复提交、队列启动与 Krita 插队。
   bool get isBusy => isSubmitting || isGenerating;

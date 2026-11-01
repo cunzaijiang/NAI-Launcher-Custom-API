@@ -98,8 +98,18 @@ void main() {
     adapter.pending!.complete(
       ResponseBody.fromBytes(_chatResponse(_png(64, 64)), 200),
     );
-    await generation;
+    await expectLater(
+      generation,
+      throwsA(
+        isA<DioException>().having(
+          (error) => error.type,
+          'type',
+          DioExceptionType.cancel,
+        ),
+      ),
+    );
     expect(usageStore.latest, isNull);
+    expect(activity.isActive, false);
   });
 
   for (final stream in [false, true]) {
@@ -168,8 +178,18 @@ void main() {
     adapter.pending!.complete(
       ResponseBody.fromBytes(_chatResponse(_png(64, 64)), 200),
     );
-    await generation;
+    await expectLater(
+      generation,
+      throwsA(
+        isA<DioException>().having(
+          (error) => error.type,
+          'type',
+          DioExceptionType.cancel,
+        ),
+      ),
+    );
     expect(usageStore.latest, isNull);
+    expect(activity.isActive, false);
   });
 
   test(
@@ -626,6 +646,78 @@ void main() {
       );
     },
   );
+
+  for (final stream in [false, true]) {
+    for (final change in ['cancel', 'endpoint', 'session']) {
+      test(
+        '${stream ? "stream" : "non-stream"} discards parse result on $change',
+        () async {
+          late final NaiGenerationCancellationLease parseLease;
+          var scheduled = false;
+          final guardedEndpoints = _PreparationEndpointService((_) {
+            // The first endpoint read after the adapter response is the guard
+            // immediately before background parse. Change on its async boundary,
+            // not a wall-clock timer racing against PNG decode speed.
+            if (adapter.requests.isEmpty || scheduled) return;
+            scheduled = true;
+            scheduleMicrotask(() {
+              switch (change) {
+                case 'cancel':
+                  service.cancelGeneration(parseLease);
+                case 'endpoint':
+                  endpoints.resetToOfficial();
+                case 'session':
+                  usageStore.clear();
+              }
+            });
+          })..setCurrent(endpoints.current);
+          endpoints = guardedEndpoints;
+          service = NAIImageGenerationApiService(
+            dio,
+            NAIImageEnhancementApiService(dio, endpoints),
+            endpoints,
+            activity,
+            usageStore,
+          );
+          parseLease = service.createCancellationLease();
+          try {
+            if (stream) {
+              final chunks = await service
+                  .generateImageStream(
+                    const ImageParams(),
+                    cancellationLease: parseLease,
+                  )
+                  .toList();
+              expect(chunks, hasLength(1));
+              expect(chunks.single.error, isNotNull);
+              expect(chunks.single.finalImage, isNull);
+            } else {
+              await expectLater(
+                service.generateImage(
+                  const ImageParams(),
+                  cancellationLease: parseLease,
+                ),
+                throwsA(
+                  isA<DioException>().having(
+                    (error) => error.type,
+                    'type',
+                    DioExceptionType.cancel,
+                  ),
+                ),
+              );
+            }
+            expect(scheduled, true);
+            expect(adapter.requests, hasLength(1));
+            expect(usageStore.latest, isNull);
+            expect(activity.isActive, false);
+            expect(parseLease.activeRequestCountForTesting, 0);
+          } finally {
+            service.releaseCancellationLease(parseLease);
+          }
+        },
+      );
+    }
+  }
 
   test('lease cancellation terminates Chat request and releases QoS', () async {
     adapter.pending = Completer<ResponseBody>();

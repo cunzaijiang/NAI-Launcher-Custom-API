@@ -4,6 +4,8 @@
 
 > **Preview4 is the current download (a prerelease)**: open Current position on a character card for the 5×5 grid. The cost estimate is inside Generate, without a separate price box. Custom cost calculations and official Anlas are unchanged.
 
+> **Preview5 fixes are in progress, unreleased and awaiting testing.** Planned scope: restore the original main Generate button layout and verify clicks in the complete desktop shell, provide explicit saving-state feedback through `isSaving`, surface preparation errors, and move Chat response parsing to the background while retaining PNG validation. Final scope depends on implementation and verification; this does not establish that all delays are resolved or the Windows click issue's root cause is confirmed. [Preview5 draft](docs/releases/custom_api_preview.md).
+
 <p align="center">
   <a href="README.md">简体中文</a> · <a href="README.zh-TW.md">繁體中文</a> · English
 </p>

@@ -1,5 +1,7 @@
 # 自定义图像 API / 自訂影像 API / Custom image APIs
 
+> **Preview5 修复中、未发布、待测 / 修復中、未發佈、待測 / Fixes in progress, unreleased, awaiting testing.** 计划：恢复原主生成按钮布局并以完整桌面 shell 验证点击、`isSaving` 显式反馈保存状态、准备错误可见、Chat 解析后台处理并保留 PNG 校验；以最终实现与验证为准。 / 計畫：恢復原主要生成按鈕版面並以完整桌面 shell 驗證點擊、`isSaving` 明確回饋儲存狀態、準備錯誤可見、Chat 解析背景處理並保留 PNG 校驗；依最終實作與驗證為準。 / Planned: restore the original main Generate button layout and verify clicks in the complete desktop shell, provide explicit saving-state feedback through `isSaving`, surface preparation errors, and parse Chat responses in the background while retaining PNG validation; subject to final implementation and verification. 不宣称全部延迟已解决或 Windows 点击问题根因已确认 / 不宣稱全部延遲已解決或 Windows 點擊問題根因已確認 / No claim that all delays are resolved or the Windows click issue's root cause is confirmed.
+
 > **Preview4 已公开发布并完成附件回验 / 已公開發佈並完成附件回驗 / Publicly released with assets verified.** [Preview4 Downloads](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.4) · source SHA: `8c974628b2f4f8e368502726632decefcc0c6023` · [验证 / 驗證 / Verification](custom_api_verification.md)。
 
 > **Preview4：38 files / 677 tests passed（`00:35`，exit `0`）；24 Dart files：`No issues found!`；CI run `41291110464`：`completed / success`。** 七附件下载、六项校验与归档 CRC 回验通过 / 七附件下載、六項校驗與封存 CRC 回驗通過 / Seven assets, six checksum entries, and archive CRCs verified. [发行说明 / 發行說明 / Release notes](releases/custom_api_preview.md)。

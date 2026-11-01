@@ -4,6 +4,8 @@
 
 > **Preview4 当前下载（预发布版）**：角色卡“当前位置”打开 5×5 网格；预计费用移入生成按钮、移除独立价格框。自定义费用数值逻辑与官方 Anlas 不变。
 
+> **Preview5 修复中，尚未发布、待测。** 计划恢复原主生成按钮布局并以完整桌面 shell 验证点击，通过 `isSaving` 显式反馈保存状态、显示准备阶段错误，并将 Chat 响应解析移至后台且保留 PNG 校验；最终范围以实现与验证为准，不代表已解决全部延迟或已确认 Windows 点击问题根因。[Preview5 草案](docs/releases/custom_api_preview.md)。
+
 <p align="center">
   简体中文 · <a href="README.zh-TW.md">繁體中文</a> · <a href="README.en-US.md">English</a>
 </p>

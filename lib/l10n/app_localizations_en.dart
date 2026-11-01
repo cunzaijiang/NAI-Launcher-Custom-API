@@ -512,13 +512,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get auth_thirdPartyApiSite => 'API base URL';
 
   @override
-  String get auth_imageApiSiteOptional => 'Image API Site (optional)';
-
-  @override
-  String get auth_imageApiSiteHint =>
-      'Leave empty to use the same third-party API site';
-
-  @override
   String get auth_thirdPartyNicknameHint =>
       'For example: self-hosted site / mirror site';
 
@@ -527,23 +520,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'Enter the API token from the third-party site';
 
   @override
-  String get auth_openAiCompatibleProfile => 'OpenAI-compatible NAI provider';
-
-  @override
   String get auth_openAiCompatibleProfileHint =>
       'Uses OpenAI Chat /v1/chat/completions with a JSON drawing payload in messages and Markdown PNG results. Enter the root or /v1 URL; one URL is used throughout.';
 
   @override
   String get auth_openAiCompatibleWarning =>
       'Login validates /v1/models without generating. Drawing uses OpenAI Chat, not native /v1/ai generation endpoints. Balance and actual costs are unknown. Base and additional fees may apply depending on the provider\'s rules; a standard estimate of 0 Anlas does not guarantee free generation. Vibe encoding/cache is handled by the server; its budget is ignored. Final images only, no automatic retries. Confirm billing with your provider.';
-
-  @override
-  String get auth_thirdPartyCompatibilityHint =>
-      'The provider must accept a JSON drawing payload inside OpenAI Chat messages and return a Markdown PNG image. Tokens are sent as Bearer tokens; login does not query /user/subscription.';
-
-  @override
-  String get auth_thirdPartyStreamingHint =>
-      'Custom API returns final images through OpenAI Chat, without intermediate streaming previews or automatic retries.';
 
   @override
   String get updateCustomDistributionTitle => 'Custom API: manual updates';

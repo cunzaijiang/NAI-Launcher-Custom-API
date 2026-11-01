@@ -4,6 +4,8 @@
 
 > **Preview4 目前下載（預發佈版）**：角色卡「目前位置」開啟 5×5 網格；預估費用移入生成按鈕、移除獨立價格框。自訂費用數值邏輯與官方 Anlas 不變。
 
+> **Preview5 修復中，尚未發佈、待測。** 計畫恢復原主要生成按鈕版面並以完整桌面 shell 驗證點擊，透過 `isSaving` 明確回饋儲存狀態、顯示準備階段錯誤，並將 Chat 回應解析移至背景且保留 PNG 校驗；最終範圍依實作與驗證為準，不代表已解決全部延遲或已確認 Windows 點擊問題根因。[Preview5 草稿](docs/releases/custom_api_preview.md)。
+
 <p align="center">
   <a href="README.md">简体中文</a> · 繁體中文 · <a href="README.en-US.md">English</a>
 </p>

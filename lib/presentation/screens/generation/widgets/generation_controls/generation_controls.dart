@@ -15,6 +15,9 @@ import 'package:nai_launcher/presentation/providers/krita/krita_bridge_notifier.
 import 'package:nai_launcher/presentation/utils/asset_protection_guard.dart';
 import 'package:nai_launcher/presentation/widgets/common/app_toast.dart';
 import 'package:nai_launcher/presentation/widgets/common/draggable_number_input.dart';
+import 'package:nai_launcher/presentation/providers/provider_pricing_provider.dart';
+import 'package:nai_launcher/presentation/widgets/common/provider_price_badge.dart';
+import 'package:nai_launcher/presentation/widgets/common/provider_pricing_summary.dart';
 import 'package:nai_launcher/presentation/widgets/generation/auto_save_toggle_chip.dart';
 import 'package:nai_launcher/presentation/widgets/anlas/anlas_balance_chip.dart';
 import 'package:nai_launcher/presentation/widgets/anlas/opus_usage_chip.dart';
@@ -37,8 +40,25 @@ class GenerationControls extends ConsumerStatefulWidget {
 class _GenerationControlsState extends ConsumerState<GenerationControls> {
   @override
   Widget build(BuildContext context) {
+    ref.listen(
+      imageGenerationNotifierProvider.select((state) => state.saveErrorMessage),
+      (_, message) {
+        if (message != null && mounted) {
+          AppToast.error(context, context.l10n.image_saveFailed(message));
+        }
+      },
+    );
     final batchStatus = ref.watch(
       imageGenerationNotifierProvider.select(selectGenerationButtonViewData),
+    );
+    final finishing = ref.watch(
+      imageGenerationNotifierProvider.select(
+        (state) => (
+          isSaving: state.isSaving,
+          isFinishing:
+              state.isBusy && !state.isGenerating && !state.isPreparing,
+        ),
+      ),
     );
     final cooldownState = ref.watch(generationCooldownProvider);
     final isAuthenticated = ref.watch(
@@ -77,8 +97,13 @@ class _GenerationControlsState extends ConsumerState<GenerationControls> {
             .updateNSamples(value);
       },
     );
+    final showProviderPricing =
+        ref.watch(customProviderPricingVisibleProvider) &&
+        !isUpscaleMode &&
+        isAuthenticated;
     final leftActions = <Widget>[opusUsage, anlasBalance];
     final rightActions = <Widget>[
+      if (showProviderPricing) const ProviderPriceRefreshButton(),
       if (compact)
         Visibility.maintain(
           visible: !showCancel,
@@ -94,12 +119,15 @@ class _GenerationControlsState extends ConsumerState<GenerationControls> {
 
     // 由子控件的实际布局尺寸决定是否换行，而不是把 compact 或文本
     // 缩放直接等同于窄布局。这样能放下时始终保持单行和主按钮几何居中。
-    return _GenerationControlsLayout(
+    final controls = _GenerationControlsLayout(
       leftActions: leftActions,
       primaryAction: SizedBox(
         key: const ValueKey('generation-footer-primary-action'),
         child: GenerateButtonWithCost(
           height: 48,
+          showPricingActions: false,
+          isSaving: finishing.isSaving,
+          isFinishing: finishing.isFinishing,
           isGenerating: isGenerating,
           showCancel: showCancel,
           batchStatus: batchStatus,
@@ -116,6 +144,17 @@ class _GenerationControlsState extends ConsumerState<GenerationControls> {
         ),
       ),
       rightActions: rightActions,
+    );
+    if (!showProviderPricing) return controls;
+    // Keep the primary RenderBox identical to the official footer. Pricing must
+    // not introduce a second measurement/layout projection around that target.
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        controls,
+        const SizedBox(height: 4),
+        ProviderPricingSummary(isGenerating: isGenerating),
+      ],
     );
   }
 

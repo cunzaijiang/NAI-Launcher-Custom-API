@@ -62,6 +62,12 @@ class _Catalog extends ProviderPricingCatalogNotifier {
   }
 }
 
+class _IdleGeneration extends ImageGenerationNotifier {
+  @override
+  ImageGenerationState build() => const ImageGenerationState();
+  void setState(ImageGenerationState value) => state = value;
+}
+
 class _Subscription extends SubscriptionNotifier {
   @override
   SubscriptionState build() => const SubscriptionState.initial();
@@ -75,6 +81,9 @@ class _LoadingCatalog extends ProviderPricingCatalogNotifier {
 }
 
 class _MobileController extends Fake implements MobileGenerationController {
+  int generateCount = 0;
+  int cancelCount = 0;
+  int skipCount = 0;
   @override
   bool get agentFullScreen => false;
   @override
@@ -88,30 +97,45 @@ class _MobileController extends Fake implements MobileGenerationController {
   @override
   void closePromptEditor() {}
   @override
-  Future<void> generate(BuildContext context) async {}
+  Future<void> generate(BuildContext context) async {
+    generateCount++;
+  }
+
   @override
-  void cancelGeneration() {}
+  void cancelGeneration() {
+    cancelCount++;
+  }
+
   @override
-  void skipCurrentRequest() {}
+  void skipCurrentRequest() {
+    skipCount++;
+  }
 }
 
-Widget mobileChrome({bool keyboardVisible = false}) => MobileGenerationChrome(
-  controller: _MobileController(),
+Widget mobileChrome({
+  bool keyboardVisible = false,
+  MobileGenerationController? controller,
+  bool generating = false,
+  bool preparing = false,
+  int cooldown = 0,
+  int totalImages = 1,
+}) => MobileGenerationChrome(
+  controller: controller ?? _MobileController(),
   data: MobileGenerationViewData(
     batchStatus: (
-      isGenerating: false,
-      isPreparing: false,
-      currentImage: 0,
-      totalImages: 1,
+      isGenerating: generating,
+      isPreparing: preparing,
+      currentImage: generating ? 1 : 0,
+      totalImages: totalImages,
     ),
-    cooldownRemainingSeconds: 0,
+    cooldownRemainingSeconds: cooldown,
     // The editor chrome avoids unrelated agent/subscription initialization.
     isPromptMaximized: true,
     isSelectionMode: false,
     isFixedTagsOverlayVisible: false,
     keyboardVisible: keyboardVisible,
-    isGenerating: false,
-    isLauncherGenerating: false,
+    isGenerating: generating,
+    isLauncherGenerating: generating,
     requiresLogin: false,
     showRandomTools: false,
     isUpscaleMode: false,
@@ -135,12 +159,17 @@ Widget app(
   double scale = 1,
   bool chrome = false,
   bool supported = true,
+  bool customPricing = true,
+  ImageGenerationNotifier? generation,
   Completer<ProviderPricingResult?>? loading,
   ProviderBillingSummaryData? billing,
   ImageWorkflowState workflow = const ImageWorkflowState(),
 }) => ProviderScope(
   overrides: [
-    customProviderPricingVisibleProvider.overrideWith((ref) => true),
+    imageGenerationNotifierProvider.overrideWith(
+      () => generation ?? _IdleGeneration(),
+    ),
+    customProviderPricingVisibleProvider.overrideWith((ref) => customPricing),
     providerPricingOriginSupportedProvider.overrideWith((ref) => supported),
     providerPriceEstimateProvider.overrideWith((ref) => quote),
     providerPricingCatalogProvider.overrideWith(
@@ -148,6 +177,7 @@ Widget app(
     ),
     subscriptionNotifierProvider.overrideWith(_Subscription.new),
     estimatedCostProvider.overrideWith((ref) => null),
+    isFreeGenerationProvider.overrideWith((ref) => true),
     providerBillingSummaryProvider.overrideWith((ref) => billing),
     generationParamsNotifierProvider.overrideWith(_Params.new),
     imageWorkflowControllerProvider.overrideWith(() => _Workflow(workflow)),
@@ -167,6 +197,107 @@ Widget app(
 );
 
 void main() {
+  for (final custom in [false, true]) {
+    testWidgets(
+      'mobile ${custom ? "custom" : "official"} keeps original core and action hits',
+      (tester) async {
+        final controller = _MobileController();
+        final generation = _IdleGeneration();
+        _Catalog.refreshes = 0;
+        Future<void> pump({
+          bool generating = false,
+          bool preparing = false,
+          int cooldown = 0,
+          int total = 1,
+        }) async {
+          await tester.pumpWidget(
+            app(
+              mobileChrome(
+                controller: controller,
+                generating: generating,
+                preparing: preparing,
+                cooldown: cooldown,
+                totalImages: total,
+              ),
+              chrome: true,
+              customPricing: custom,
+              generation: generation,
+            ),
+          );
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 200));
+        }
+
+        await pump();
+        expect(
+          find.byType(GenerateButtonWithCost),
+          findsNothing,
+          reason: 'mobile must not use desktop pricing wrapper',
+        );
+        final action = custom ? find.text('预计 0.05–0.09') : find.text('生成');
+        expect(action.hitTestable(), findsOneWidget);
+        if (custom) {
+          final primary = find.ancestor(
+            of: action,
+            matching: find.byType(FilledButton),
+          );
+          final refresh = find.byKey(const ValueKey('provider-price-refresh'));
+          expect(
+            tester.getRect(primary).overlaps(tester.getRect(refresh)),
+            isFalse,
+          );
+          await tester.tap(refresh);
+          expect(_Catalog.refreshes, 1);
+          expect(controller.generateCount, 0);
+        }
+        await tester.tap(action);
+        expect(controller.generateCount, 1);
+        await pump(cooldown: 3);
+        expect(
+          tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+          isNull,
+        );
+        await tester.tap(find.byType(FilledButton));
+        expect(controller.generateCount, 1);
+        await pump(preparing: true);
+        await tester.tap(find.text('取消'));
+        expect(controller.cancelCount, 1);
+        await pump(generating: true, total: 2);
+        await tester.tap(find.text('跳过当前批次 1/2'));
+        expect(controller.skipCount, 1);
+        await tester.tap(find.text('取消'));
+        expect(controller.cancelCount, 2);
+        await pump();
+        generation.setState(
+          const ImageGenerationState(
+            status: GenerationStatus.completed,
+            isSubmitting: true,
+            isSaving: true,
+          ),
+        );
+        await tester.pump();
+        final saving = find.text('保存中...');
+        expect(saving, findsOneWidget);
+        final button = find.ancestor(
+          of: saving,
+          matching: find.byType(FilledButton),
+        );
+        expect(tester.widget<FilledButton>(button).onPressed, isNull);
+        expect(
+          find.descendant(
+            of: button,
+            matching: find.byType(CircularProgressIndicator),
+          ),
+          findsNothing,
+        );
+        await tester.tap(saving);
+        expect(controller.generateCount, 1);
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
   testWidgets(
     'shows unitless range, public rule metadata, stale state and accessible refresh',
     (tester) async {
@@ -254,6 +385,14 @@ void main() {
     await tester.pump();
     expect(find.text('预计 --'), findsOneWidget);
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(FilledButton),
+        matching: find.byType(CircularProgressIndicator),
+      ),
+      findsNothing,
+      reason: 'price fetching belongs to sibling refresh, not generation',
+    );
     final refresh = tester.widget<IconButton>(
       find.byKey(const ValueKey('provider-price-refresh')),
     );
@@ -296,8 +435,13 @@ void main() {
         addTearDown(tester.view.resetDevicePixelRatio);
         addTearDown(tester.view.resetPadding);
         addTearDown(tester.view.resetViewInsets);
-        await tester.pumpWidget(app(mobileChrome(), chrome: true, scale: 3));
+        final controller = _MobileController();
+        _Catalog.refreshes = 0;
+        await tester.pumpWidget(
+          app(mobileChrome(controller: controller), chrome: true, scale: 3),
+        );
         await tester.pumpAndSettle();
+        expect(find.byType(GenerateButtonWithCost), findsNothing);
         expect(tester.takeException(), isNull);
         expect(find.text('预计 0.05–0.09'), findsOneWidget);
         final button = tester.getRect(find.byType(FilledButton));
@@ -310,8 +454,21 @@ void main() {
         );
         expect(button.bottom, lessThanOrEqualTo(296));
         final refresh = find.byKey(const ValueKey('provider-price-refresh'));
+        // The short 320x320 / 3x footer scrolls; reveal its status-row action.
+        await tester.ensureVisible(refresh);
+        await tester.pumpAndSettle();
         expect(refresh.hitTestable(), findsOneWidget);
         expect(tester.getSize(refresh), const Size(44, 44));
+        await tester.tap(refresh);
+        expect(_Catalog.refreshes, 1);
+        expect(controller.generateCount, 0);
+        final amount = find.text('预计 0.05–0.09');
+        await tester.ensureVisible(amount);
+        await tester.pumpAndSettle();
+        expect(amount.hitTestable(), findsOneWidget);
+        await tester.tap(amount);
+        expect(controller.generateCount, 1);
+        expect(_Catalog.refreshes, 1);
         tester.view.viewInsets = const FakeViewPadding(bottom: 180);
         await tester.pumpWidget(
           app(mobileChrome(keyboardVisible: true), chrome: true, scale: 3),

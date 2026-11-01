@@ -314,9 +314,9 @@ void main() {
         state.errorMessage,
         'GENERATION_ERROR_INVALID_RESOLUTION|1080|1920|1088|1920',
       );
-      final subscriptionNotifier = container.read(
-        subscriptionNotifierProvider.notifier,
-      ) as TestSubscriptionNotifier;
+      final subscriptionNotifier =
+          container.read(subscriptionNotifierProvider.notifier)
+              as TestSubscriptionNotifier;
       expect(subscriptionNotifier.refreshBalanceCallCount, 1);
     });
 
@@ -507,9 +507,9 @@ void main() {
           capturedParams!.negativePrompt,
           equals('bad anatomy, bad hands, text'),
         );
-        final subscriptionNotifier = container.read(
-          subscriptionNotifierProvider.notifier,
-        ) as TestSubscriptionNotifier;
+        final subscriptionNotifier =
+            container.read(subscriptionNotifierProvider.notifier)
+                as TestSubscriptionNotifier;
         expect(subscriptionNotifier.refreshBalanceCallCount, 1);
       },
     );
@@ -590,14 +590,14 @@ void main() {
               ),
               isEmpty,
             );
-            final payload = jsonDecode(
-              adapter.requests.single.data as String,
-            ) as Map<String, dynamic>;
+            final payload =
+                jsonDecode(adapter.requests.single.data as String)
+                    as Map<String, dynamic>;
             expect(payload['stream'], false);
             final messages = payload['messages'] as List;
-            final draw = jsonDecode(
-              (messages.single as Map)['content'] as String,
-            ) as Map<String, dynamic>;
+            final draw =
+                jsonDecode((messages.single as Map)['content'] as String)
+                    as Map<String, dynamic>;
             final controlnet = draw['controlnet'] as Map;
             expect(controlnet['images'], hasLength(1));
             expect(
@@ -644,70 +644,78 @@ void main() {
             ),
           ],
         );
-        await expectLater(
-          container
-              .read(imageGenerationNotifierProvider.notifier)
-              .generate(
-                const ImageParams(
-                  model: ImageModels.animeDiffusionV45Full,
-                  vibeReferencesV4: [
-                    VibeReference(
-                      displayName: 'encoded-only',
-                      vibeEncoding: 'AQID',
-                    ),
-                  ],
-                ),
+        await container
+            .read(imageGenerationNotifierProvider.notifier)
+            .generate(
+              const ImageParams(
+                model: ImageModels.animeDiffusionV45Full,
+                vibeReferencesV4: [
+                  VibeReference(
+                    displayName: 'encoded-only',
+                    vibeEncoding: 'AQID',
+                  ),
+                ],
               ),
-          throwsA(isA<UnsupportedError>()),
-        );
+            );
+        final failed = container.read(imageGenerationNotifierProvider);
+        expect(failed.status, GenerationStatus.error);
+        expect(failed.errorMessage, contains('original source image'));
+        expect(failed.isBusy, isFalse);
+        expect(failed.isPreparing, isFalse);
         expect(adapter.requests, isEmpty);
         dio.close(force: true);
       },
     );
 
-    test('profile rejects invalid Vibes through preparation before any encoding call', () async {
-      final enhancement = FakeNAIImageEnhancementApiService();
-      final endpoints = NaiApiEndpointService()
-        ..setCurrent(
-          NaiApiEndpointConfig.fromInput(
-            mainBaseUrl: 'https://compatible.invalid',
-            protocol: NaiApiProtocol.openAiCompatible,
-          ),
+    test(
+      'profile rejects invalid Vibes through preparation before any encoding call',
+      () async {
+        final enhancement = FakeNAIImageEnhancementApiService();
+        final endpoints = NaiApiEndpointService()
+          ..setCurrent(
+            NaiApiEndpointConfig.fromInput(
+              mainBaseUrl: 'https://compatible.invalid',
+              protocol: NaiApiProtocol.openAiCompatible,
+            ),
+          );
+        container.dispose();
+        container = _createAuthenticatedContainer(
+          overrides: [
+            naiApiEndpointServiceProvider.overrideWithValue(endpoints),
+            naiImageEnhancementApiServiceProvider.overrideWithValue(
+              enhancement,
+            ),
+            subscriptionNotifierProvider.overrideWith(
+              TestSubscriptionNotifier.new,
+            ),
+          ],
         );
-      container.dispose();
-      container = _createAuthenticatedContainer(
-        overrides: [
-          naiApiEndpointServiceProvider.overrideWithValue(endpoints),
-          naiImageEnhancementApiServiceProvider.overrideWithValue(enhancement),
-          subscriptionNotifierProvider.overrideWith(
-            TestSubscriptionNotifier.new,
-          ),
-        ],
-      );
-      final raw = VibeReference(
-        displayName: 'raw',
-        vibeEncoding: '',
-        rawImageData: _validImageBytes(width: 64, height: 64),
-      );
-      await expectLater(
-        container
+        final raw = VibeReference(
+          displayName: 'raw',
+          vibeEncoding: '',
+          rawImageData: _validImageBytes(width: 64, height: 64),
+        );
+        await container
             .read(imageGenerationNotifierProvider.notifier)
             .generate(
               ImageParams(
                 model: ImageModels.animeDiffusionV45Full,
                 vibeReferencesV4: List.filled(5, raw),
               ),
-            ),
-        throwsArgumentError,
-      );
-      verifyNever(
-        () => enhancement.encodeVibe(
-          any(),
-          model: any(named: 'model'),
-          informationExtracted: any(named: 'informationExtracted'),
-        ),
-      );
-    });
+            );
+        final failed = container.read(imageGenerationNotifierProvider);
+        expect(failed.status, GenerationStatus.error);
+        expect(failed.errorMessage, isNotEmpty);
+        expect(failed.isBusy, isFalse);
+        verifyNever(
+          () => enhancement.encodeVibe(
+            any(),
+            model: any(named: 'model'),
+            informationExtracted: any(named: 'informationExtracted'),
+          ),
+        );
+      },
+    );
 
     test(
       'profile saved imagesPerRequest preserves the full image count',
@@ -871,9 +879,9 @@ void main() {
           state.currentImages.every((image) => image.comparisonSource == null),
           isTrue,
         );
-        final subscriptionNotifier = container.read(
-          subscriptionNotifierProvider.notifier,
-        ) as TestSubscriptionNotifier;
+        final subscriptionNotifier =
+            container.read(subscriptionNotifierProvider.notifier)
+                as TestSubscriptionNotifier;
         expect(subscriptionNotifier.refreshBalanceCallCount, 1);
       },
     );
@@ -1180,51 +1188,56 @@ void main() {
       },
     );
 
-    test('registerExternalImage should preserve original bytes when metadata embedding is disabled', () async {
-      final notifier = container.read(imageGenerationNotifierProvider.notifier);
-      final params = container.read(generationParamsNotifierProvider);
-      final comfyPrompt = jsonEncode({
-        '1': {
-          'class_type': 'LoadImage',
-          'inputs': {'image': 'launcher_input.png'},
-        },
-        '2': {
-          'class_type': 'SaveImage',
-          'inputs': {'filename_prefix': 'SeedVR2'},
-        },
-      });
-      final originalBytes = UnifiedMetadataParser.embedTextChunkOnly(
-        _validImageBytes(width: 512, height: 768),
-        'prompt',
-        comfyPrompt,
-      );
-      final tempDir = await Directory.systemTemp.createTemp(
-        'nai_launcher_seedvr2_raw_',
-      );
-      addTearDown(() => tempDir.delete(recursive: true));
+    test(
+      'registerExternalImage should preserve original bytes when metadata embedding is disabled',
+      () async {
+        final notifier = container.read(
+          imageGenerationNotifierProvider.notifier,
+        );
+        final params = container.read(generationParamsNotifierProvider);
+        final comfyPrompt = jsonEncode({
+          '1': {
+            'class_type': 'LoadImage',
+            'inputs': {'image': 'launcher_input.png'},
+          },
+          '2': {
+            'class_type': 'SaveImage',
+            'inputs': {'filename_prefix': 'SeedVR2'},
+          },
+        });
+        final originalBytes = UnifiedMetadataParser.embedTextChunkOnly(
+          _validImageBytes(width: 512, height: 768),
+          'prompt',
+          comfyPrompt,
+        );
+        final tempDir = await Directory.systemTemp.createTemp(
+          'nai_launcher_seedvr2_raw_',
+        );
+        addTearDown(() => tempDir.delete(recursive: true));
 
-      await notifier.registerExternalImage(
-        originalBytes,
-        params: params,
-        saveToLocal: true,
-        saveDirectoryPath: tempDir.path,
-        syncToGalleryIndex: false,
-        embedNaiMetadata: false,
-      );
+        await notifier.registerExternalImage(
+          originalBytes,
+          params: params,
+          saveToLocal: true,
+          saveDirectoryPath: tempDir.path,
+          syncToGalleryIndex: false,
+          embedNaiMetadata: false,
+        );
 
-      final savedImage = container
-          .read(imageGenerationNotifierProvider)
-          .history
-          .first;
-      final savedBytes = await File(savedImage.filePath!).readAsBytes();
+        final savedImage = container
+            .read(imageGenerationNotifierProvider)
+            .history
+            .first;
+        final savedBytes = await File(savedImage.filePath!).readAsBytes();
 
-      expect(savedImage.preserveOriginalBytesOnSave, isTrue);
-      expect(savedImage.bytes, orderedEquals(originalBytes));
-      expect(savedBytes, orderedEquals(originalBytes));
-      final textData = UnifiedMetadataParser.extractPngTextData(savedBytes);
-      expect(textData['prompt'], comfyPrompt);
-      expect(textData, isNot(contains('Comment')));
-    });
+        expect(savedImage.preserveOriginalBytesOnSave, isTrue);
+        expect(savedImage.bytes, orderedEquals(originalBytes));
+        expect(savedBytes, orderedEquals(originalBytes));
+        final textData = UnifiedMetadataParser.extractPngTextData(savedBytes);
+        expect(textData['prompt'], comfyPrompt);
+        expect(textData, isNot(contains('Comment')));
+      },
+    );
 
     test(
       'registerExternalImage should prepend external result to current display',
@@ -1269,45 +1282,50 @@ void main() {
       },
     );
 
-    test('registerExternalImage should replace current display for upscale results', () async {
-      final notifier = container.read(imageGenerationNotifierProvider.notifier);
-      final params = container.read(generationParamsNotifierProvider);
-      final existing = GeneratedImage.create(
-        _validImageBytes(width: 640, height: 960),
-        width: 640,
-        height: 960,
-      );
+    test(
+      'registerExternalImage should replace current display for upscale results',
+      () async {
+        final notifier = container.read(
+          imageGenerationNotifierProvider.notifier,
+        );
+        final params = container.read(generationParamsNotifierProvider);
+        final existing = GeneratedImage.create(
+          _validImageBytes(width: 640, height: 960),
+          width: 640,
+          height: 960,
+        );
 
-      notifier.state = notifier.state.copyWith(
-        currentImages: [existing],
-        history: [existing],
-        displayImages: [existing],
-      );
+        notifier.state = notifier.state.copyWith(
+          currentImages: [existing],
+          history: [existing],
+          displayImages: [existing],
+        );
 
-      await notifier.registerExternalImage(
-        _validImageBytes(width: 1280, height: 1920),
-        params: params,
-        width: 1280,
-        height: 1920,
-        replaceCurrentDisplay: true,
-      );
+        await notifier.registerExternalImage(
+          _validImageBytes(width: 1280, height: 1920),
+          params: params,
+          width: 1280,
+          height: 1920,
+          replaceCurrentDisplay: true,
+        );
 
-      final state = container.read(imageGenerationNotifierProvider);
+        final state = container.read(imageGenerationNotifierProvider);
 
-      expect(state.currentImages, hasLength(1));
-      expect(state.displayImages, hasLength(1));
-      expect(state.currentImages.single.width, equals(1280));
-      expect(state.currentImages.single.height, equals(1920));
-      expect(
-        state.displayImages.single.id,
-        equals(state.currentImages.single.id),
-      );
-      expect(state.history, hasLength(2));
-      expect(state.history.first.id, equals(state.currentImages.single.id));
-      expect(state.history.last.id, equals(existing.id));
-      expect(state.displayWidth, equals(1280));
-      expect(state.displayHeight, equals(1920));
-    });
+        expect(state.currentImages, hasLength(1));
+        expect(state.displayImages, hasLength(1));
+        expect(state.currentImages.single.width, equals(1280));
+        expect(state.currentImages.single.height, equals(1920));
+        expect(
+          state.displayImages.single.id,
+          equals(state.currentImages.single.id),
+        );
+        expect(state.history, hasLength(2));
+        expect(state.history.first.id, equals(state.currentImages.single.id));
+        expect(state.history.last.id, equals(existing.id));
+        expect(state.displayWidth, equals(1280));
+        expect(state.displayHeight, equals(1920));
+      },
+    );
 
     test(
       'registerExternalImage should rewrite embedded metadata resolution',

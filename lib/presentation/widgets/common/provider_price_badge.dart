@@ -18,35 +18,15 @@ class ProviderPriceBadge extends ConsumerWidget {
         workflow.upscale.backend != UpscaleBackend.novelai) {
       return const SizedBox.shrink();
     }
-    final pricing = ref.watch(providerPricingCatalogProvider);
     final estimate = ref.watch(providerPriceEstimateProvider);
-    return Wrap(
-      alignment: WrapAlignment.center,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      spacing: 4,
-      runSpacing: 4,
-      children: [
-        Text(
-          context.l10n.providerPrice_estimate(estimate?.formatted ?? '--'),
-          textAlign: TextAlign.center,
-          // Inherit the button's foreground, including disabled/cancel states.
-          style: TextStyle(
-            fontSize: Theme.of(context).textTheme.labelSmall?.fontSize,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        if (pricing.isLoading)
-          Semantics(
-            label: context.l10n.providerPrice_refreshing,
-            child: SizedBox.square(
-              dimension: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: DefaultTextStyle.of(context).style.color,
-              ),
-            ),
-          ),
-      ],
+    return Text(
+      context.l10n.providerPrice_estimate(estimate?.formatted ?? '--'),
+      textAlign: TextAlign.center,
+      // Plain label only: fetching prices cannot change the primary hit target.
+      style: TextStyle(
+        fontSize: Theme.of(context).textTheme.labelSmall?.fontSize,
+        fontWeight: FontWeight.w600,
+      ),
     );
   }
 }
@@ -110,7 +90,15 @@ class ProviderPriceRefreshButton extends ConsumerWidget {
       onPressed: supported && !pricing.isLoading
           ? () => ref.read(providerPricingCatalogProvider.notifier).refresh()
           : null,
-      icon: const Icon(Icons.refresh_rounded),
+      icon: pricing.isLoading
+          ? Semantics(
+              label: l10n.providerPrice_refreshing,
+              child: const SizedBox.square(
+                dimension: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            )
+          : const Icon(Icons.refresh_rounded),
       // Details are also available to screen readers, not only hover users.
       tooltip: '$action\n${_tooltip(context, pricing.valueOrNull, model)}',
     );

@@ -214,7 +214,6 @@ void main() {
       final l10n = AppLocalizations.of(tester.element(warning))!;
       expect(find.byType(SwitchListTile), findsNothing);
       expect(find.byType(FloatingLabelInput), findsNWidgets(3));
-      expect(find.text(l10n.auth_imageApiSiteOptional), findsNothing);
       expect(find.text(l10n.auth_openAiCompatibleWarning), findsOneWidget);
       expect(find.byKey(const Key('third_party_streaming_hint')), findsNothing);
       final mainInput = find.byType(FloatingLabelInput).first;

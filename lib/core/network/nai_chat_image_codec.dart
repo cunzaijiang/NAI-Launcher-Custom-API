@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show compute;
 import 'package:image/image.dart' as img;
 
 import '../../data/models/image/image_params.dart';
@@ -200,6 +201,13 @@ abstract final class NAIChatImageCodec {
       };
     });
   }
+
+  /// Parse the entire response, including strict PNG pixel validation, off the
+  /// UI isolate. Only the response string and sendable bytes/metadata cross the
+  /// boundary; no request, cancellation token or service is captured.
+  /// Do not queue this latency-sensitive step behind the metadata compute gate.
+  static Future<NAIChatImageResponse> decodeResponseAsync(String body) =>
+      compute(decodeResponse, body, debugLabel: 'chat-image-response');
 
   /// Only inline PNG data URIs are accepted. Never follow remote image URLs.
   static NAIChatImageResponse decodeResponse(String body) {

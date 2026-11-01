@@ -5,10 +5,14 @@ import '../../../core/utils/localization_extension.dart';
 import '../../adaptive/window_size_class.dart';
 import '../../agent_chat/widgets/agent_chat_entry_button.dart';
 import '../../providers/generation/image_generation_selectors.dart';
+import '../../providers/image_generation_provider.dart';
 import '../../themes/design_tokens.dart';
 import '../../widgets/anlas/anlas_balance_chip.dart';
 import '../../widgets/anlas/opus_usage_chip.dart';
 import '../../widgets/common/anlas_cost_badge.dart';
+import '../../widgets/common/app_toast.dart';
+import '../../widgets/common/provider_price_badge.dart';
+import '../../widgets/common/provider_pricing_summary.dart';
 import '../../providers/provider_pricing_provider.dart';
 import '../../widgets/common/owned_scroll_controller.dart';
 import '../../widgets/common/themed_button.dart';
@@ -155,6 +159,10 @@ class MobileGenerationChrome extends ConsumerWidget {
   Widget? _buildBottomBar(BuildContext context, WidgetRef ref) {
     if (data.keyboardVisible || controller.agentFullScreen) return null;
     final theme = Theme.of(context);
+    final showProviderPricing =
+        ref.watch(customProviderPricingVisibleProvider) &&
+        !data.isUpscaleMode &&
+        !data.requiresLogin;
     final bottomBar = SafeArea(
       top: false,
       child: Container(
@@ -188,6 +196,7 @@ class MobileGenerationChrome extends ConsumerWidget {
                   key: const ValueKey('generation-mobile-queue-actions'),
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    if (showProviderPricing) const ProviderPriceRefreshButton(),
                     if (data.showRandomTools)
                       SizedBox.square(
                         dimension: 44,
@@ -225,6 +234,10 @@ class MobileGenerationChrome extends ConsumerWidget {
               showCost: !data.isUpscaleMode,
               requiresLogin: data.requiresLogin,
             ),
+            if (showProviderPricing) ...[
+              const SizedBox(height: 4),
+              ProviderPricingSummary(isGenerating: data.isGenerating),
+            ],
           ],
         ),
       ),
@@ -248,6 +261,14 @@ class MobileGenerationChrome extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(
+      imageGenerationNotifierProvider.select((state) => state.saveErrorMessage),
+      (_, message) {
+        if (message != null && context.mounted) {
+          AppToast.error(context, context.l10n.image_saveFailed(message));
+        }
+      },
+    );
     return ThemedScaffold(
       scaffoldKey: controller.scaffoldKey,
       drawer: _buildParameterDrawer(context),
@@ -322,22 +343,18 @@ class _MobileGenerateButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final finishing = ref.watch(
+      imageGenerationNotifierProvider.select(
+        (state) => (
+          isSaving: state.isSaving,
+          isFinishing:
+              state.isBusy && !state.isGenerating && !state.isPreparing,
+        ),
+      ),
+    );
     final providerPricing = ref.watch(customProviderPricingVisibleProvider);
-    // Custom pricing shares the responsive, non-interactive cost label and
-    // sibling refresh action with desktop. Keep official Anlas chrome unchanged.
-    if (providerPricing) {
-      return GenerateButtonWithCost(
-        isGenerating: isGenerating,
-        showCancel: showCancel,
-        batchStatus: batchStatus,
-        cooldownRemainingSeconds: cooldownRemainingSeconds,
-        onGenerate: onGenerate,
-        onCancel: onCancel,
-        onSkipCurrent: onSkipCurrent,
-        showCost: showCost,
-        requiresLogin: requiresLogin,
-      );
-    }
+    // Both endpoint types keep the original mobile button and hit-test chain.
+    // Custom pricing changes label content only; refresh lives in the status row.
     final theme = Theme.of(context);
     final cancelTheme = theme.copyWith(
       colorScheme: theme.colorScheme.copyWith(
@@ -349,6 +366,19 @@ class _MobileGenerateButton extends ConsumerWidget {
     );
     // Krita 占用时启动器自身没有可取消的任务，只能转圈禁用等待。
     final isLoading = isGenerating && !_showCancelAction;
+    final label = finishing.isSaving
+        ? context.l10n.common_saving
+        : finishing.isFinishing
+        ? context.l10n.comfyWorkflow_processing
+        : showCancel
+        ? context.l10n.generation_generate
+        : requiresLogin
+        ? context.l10n.auth_login
+        : isGenerating
+        ? context.l10n.generation_generating
+        : cooldownRemainingSeconds > 0
+        ? context.l10n.generation_cooldownRemaining(cooldownRemainingSeconds)
+        : context.l10n.generation_generate;
     final button = AnimatedTheme(
       data: _showCancelAction ? cancelTheme : theme,
       duration: MediaQuery.disableAnimationsOf(context)
@@ -356,7 +386,9 @@ class _MobileGenerateButton extends ConsumerWidget {
           : const Duration(milliseconds: 160),
       curve: Curves.easeOut,
       child: ThemedButton(
-        onPressed: _showCancelAction
+        onPressed: finishing.isSaving || finishing.isFinishing
+            ? null
+            : _showCancelAction
             ? onCancel
             : requiresLogin
             ? onGenerate
@@ -382,20 +414,22 @@ class _MobileGenerateButton extends ConsumerWidget {
                   const SizedBox(width: 8),
                 ],
                 Flexible(
-                  child: Text(
-                    showCancel
-                        ? context.l10n.generation_generate
-                        : requiresLogin
-                        ? context.l10n.auth_login
-                        : isGenerating
-                        ? context.l10n.generation_generating
-                        : cooldownRemainingSeconds > 0
-                        ? context.l10n.generation_cooldownRemaining(
-                            cooldownRemainingSeconds,
-                          )
-                        : context.l10n.generation_generate,
-                    textAlign: TextAlign.center,
-                  ),
+                  child: providerPricing
+                      ? Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Wrap(
+                            alignment: WrapAlignment.center,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: [
+                              Text(label, textAlign: TextAlign.center),
+                              if (showCost && !requiresLogin && !isLoading)
+                                const ProviderPriceBadge(),
+                            ],
+                          ),
+                        )
+                      : Text(label, textAlign: TextAlign.center),
                 ),
                 if (showCost && !requiresLogin && !providerPricing)
                   AnlasCostBadge(isGenerating: isLoading),

@@ -487,19 +487,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get auth_thirdPartyApiSite => 'API 基础地址';
 
   @override
-  String get auth_imageApiSiteOptional => '图像 API 站点（可选）';
-
-  @override
-  String get auth_imageApiSiteHint => '留空则使用同一个第三方 API 站点';
-
-  @override
   String get auth_thirdPartyNicknameHint => '例如：自建站点 / 镜像站点';
 
   @override
   String get auth_thirdPartyTokenHint => '请输入第三方站点提供的 API Token';
-
-  @override
-  String get auth_openAiCompatibleProfile => 'OpenAI 兼容 NAI 服务商';
 
   @override
   String get auth_openAiCompatibleProfileHint =>
@@ -508,14 +499,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get auth_openAiCompatibleWarning =>
       '登录仅验证 /v1/models，不试画。绘图使用 OpenAI Chat，不调用原生 /v1/ai 生成接口。余额与实际费用未知。是否产生基础费与额外费用取决于服务商规则；标准 Anlas 预估为 0 不保证免费。Vibe 编码与缓存由服务端处理，其预算字段被忽略。仅返回最终图像，不自动重试，请向服务商确认计费。';
-
-  @override
-  String get auth_thirdPartyCompatibilityHint =>
-      '服务商须支持在 OpenAI Chat messages 内接收 JSON 绘图参数，并返回 Markdown PNG 图片。Token 按 Bearer 方式发送；登录不查询 /user/subscription。';
-
-  @override
-  String get auth_thirdPartyStreamingHint =>
-      '自定义接口通过 OpenAI Chat 返回最终图像，不提供中间流式预览，也不自动重试。';
 
   @override
   String get updateCustomDistributionTitle => 'Custom API：手动更新';
@@ -16076,19 +16059,10 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get auth_thirdPartyApiSite => 'API 基礎位址';
 
   @override
-  String get auth_imageApiSiteOptional => '影象 API 站點（可選）';
-
-  @override
-  String get auth_imageApiSiteHint => '留空則使用同一個第三方 API 站點';
-
-  @override
   String get auth_thirdPartyNicknameHint => '例如：自建站點 / 映象站點';
 
   @override
   String get auth_thirdPartyTokenHint => '請輸入第三方站點提供的 API Token';
-
-  @override
-  String get auth_openAiCompatibleProfile => 'OpenAI 相容 NAI 服務商';
 
   @override
   String get auth_openAiCompatibleProfileHint =>
@@ -16097,14 +16071,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   @override
   String get auth_openAiCompatibleWarning =>
       '登入僅驗證 /v1/models，不試畫。繪圖使用 OpenAI Chat，不呼叫原生 /v1/ai 生成介面。餘額與實際費用未知。是否產生基本費與額外費用取決於服務商規則；標準 Anlas 預估為 0 不保證免費。Vibe 編碼與快取由伺服器處理，其預算欄位被忽略。僅回傳最終影像，不自動重試，請向服務商確認計費。';
-
-  @override
-  String get auth_thirdPartyCompatibilityHint =>
-      '服務商須支援在 OpenAI Chat messages 內接收 JSON 繪圖參數，並回傳 Markdown PNG 圖片。Token 按 Bearer 方式傳送；登入不查詢 /user/subscription。';
-
-  @override
-  String get auth_thirdPartyStreamingHint =>
-      '自訂介面透過 OpenAI Chat 回傳最終影像，不提供中間串流預覽，也不自動重試。';
 
   @override
   String get updateCustomDistributionTitle => 'Custom API：手動更新';

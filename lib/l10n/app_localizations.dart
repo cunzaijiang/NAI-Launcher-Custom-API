@@ -1012,18 +1012,6 @@ abstract class AppLocalizations {
   /// **'API base URL'**
   String get auth_thirdPartyApiSite;
 
-  /// No description provided for @auth_imageApiSiteOptional.
-  ///
-  /// In en, this message translates to:
-  /// **'Image API Site (optional)'**
-  String get auth_imageApiSiteOptional;
-
-  /// No description provided for @auth_imageApiSiteHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Leave empty to use the same third-party API site'**
-  String get auth_imageApiSiteHint;
-
   /// No description provided for @auth_thirdPartyNicknameHint.
   ///
   /// In en, this message translates to:
@@ -1036,12 +1024,6 @@ abstract class AppLocalizations {
   /// **'Enter the API token from the third-party site'**
   String get auth_thirdPartyTokenHint;
 
-  /// No description provided for @auth_openAiCompatibleProfile.
-  ///
-  /// In en, this message translates to:
-  /// **'OpenAI-compatible NAI provider'**
-  String get auth_openAiCompatibleProfile;
-
   /// No description provided for @auth_openAiCompatibleProfileHint.
   ///
   /// In en, this message translates to:
@@ -1053,18 +1035,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Login validates /v1/models without generating. Drawing uses OpenAI Chat, not native /v1/ai generation endpoints. Balance and actual costs are unknown. Base and additional fees may apply depending on the provider\'s rules; a standard estimate of 0 Anlas does not guarantee free generation. Vibe encoding/cache is handled by the server; its budget is ignored. Final images only, no automatic retries. Confirm billing with your provider.'**
   String get auth_openAiCompatibleWarning;
-
-  /// No description provided for @auth_thirdPartyCompatibilityHint.
-  ///
-  /// In en, this message translates to:
-  /// **'The provider must accept a JSON drawing payload inside OpenAI Chat messages and return a Markdown PNG image. Tokens are sent as Bearer tokens; login does not query /user/subscription.'**
-  String get auth_thirdPartyCompatibilityHint;
-
-  /// No description provided for @auth_thirdPartyStreamingHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Custom API returns final images through OpenAI Chat, without intermediate streaming previews or automatic retries.'**
-  String get auth_thirdPartyStreamingHint;
 
   /// No description provided for @updateCustomDistributionTitle.
   ///

@@ -1,85 +1,51 @@
-# NAI Launcher Custom API 4.3.1 Preview4
+# NAI Launcher Custom API 4.3.1 Preview5
 
-Tag: `custom-api-v4.3.1-preview.4` · Filename version: `4.3.1-custom-api-preview.4`
+Planned tag: `custom-api-v4.3.1-preview.5` · Filename version: `4.3.1-custom-api-preview.5`
 
-**Preview4 已公开发布，七附件已下载回验 / 已公開發佈，七附件已下載回驗 / Publicly released; all seven assets downloaded and verified.** [验证记录 / 驗證記錄 / Verification](../custom_api_verification.md)。
+**待发布 / 待發佈 / Unreleased.** 当前实际下载仍为 / 目前實際下載仍為 / Current download remains [Preview4](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.4)。[分版本验证 / 分版本驗證 / Version-separated verification](../custom_api_verification.md)。
 
-这是独立修改版预览，不是上游官方发行版或 NovelAI 官方产品。 / 這是獨立修改預覽，不是上游官方發行版或 NovelAI 官方產品。 / An independent modified preview, not an official upstream release or NovelAI product.
-
-## 下载与旧版 / 下載與舊版 / Downloads and prior release
-
-附件以实际发布资产为准，不以源码归档代替安装包。Preview4 使用独立 tag 和文件版本，不覆盖 Preview3 包、校验值或既有发行记录。 / 附件以實際發佈資產為準，來源封存檔不是安裝包。Preview4 使用獨立 tag 與檔案版本，不覆蓋 Preview3 套件、檢查碼或既有發行記錄。 / Actual published assets are authoritative; source archives are not installers. Preview4 uses a separate tag and filename version without overwriting Preview3 packages, checksums, or existing release records.
-
-[Preview4 Release](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.4) · [checksums.txt](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.4/checksums.txt)
-
-| 平台 / Platform | 实际下载 / 實際下載 / Download |
-| --- | --- |
-| android / android-apk | [NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.4.apk](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.4/NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.4.apk) |
-| macos / macos-portable | [NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.4_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.4/NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.4_Portable.zip) |
-| windows / windows-portable | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.4_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.4/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.4_Portable.zip) |
-| windows / windows-installer | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.4_Setup.exe](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.4/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.4_Setup.exe) |
-
-Source SHA: `8c974628b2f4f8e368502726632decefcc0c6023` · [CI run 41291110464](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/actions/runs/41291110464): `completed / success` · 7 assets / 6 checksums / 4 package hashes / archive CRCs verified.
-
-[Preview3 已发布版本 / 已發佈版本 / Published prior release](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.3)
+独立修改版预览，不是上游官方发行版或 NovelAI 官方产品。 / 獨立修改預覽，不是上游官方發行版或 NovelAI 官方產品。 / An independent modified preview, not an official upstream release or NovelAI product. 新 tag 与文件版本不覆盖旧包、校验值或发行记录 / 新 tag 與檔案版本不覆蓋舊套件、檢查碼或發行記錄 / The new tag and filename version do not overwrite prior packages, checksums or releases.
 
 ## 简体中文
 
-### Preview4 修复范围
+- desktop/mobile 恢复 Preview3 主生成按钮核心布局，完整桌面 shell 验证点击；金额为纯文字，价格 spinner 仅在刷新时显示。
+- `isSaving` 显式反馈保存状态，区分生成完成与保存中；准备阶段错误可见。
+- Chat 响应后台解析，保留 PNG 校验与现有协议限制；新增阶段日志便于后续设备定位。
 
-- 修复自定义 Chat 多角色定位：移除“AI 选择”位置选项，点击角色卡“当前位置”打开 **5×5 位置网格**并选择位置。
-- 自定义 Chat 绘图请求强制使用 `use_coords: true`，包括仍保存旧 AI 选择／自动定位设置的配置，避免角色位置被旧设置关闭。
-- 将自定义接口的预计费用移入生成按钮，移除独立价格框；自定义费用数值逻辑与官方 Anlas 行为不变。
-- **NovelAI official 模式保留原有 AI／手动定位行为**，不把自定义 Chat 的强制坐标规则套到官方路线。Preview3 动态定价、费用边界、登录与生成协议不在本次扩展范围内。
+**验证**：最终定向 42 文件、740 tests 全通过（`00:30`，exit `0`）；完整 shell 4/4，mobile 单文件 17 passed（含 fake callback）。此前全仓 10634 passed / 3 skipped / 5 failed，后续 4 项修复或复测通过；installer `hiddenPowerShell` marker 仍失败，其生产／测试 baseline 未改、child probe 单独成功，环境原因未知。不能宣称全仓 green。
 
-### 验证与安装边界
+**真实 API 探测不是应用 E2E**：8 请求、7 次 HTTP 200／有效 PNG、1 失败，均 `stream=false`、无重试。V4.5 Curated single 在 152.177 秒 `RemoteDisconnected`，扣费未知。成功请求 headers 约 3–11 秒、body 完成约 20–86 秒（均从请求开始计）；离线 Dart 样本解析 84 ms、metadata 30 ms。不将整段等待归因为本地，不承诺一分钟延迟全修或 Windows 根因已确认。
 
-2026-11-01 最终本地验证：38 文件 677 tests 通过（`00:35`，exit `0`），包含新增 2 个 metadata 一致性用例；24 个 Dart 文件 scoped analyze：`No issues found!`，后续 3 个改动文件单独分析亦无问题；源码审阅 31 个路径。
+**实际 UI blocked**：Android 无 SDK／emulator／device；Windows debug 构建因固定 NVIDIA DLSS 头下载 TLS 错误 `35` 阻塞。未完成真实 UI／安装验收；Preview5 CI、发布及附件回验待完成。
 
-Preview4 的本地回归、静态分析、CI 构建及三平台附件回验，仅以本版实际记录为证；不把 Preview3 的成功测试数、CI、源码 SHA 或包校验值当作本版证据。定位操作、旧配置与 official 模式均需单独回归；未做真实安装、UI 或付费生成，Windows／Android 热重载会话未启动；静态检查不能替代这些验收。
-
-以本发布实际附件、`checksums.txt`、`release_manifest.json` 与源码身份为准。不要仅从发行说明推断包已存在、签名已验证或可以覆盖安装。独立预览的 Windows 包未做 Authenticode 签名，macOS 仅 ad-hoc、无 Developer ID／公证，Android 使用非上游临时 debug key；完整性校验不是发布者签名。应用 ID／安装位置可能与上游重叠，不同签名不能直接覆盖，卸载可能删除本地数据。先备份、核对来源和 SHA-256，不要全局关闭系统安全保护。更新仍从本分支 Releases 手动下载安装，自动检查与应用内下载安装禁用。
-
-如遇异常，请通过“设置 → 关于 → 导出诊断日志”反馈，分享前删除 Token 等敏感信息。
+安装前备份、核对来源与 SHA-256。Windows 无 Authenticode；macOS 仅 ad-hoc、无 Developer ID／公证；Android 使用非上游临时 debug key，不保证覆盖安装，卸载可能删除数据。完整性校验不是发布者签名，不要全局关闭系统安全保护；从本分支 Releases 手动更新。如遇异常，请通过“设置 → 关于 → 导出诊断日志”反馈，分享前删除 Token 等敏感信息。
 
 ## 繁體中文
 
-### Preview4 修復範圍
+- desktop/mobile 恢復 Preview3 主要生成按鈕核心版面，以完整桌面 shell 驗證點擊；金額為純文字，價格 spinner 僅在重新整理時顯示。
+- `isSaving` 明確回饋儲存狀態，區分生成完成與儲存中；準備階段錯誤可見。
+- Chat 回應背景解析，保留 PNG 校驗與既有協定限制；新階段日誌方便後續裝置定位。
 
-- 修復自訂 Chat 多角色定位：移除「AI 選擇」位置選項，點擊角色卡「目前位置」開啟 **5×5 位置網格**並選擇位置。
-- 自訂 Chat 繪圖請求強制使用 `use_coords: true`，包括仍儲存舊 AI 選擇／自動定位設定的組態，避免角色位置被舊設定關閉。
-- 將自訂介面的預估費用移入生成按鈕，移除獨立價格框；自訂費用數值邏輯與官方 Anlas 行為不變。
-- **NovelAI official 模式保留原有 AI／手動定位行為**，不把自訂 Chat 強制座標規則套到官方路線。Preview3 動態定價、費用邊界、登入與生成協定不在本次擴充範圍內。
+**驗證**：最終定向 42 檔案、740 tests 全通過（`00:30`，exit `0`）；完整 shell 4/4，mobile 單檔 17 passed（含 fake callback）。先前全倉 10634 passed / 3 skipped / 5 failed，後續 4 項修復或複測通過；installer `hiddenPowerShell` marker 仍失敗，其生產／測試 baseline 未改、child probe 單獨成功，環境原因未知。不能宣稱全倉 green。
 
-### 驗證與安裝邊界
+**真實 API 探測不是應用程式 E2E**：8 請求、7 次 HTTP 200／有效 PNG、1 失敗，皆 `stream=false`、無重試。V4.5 Curated single 在 152.177 秒 `RemoteDisconnected`，扣費未知。成功請求 headers 約 3–11 秒、body 完成約 20–86 秒（皆從請求開始計）；離線 Dart 樣本解析 84 ms、metadata 30 ms。不將全部等待歸因本機，不承諾一分鐘延遲全修或 Windows 根因已確認。
 
-2026-11-01 最終本機驗證：38 檔案 677 tests 通過（`00:35`，exit `0`），含新增 2 個 metadata 一致性案例；24 個 Dart 檔案 scoped analyze：`No issues found!`，後續 3 個改動檔案個別分析亦無問題；原始碼審閱 31 個路徑。
+**實際 UI blocked**：Android 無 SDK／emulator／device；Windows debug 建置因固定 NVIDIA DLSS 標頭下載 TLS 錯誤 `35` 阻塞。未完成真實 UI／安裝驗收；Preview5 CI、發佈及附件回驗待完成。
 
-Preview4 的本機回歸、靜態分析、CI 建置及三平台附件回驗，僅以本版實際記錄為證；不把 Preview3 成功測試數、CI、來源 SHA 或套件檢查碼當作本版證據。定位操作、舊設定與 official 模式皆須個別回歸；未做真實安裝、UI 或付費生成，Windows／Android 熱重載工作階段未啟動；靜態檢查不能替代這些驗收。
-
-依本發佈實際附件、`checksums.txt`、`release_manifest.json` 與來源識別為準。不要僅從發行說明推斷套件已存在、簽章已驗證或可覆蓋安裝。獨立預覽的 Windows 套件無 Authenticode 簽章，macOS 僅 ad-hoc、無 Developer ID／公證，Android 使用非上游臨時 debug key；完整性校驗不是發布者簽章。ID／安裝位置可能與上游重疊，不同簽章不能直接覆蓋，解除安裝可能刪除本機資料。先備份、核對來源與 SHA-256，不要全域停用系統安全保護。更新仍從本分支 Releases 手動下載安裝，自動檢查與應用程式內下載安裝停用。
-
-如遇異常，請透過「設定 → 關於 → 匯出診斷日誌」回報，分享前移除 Token 等敏感資訊。
+安裝前備份、核對來源與 SHA-256。Windows 無 Authenticode；macOS 僅 ad-hoc、無 Developer ID／公證；Android 使用非上游臨時 debug key，不保證覆蓋安裝，解除安裝可能刪除資料。完整性校驗不是發布者簽章，不要全域停用系統安全保護；從本分支 Releases 手動更新。如遇異常，請透過「設定 → 關於 → 匯出診斷日誌」回報，分享前移除 Token 等敏感資訊。
 
 ## English
 
-### Preview4 fix scope
+- Restore the Preview3 main Generate button core layout on desktop/mobile and verify clicks in the complete desktop shell. Amounts are plain text; the pricing spinner is refresh-only.
+- Explicit saving feedback through `isSaving` distinguishes generation completion from saving; preparation errors are visible.
+- Parse Chat responses in the background, retaining PNG validation and existing protocol limits. New phase logs support later device diagnosis.
 
-- Fix custom Chat multi-character positioning: remove the AI position-selection option and open **Current position** on a character card to choose a position from the **5×5 grid**.
-- Custom Chat drawing requests enforce `use_coords: true`, including configurations saved with the old AI/automatic positioning setting, so old settings cannot disable character coordinates.
-- Move the Custom API cost estimate into the Generate button and remove the separate price box; custom cost calculations and official Anlas behavior remain unchanged.
-- **NovelAI official mode retains its existing AI/manual positioning behavior**; custom Chat's forced-coordinate rule does not apply to the official route. This update does not expand Preview3 dynamic pricing, billing boundaries, login, or generation protocols.
+**Verification**: all 740 tests in 42 targeted files passed (`00:30`, exit `0`); complete shell 4/4, mobile file 17 passed (including a fake callback). The earlier full suite recorded 10634 passed / 3 skipped / 5 failed. Four items were subsequently fixed or retested successfully; the installer `hiddenPowerShell` marker still fails. Its production/test baseline is unchanged, an isolated child probe succeeds, and the environmental cause is unknown. The full suite is not claimed green.
 
-### Verification and installation limits
+**Real API probes are not app E2E**: 8 requests, 7 HTTP 200/valid PNG successes, 1 failure; all `stream=false`, no retries. V4.5 Curated single raised `RemoteDisconnected` after 152.177 seconds; billing is unknown. Successful requests reached headers in about 3–11 seconds and body completion in about 20–86 seconds, both measured from request start. One offline Dart sample took 84 ms to parse and 30 ms for metadata. The whole wait is not attributed to local work; neither elimination of all minute-long delays nor a confirmed Windows root cause is claimed.
 
-Final local validation on 2026-11-01: 677 tests in 38 files passed (`00:35`, exit `0`), including 2 added metadata-consistency cases; scoped analysis of 24 Dart files reported `No issues found!`, and the 3 subsequently changed files also passed separate analysis; 31 source paths were reviewed.
+**Actual UI blocked**: Android has no SDK/emulator/device; the Windows debug build hit TLS error `35` downloading pinned NVIDIA DLSS headers. Real UI/installation acceptance is incomplete; Preview5 CI, publication and asset verification remain pending.
 
-Only actual Preview4 records establish local regressions, static analysis, CI builds, and three-platform asset verification. Preview3 passing test counts, CI, source SHA, and package checksums are not evidence for this version. Position selection, old configurations, and official mode each need regression coverage; real installation, UI, and paid-generation testing were not performed, and Windows/Android hot-reload sessions were not started. Static checks cannot replace that acceptance testing.
+Back up and verify provenance/SHA-256 before installation. Windows has no Authenticode; macOS is ad-hoc only without Developer ID/notarization; Android uses an ephemeral non-upstream debug key. Replacement installation is not guaranteed, and uninstalling can erase data. Integrity checks are not publisher signatures; never globally disable system security. Update manually from this fork's Releases. Report issues through Settings → About → Export diagnostic logs, removing tokens and other sensitive information before sharing.
 
-Actual assets in this release, `checksums.txt`, `release_manifest.json`, and source identity are authoritative. Release notes alone do not establish that packages exist, signatures were verified, or replacement installation works. Independent preview Windows packages have no Authenticode signature; macOS is ad-hoc only without Developer ID/notarization; Android uses an ephemeral non-upstream debug key. Integrity checks are not publisher signatures. Application IDs/install locations may overlap upstream, differing signatures prevent direct replacement, and uninstalling can erase local data. Back up, verify provenance and SHA-256, and never globally disable system security. Updates remain manual downloads/installations from this fork's Releases; automatic checks and in-app installation are disabled.
-
-Report issues through Settings → About → Export diagnostic logs, removing tokens and other sensitive information before sharing.
-
-[协议与费用边界 / 協定與費用邊界 / Protocol and billing limits](../custom_api.md) · [分版本验证记录 / 分版本驗證記錄 / Version-separated verification](../custom_api_verification.md)
-
-[Preview3 已发布发行说明 / 已發佈發行說明 / Published release notes](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.3) · [Preview3 固定版本协议 / 固定版本協定 / Tagged protocol guide](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/blob/custom-api-v4.3.1-preview.3/docs/custom_api.md)
+[协议与费用边界 / 協定與費用邊界 / Protocol and billing limits](../custom_api.md) · [Preview4 已发布说明 / 已發佈說明 / Published notes](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.4)

@@ -21,6 +21,11 @@ class GenerateButtonWithCost extends ConsumerWidget {
   final bool showCost;
   final bool requiresLogin;
   final bool compact;
+  final bool isSaving;
+  final bool isFinishing;
+
+  /// Desktop places refresh/usage in the existing footer slots, outside primary.
+  final bool showPricingActions;
 
   /// 按钮高度（紧凑布局可压低）
   final double height;
@@ -37,6 +42,9 @@ class GenerateButtonWithCost extends ConsumerWidget {
     this.showCost = true,
     this.requiresLogin = false,
     this.compact = false,
+    this.isSaving = false,
+    this.isFinishing = false,
+    this.showPricingActions = true,
     this.height = 48,
   });
 
@@ -54,6 +62,8 @@ class GenerateButtonWithCost extends ConsumerWidget {
       '${batchStatus.currentImage}/${batchStatus.totalImages}';
 
   String _generateLabelText(BuildContext context) {
+    if (isSaving) return context.l10n.common_saving;
+    if (isFinishing) return context.l10n.comfyWorkflow_processing;
     if (requiresLogin && !isGenerating) {
       return context.l10n.auth_login;
     }
@@ -77,7 +87,8 @@ class GenerateButtonWithCost extends ConsumerWidget {
       context,
       providerPricing: providerPricing,
     );
-    final primaryButton = providerPricing && showCost && !requiresLogin
+    final primaryButton =
+        showPricingActions && providerPricing && showCost && !requiresLogin
         ? Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -176,26 +187,16 @@ class GenerateButtonWithCost extends ConsumerWidget {
           )
         : buttonTheme;
 
-    final accessibleTheme = providerPricing
-        ? effectiveTheme.copyWith(
-            filledButtonTheme: FilledButtonThemeData(
-              style:
-                  (effectiveTheme.filledButtonTheme.style ??
-                          const ButtonStyle())
-                      .copyWith(
-                        minimumSize: const WidgetStatePropertyAll(Size(64, 44)),
-                      ),
-            ),
-          )
-        : effectiveTheme;
     return AnimatedTheme(
-      data: accessibleTheme,
+      data: effectiveTheme,
       duration: MediaQuery.disableAnimationsOf(context)
           ? Duration.zero
           : const Duration(milliseconds: 160),
       curve: Curves.easeOut,
       child: ThemedButton(
-        onPressed: _showCancelAction
+        onPressed: isSaving || isFinishing
+            ? null
+            : _showCancelAction
             ? onCancel
             : requiresLogin
             ? onGenerate

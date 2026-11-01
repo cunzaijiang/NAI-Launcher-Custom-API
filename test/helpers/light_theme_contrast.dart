@@ -12,6 +12,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nai_launcher/core/storage/local_storage_service.dart';
+import 'package:nai_launcher/data/services/account_manager_provider.dart';
+import 'package:nai_launcher/data/services/auth_provider.dart';
 import 'package:nai_launcher/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -29,15 +31,28 @@ const double _nearWhiteLuminance = 0.5;
 ProviderContainer createStorageFreeContainer({
   List<Override> overrides = const [],
 }) {
-  SharedPreferences.setMockInitialValues(const {});
+  SharedPreferences.setMockInitialValues(const {'auto_login': false});
   return ProviderContainer(
     overrides: [
+      // 面板只验证渲染，不启动真实账号恢复或 Hive 的异步初始化。
+      authNotifierProvider.overrideWith(_UnauthenticatedAuthNotifier.new),
+      accountManagerNotifierProvider.overrideWith(_EmptyAccountManager.new),
       localStorageServiceProvider.overrideWith(
         (ref) => InMemoryLocalStorageService(),
       ),
       ...overrides,
     ],
   );
+}
+
+class _UnauthenticatedAuthNotifier extends AuthNotifier {
+  @override
+  AuthState build() => const AuthState(status: AuthStatus.unauthenticated);
+}
+
+class _EmptyAccountManager extends AccountManagerNotifier {
+  @override
+  AccountManagerState build() => const AccountManagerState();
 }
 
 /// 纯内存的 [LocalStorageService]，供 widget 测试替换真实 Hive 实现。

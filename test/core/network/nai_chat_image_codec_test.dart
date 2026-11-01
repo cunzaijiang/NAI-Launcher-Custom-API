@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -245,6 +246,81 @@ void main() {
   });
 
   test(
+    'async decode yields to the UI event loop and preserves response',
+    () async {
+      final png = Uint8List.fromList(
+        img.encodePng(img.Image(width: 1024, height: 1024)),
+      );
+      final body = _response(
+        png,
+        suffix: '<!-- seeds: [12345] -->',
+        extras: {
+          'model': 'response-model',
+          'id': 'response-id',
+          'usage': {
+            'total_tokens': 17,
+            'details': {'cached': 3},
+          },
+          'vibe_cache_ids': ['opaque-id'],
+        },
+      );
+      var eventLoopTicked = false;
+      final tick = Timer(Duration.zero, () => eventLoopTicked = true);
+      try {
+        final decoded = await NAIChatImageCodec.decodeResponseAsync(body);
+        expect(eventLoopTicked, true);
+        expect(decoded.image, png);
+        expect((decoded.width, decoded.height), (1024, 1024));
+        expect(decoded.seed, 12345);
+        expect(decoded.model, 'response-model');
+        expect(decoded.requestId, 'response-id');
+        expect(decoded.usage, {
+          'total_tokens': 17,
+          'details': {'cached': 3},
+        });
+        expect(decoded.vibeCacheIds, ['opaque-id']);
+      } finally {
+        tick.cancel();
+      }
+    },
+  );
+
+  test('async decode retains strict envelope and PNG rejection', () async {
+    final png = _png();
+    final inline = '![x](data:image/png;base64,${base64Encode(png)})';
+    for (final body in [
+      '{bad',
+      '[]',
+      _response(
+        png,
+        extras: {
+          'error': {'message': 'Rejected'},
+        },
+      ),
+      for (final content in [
+        '![x](https://untrusted.invalid/a.png)',
+        '$inline $inline',
+        '![x](data:image/png;base64,abc=def)',
+        '![x](data:image/png;base64,AQID)',
+        // IHDR alone is not proof of a decodable image.
+        '![x](data:image/png;base64,${base64Encode(png.sublist(0, 33))})',
+      ])
+        jsonEncode({
+          'choices': [
+            {
+              'message': {'content': content},
+            },
+          ],
+        }),
+    ]) {
+      await expectLater(
+        NAIChatImageCodec.decodeResponseAsync(body),
+        throwsA(anyOf(isA<FormatException>(), isA<StateError>())),
+      );
+    }
+  });
+
+  test(
     'decodes PNG, seed comment, final usage and opaque cache identifiers',
     () {
       final decoded = NAIChatImageCodec.decodeResponse(
@@ -296,7 +372,9 @@ void main() {
         (_png(), '', 42),
       ]) {
         final image = await NAIChatImageCodec.withRequestMetadata(
-          NAIChatImageCodec.decodeResponse(_response(png, suffix: suffix)),
+          await NAIChatImageCodec.decodeResponseAsync(
+            _response(png, suffix: suffix),
+          ),
           params: params,
           requestSeed: 42,
           requestParameters: const {},
@@ -307,6 +385,53 @@ void main() {
       }
     },
   );
+
+  for (final hasNaiPrompt in [false, true]) {
+    test(
+      'async metadata update preserves unrelated text and IDAT '
+      'with ${hasNaiPrompt ? "recognized" : "unrecognized"} NAI Comment',
+      () async {
+        final original = UnifiedMetadataParser.embedTextChunks(_png(), {
+          'Description': 'server description',
+          'Software': 'NovelAI',
+          'Source': 'server source',
+          'ServerAnnotation': 'unrelated text must survive',
+          // Existing NAI metadata is recognized only when Comment has prompt.
+          'Comment': jsonEncode({
+            if (hasNaiPrompt) 'prompt': 'server prompt',
+            'seed': 987,
+            'server_extra': 'kept',
+          }),
+        });
+        final response = await NAIChatImageCodec.decodeResponseAsync(
+          _response(original, suffix: '<!-- seeds: [123] -->'),
+        );
+        final updated = await NAIChatImageCodec.withRequestMetadata(
+          response,
+          params: const ImageParams(prompt: 'request prompt', seed: -1),
+          requestSeed: 42,
+          requestParameters: const {},
+        );
+        final text = UnifiedMetadataParser.extractPngTextData(updated);
+        final comment = jsonDecode(text['Comment']!) as Map;
+        expect(comment['prompt'], contains('request prompt'));
+        if (hasNaiPrompt) {
+          expect(text['Description'], 'server description');
+          expect(text['Source'], 'server source');
+          expect(comment['server_extra'], 'kept');
+          expect(comment['seed'], 987);
+        } else {
+          // Unrecognized Comment is replaced, not merged into request metadata.
+          expect(text['Description'], contains('request prompt'));
+          expect(comment.containsKey('server_extra'), false);
+        }
+        expect(text['Software'], 'NovelAI');
+        expect(text['ServerAnnotation'], 'unrelated text must survive');
+        expect(_idatChunks(original), isNotEmpty);
+        expect(_idatChunks(updated), _idatChunks(original));
+      },
+    );
+  }
 
   test('malformed JSON and error envelope report meaningful detail', () {
     expect(
@@ -369,6 +494,20 @@ void main() {
       }
     },
   );
+}
+
+List<int> _idatChunks(Uint8List png) {
+  final output = <int>[];
+  final data = ByteData.sublistView(png);
+  for (var offset = 8; offset + 12 <= png.length;) {
+    final length = data.getUint32(offset);
+    final end = offset + 12 + length;
+    if (ascii.decode(png.sublist(offset + 4, offset + 8)) == 'IDAT') {
+      output.addAll(png.sublist(offset, end));
+    }
+    offset = end;
+  }
+  return output;
 }
 
 Uint8List _png() =>

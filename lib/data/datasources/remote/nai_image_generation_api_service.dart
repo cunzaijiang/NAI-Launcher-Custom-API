@@ -379,29 +379,57 @@ class NAIImageGenerationApiService {
     _validatePreparedSession(command, request);
     final requestedAt = DateTime.now().toUtc();
     final endpoint = command.endpoint;
+    final phaseWatch = Stopwatch()..start();
+    var receivedBytes = 0;
     final response = await _transport.sendChat(
       payload,
       request,
-      onProgress: onProgress,
+      onProgress: (count, total) {
+        receivedBytes = count;
+        onProgress?.call(count, total);
+      },
     );
-    final decoded = NAIChatImageCodec.decodeResponse(response.data ?? '');
     AppLogger.d(
-      'Chat drawing complete: usageFields=${decoded.usage.length}, '
-          'vibeCacheCount=${decoded.vibeCacheIds.length}',
+      'Chat phase=http-complete bytes=$receivedBytes '
+          'elapsedMs=${phaseWatch.elapsedMilliseconds}',
       'ImgGen',
     );
+    _validatePreparedSession(command, request);
+    phaseWatch.reset();
+    final decoded = await NAIChatImageCodec.decodeResponseAsync(
+      response.data ?? '',
+    );
+    AppLogger.d(
+      'Chat phase=parse-complete bytes=${decoded.image.length} '
+          'elapsedMs=${phaseWatch.elapsedMilliseconds}',
+      'ImgGen',
+    );
+    _validatePreparedSession(command, request);
+    phaseWatch.reset();
     final image = await NAIChatImageCodec.withRequestMetadata(
       decoded,
       params: command.responseContext.originalParams,
       requestSeed: command.buildResult.seed,
       requestParameters: command.buildResult.requestParameters,
     );
-    if (request.cancelToken.isCancelled) throw request.cancelToken.cancelError!;
+    AppLogger.d(
+      'Chat phase=metadata-complete bytes=${image.length} '
+          'elapsedMs=${phaseWatch.elapsedMilliseconds}',
+      'ImgGen',
+    );
+    _validatePreparedSession(command, request);
+    phaseWatch.reset();
     final artifact = await _responseProcessor.composeImage(
       image,
       command.responseContext,
     );
-    if (request.cancelToken.isCancelled) throw request.cancelToken.cancelError!;
+    phaseWatch.stop();
+    AppLogger.d(
+      'Chat phase=compose-complete bytes=${artifact.displayImageBytes.length} '
+          'elapsedMs=${phaseWatch.elapsedMilliseconds}',
+      'ImgGen',
+    );
+    _validatePreparedSession(command, request);
     if (endpoint == _endpointService.current) {
       _usageStore?.record(
         ProviderGenerationUsage(

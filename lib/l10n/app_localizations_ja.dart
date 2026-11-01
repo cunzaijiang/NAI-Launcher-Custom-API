@@ -500,19 +500,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get auth_thirdPartyApiSite => 'API ベース URL';
 
   @override
-  String get auth_imageApiSiteOptional => '画像 API サイト (オプション)';
-
-  @override
-  String get auth_imageApiSiteHint => '同じサードパーティ API サイトを使用する場合は空のままにしてください';
-
-  @override
   String get auth_thirdPartyNicknameHint => '例: 自己ホスト型サイト / ミラー サイト';
 
   @override
   String get auth_thirdPartyTokenHint => 'サードパーティ サイトから API トークンを入力してください';
-
-  @override
-  String get auth_openAiCompatibleProfile => 'OpenAI 互換 NAI プロバイダー';
 
   @override
   String get auth_openAiCompatibleProfileHint =>
@@ -521,14 +512,6 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get auth_openAiCompatibleWarning =>
       'ログインは /v1/models の検証のみで試し描画しません。描画は OpenAI Chat を使い、ネイティブ /v1/ai 生成 API は呼び出しません。残高と実際の料金は不明です。基本料金や追加料金の有無はプロバイダーのルールによります。標準の Anlas 見積もりが 0 でも無料とは限りません。Vibe のエンコードとキャッシュはサーバーが処理し、予算フィールドは無視されます。最終画像のみで自動再試行はありません。料金をプロバイダーに確認してください。';
-
-  @override
-  String get auth_thirdPartyCompatibilityHint =>
-      'OpenAI Chat messages 内の JSON 描画パラメーターと Markdown PNG 応答に対応するプロバイダーが必要です。トークンは Bearer として送信され、ログイン時に /user/subscription は取得しません。';
-
-  @override
-  String get auth_thirdPartyStreamingHint =>
-      'カスタム API は OpenAI Chat で最終画像を返します。途中のストリーミングプレビューと自動再試行はありません。';
 
   @override
   String get updateCustomDistributionTitle => 'Custom API：手動更新';

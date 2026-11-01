@@ -226,7 +226,7 @@ class ImageGenerationNotifier extends _$ImageGenerationNotifier {
           restored.map((image) => MapEntry(image.id, image.filePath)),
         );
       state = state.copyWith(
-        status: state.status == GenerationStatus.idle
+        status: state.status == GenerationStatus.idle && !state.isSubmitting
             ? GenerationStatus.completed
             : state.status,
         history: merged,
@@ -301,7 +301,13 @@ class ImageGenerationNotifier extends _$ImageGenerationNotifier {
     if (_isDisposed || state.isBusy) {
       return;
     }
-    _setSubmitting(true);
+    // 新调用的准备阶段不能继承上一轮 completed/error/cancelled。
+    state = state.copyWith(
+      status: GenerationStatus.idle,
+      isSubmitting: true,
+      isSaving: false,
+      clearSaveError: true,
+    );
     final invocationSettled = Completer<void>();
     _generationInvocationSettled = invocationSettled;
     final epoch = _lifecycleEpoch;
@@ -428,6 +434,20 @@ class ImageGenerationNotifier extends _$ImageGenerationNotifier {
       _activeRun = handle;
       await for (final event in coordinator.execute(command, handle)) {
         await _reduce(event, epoch);
+      }
+    } catch (error, stackTrace) {
+      // prepareInitial 也可能抛出普通 UnsupportedError 或编码/读盘异常，
+      // 必须成为可见失败，不能只在 finally 解锁后表现为“点了没反应”。
+      AppLogger.e('Generation invocation failed', error, stackTrace);
+      if (_isCurrentLifecycle(epoch) && _activeInvocationId == invocationId) {
+        state = state.copyWith(
+          status: GenerationStatus.error,
+          errorMessage: error.toString(),
+          progress: 0,
+          currentImage: 0,
+          totalImages: 0,
+          clearStreamPreview: true,
+        );
       }
     } finally {
       // 归属判断不可省：被取消后新一次提交已经接管标志，这里不能替它复位。
@@ -710,7 +730,7 @@ class ImageGenerationNotifier extends _$ImageGenerationNotifier {
         if (images.isNotEmpty) {
           final settings = ref.read(imageSaveSettingsNotifierProvider);
           if (settings.autoSave) {
-            await _saveImages(images, epoch: epoch);
+            await _autoSaveCompletedImages(images, epoch, event.runId);
           }
         }
       case GenerationCancelled():
@@ -736,6 +756,41 @@ class ImageGenerationNotifier extends _$ImageGenerationNotifier {
           totalImages: 0,
           clearStreamPreview: true,
         );
+    }
+  }
+
+  Future<void> _autoSaveCompletedImages(
+    List<GeneratedImage> images,
+    int epoch,
+    int runId,
+  ) async {
+    state = state.copyWith(isSaving: true, errorMessage: state.errorMessage);
+    String? saveError;
+    try {
+      final result = await _saveImages(images, epoch: epoch);
+      final unsaved = images.length - result.savedPaths.length;
+      if (unsaved > 0) {
+        saveError =
+            '$unsaved image(s) could not be saved to the local gallery.';
+      }
+      if (result.systemGalleryExportFailureCount > 0) {
+        saveError = [
+          if (saveError != null) saveError,
+          '${result.systemGalleryExportFailureCount} image(s) could not be '
+              'exported to the system gallery.',
+        ].join(' ');
+      }
+    } catch (error, stackTrace) {
+      AppLogger.e('Failed to save completed generation', error, stackTrace);
+      saveError = error.toString();
+    } finally {
+      if (_isCurrentLifecycle(epoch) && _activeRunId == runId) {
+        state = state.copyWith(
+          isSaving: false,
+          saveErrorMessage: saveError,
+          errorMessage: state.errorMessage,
+        );
+      }
     }
   }
 
@@ -946,6 +1001,7 @@ class ImageGenerationNotifier extends _$ImageGenerationNotifier {
   }
 
   void skipCurrentRequest() {
+    if (_isDisposed || !state.isGenerating) return;
     final coordinator = _coordinator;
     final handle = _activeRun;
     if (coordinator == null || handle == null) {
@@ -961,6 +1017,14 @@ class ImageGenerationNotifier extends _$ImageGenerationNotifier {
 
   void cancel() {
     if (_isDisposed) return;
+    // 终态只剩不可取消的保存收尾；不能解锁让新提交与旧保存交错，
+    // 也不能再取消已结束的 transport。真正的准备/生成取消仍按原归属处理。
+    if (state.isSaving ||
+        (state.isSubmitting &&
+            state.status != GenerationStatus.idle &&
+            !state.isGenerating)) {
+      return;
+    }
     final processingCoordinator = _coordinator;
     final processingRun = _activeRun;
     if (processingCoordinator != null &&
