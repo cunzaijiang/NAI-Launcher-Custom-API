@@ -6,6 +6,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:nai_launcher/l10n/app_localizations.dart';
 import 'package:nai_launcher/data/services/account_manager_provider.dart';
 import 'package:nai_launcher/presentation/router/mobile_more_panel.dart';
+import 'package:nai_launcher/presentation/widgets/navigation/qq_logo.dart';
 
 class _MockNavigationShell extends Mock implements StatefulNavigationShell {
   @override
@@ -94,6 +95,14 @@ void main() {
         expect(button.hitTestable(), findsOneWidget);
         expect(tester.getRect(button).bottom, lessThanOrEqualTo(768));
       }
+
+      final community = find.byKey(const ValueKey('mobile-more-discord'));
+      expect(
+        find.descendant(of: community, matching: find.byType(QQLogo)),
+        findsOneWidget,
+      );
+      expect(find.text('加入 QQ 群'), findsOneWidget);
+      expect(find.byIcon(Icons.discord), findsNothing);
 
       await tester.scrollUntilVisible(
         entry,

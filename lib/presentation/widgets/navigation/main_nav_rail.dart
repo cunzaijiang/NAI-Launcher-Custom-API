@@ -25,6 +25,7 @@ import '../auth/account_avatar.dart';
 import '../auth/login_form_container.dart';
 import '../auth/saved_account_token_reader.dart';
 import '../settings/account_profile_sheet.dart';
+import 'qq_logo.dart';
 
 import '../common/app_toast.dart';
 import '../common/menu_action_label.dart';
@@ -239,12 +240,12 @@ class MainNavRail extends ConsumerWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      // Discord 社群
+                      // QQ 群
                       _ExternalLinkIcon(
-                        icon: Icons.discord,
+                        icon: const QQLogo(size: 24),
                         label: context.l10n.nav_discordCommunity,
-                        color: const Color(0xFF5865F2), // Discord 紫色
-                        url: CommunityLinks.discord,
+                        color: const Color(0xFF0099FF),
+                        url: CommunityLinks.qq,
                       ),
 
                       // GitHub 仓库
@@ -861,7 +862,7 @@ class _GitHubLogoPainter extends CustomPainter {
 
 /// 外部链接图标
 class _ExternalLinkIcon extends StatefulWidget {
-  final IconData icon;
+  final Widget icon;
   final String label;
   final Color color;
   final String url;
@@ -899,10 +900,12 @@ class _ExternalLinkIconState extends State<_ExternalLinkIcon> {
       onHover: (value) => setState(() => _isHovering = value),
       onTapDown: () => setState(() => _isPressed = true),
       onTapEnd: () => setState(() => _isPressed = false),
-      icon: Icon(
-        widget.icon,
-        color: widget.color.withValues(alpha: _isHovering ? 1.0 : 0.7),
-        size: 24,
+      icon: IconTheme(
+        data: IconThemeData(
+          color: widget.color.withValues(alpha: _isHovering ? 1.0 : 0.7),
+          size: 24,
+        ),
+        child: widget.icon,
       ),
     );
   }

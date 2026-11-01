@@ -811,7 +811,7 @@ abstract class AppLocalizations {
   /// No description provided for @nav_discordCommunity.
   ///
   /// In en, this message translates to:
-  /// **'Discord Community'**
+  /// **'QQ Group'**
   String get nav_discordCommunity;
 
   /// No description provided for @nav_githubRepo.
@@ -823,7 +823,7 @@ abstract class AppLocalizations {
   /// No description provided for @nav_joinDiscord.
   ///
   /// In en, this message translates to:
-  /// **'Join Discord'**
+  /// **'Join QQ Group'**
   String get nav_joinDiscord;
 
   /// No description provided for @nav_projectRepository.

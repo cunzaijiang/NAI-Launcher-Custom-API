@@ -22,6 +22,14 @@ Source package: `https://registry.npmjs.org/@lobehub/icons-static-png/-/icons-st
 Package integrity (SHA-512, Base64):
 `vyCHQJBxhk9dJxhsCQ3G6U1I4rP8HFiOgxn73IM2s1XAYHupmMJIfm80jRjd83xjM8jSI+SMGsMmjADy0qHwHg==`
 
+## QQ Community Icon
+
+`assets/icons/qq.png` is a transparent rasterization of the standard QQ SVG
+from [Simple Icons](https://github.com/simple-icons/simple-icons/blob/90646e4bf7f3b89df6c37e65baf3e7bc759a517c/icons/qq.svg),
+revision `90646e4bf7f3b89df6c37e65baf3e7bc759a517c`, under
+[CC0-1.0](https://github.com/simple-icons/simple-icons/blob/90646e4bf7f3b89df6c37e65baf3e7bc759a517c/LICENSE.md).
+No icon service is contacted at runtime. QQ trademarks belong to their owner.
+
 ## Project Website Fonts
 
 The public project website self-hosts [Oswald](https://github.com/googlefonts/OswaldFont)

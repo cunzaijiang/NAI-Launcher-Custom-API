@@ -390,13 +390,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get nav_dictionary => '辞書';
 
   @override
-  String get nav_discordCommunity => 'Discord コミュニティ';
+  String get nav_discordCommunity => 'QQ グループ';
 
   @override
   String get nav_githubRepo => 'GitHub リポジトリ';
 
   @override
-  String get nav_joinDiscord => 'Discord に参加';
+  String get nav_joinDiscord => 'QQ グループに参加';
 
   @override
   String get nav_projectRepository => 'プロジェクトリポジトリ';

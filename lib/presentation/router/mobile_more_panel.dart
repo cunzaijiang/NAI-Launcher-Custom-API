@@ -15,6 +15,7 @@ import '../providers/update_provider.dart';
 import '../services/mobile_image_metadata_importer.dart';
 import '../widgets/common/app_toast.dart';
 import '../widgets/navigation/main_nav_rail.dart';
+import '../widgets/navigation/qq_logo.dart';
 import '../widgets/settings/account_profile_sheet.dart';
 import 'app_branch.dart';
 import 'app_routes.dart';
@@ -196,13 +197,11 @@ Future<void> showMobileMorePanel({
                     children: [
                       _MobileCommunityButton(
                         key: const ValueKey('mobile-more-discord'),
-                        icon: const Icon(Icons.discord, size: 20),
+                        icon: const QQLogo(size: 20),
                         label: panelContext.l10n.nav_joinDiscord,
-                        backgroundColor: const Color(0xFF5865F2),
-                        onPressed: () => _openCommunityLink(
-                          panelContext,
-                          CommunityLinks.discord,
-                        ),
+                        backgroundColor: const Color(0xFF0099FF),
+                        onPressed: () =>
+                            _openCommunityLink(panelContext, CommunityLinks.qq),
                       ),
                       const SizedBox(height: 8),
                       _MobileCommunityButton(
@@ -222,12 +221,12 @@ Future<void> showMobileMorePanel({
                       Expanded(
                         child: _MobileCommunityButton(
                           key: const ValueKey('mobile-more-discord'),
-                          icon: const Icon(Icons.discord, size: 20),
+                          icon: const QQLogo(size: 20),
                           label: panelContext.l10n.nav_joinDiscord,
-                          backgroundColor: const Color(0xFF5865F2),
+                          backgroundColor: const Color(0xFF0099FF),
                           onPressed: () => _openCommunityLink(
                             panelContext,
-                            CommunityLinks.discord,
+                            CommunityLinks.qq,
                           ),
                         ),
                       ),

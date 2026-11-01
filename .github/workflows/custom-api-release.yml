@@ -134,8 +134,12 @@ jobs:
             'test/presentation/widgets/common/anlas_cost_badge_test.dart'
             'test/presentation/screens/generation/widgets/generation_controls/generate_button_test.dart'
             'test/data/datasources/remote/nai_image_generation_api_service_test.dart'
+            'test/core/constants/community_links_test.dart'
+            'test/presentation/router/mobile_more_panel_test.dart'
+            'test/presentation/router/main_shell_auth_prompt_test.dart'
+            'test/presentation/router/desktop_shell_sidebar_transition_test.dart'
           )
-          if ($tests.Count -ne 28) { throw 'Expected exactly 28 regression suites.' }
+          if ($tests.Count -ne 32) { throw 'Expected exactly 32 regression suites.' }
           foreach ($test in $tests) {
             if (!(Test-Path -LiteralPath $test -PathType Leaf)) { throw "Missing regression suite: $test" }
           }

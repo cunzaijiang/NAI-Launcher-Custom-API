@@ -401,13 +401,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nav_dictionary => 'Dictionary';
 
   @override
-  String get nav_discordCommunity => 'Discord Community';
+  String get nav_discordCommunity => 'QQ Group';
 
   @override
   String get nav_githubRepo => 'GitHub Repository';
 
   @override
-  String get nav_joinDiscord => 'Join Discord';
+  String get nav_joinDiscord => 'Join QQ Group';
 
   @override
   String get nav_projectRepository => 'Project repository';
