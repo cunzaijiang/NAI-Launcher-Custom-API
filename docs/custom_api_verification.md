@@ -1,8 +1,6 @@
 # Preview3 验证记录 / 驗證記錄 / Verification record
 
-> **2026-11-01：已完成本地验证，正在准备 Preview3 发布，尚未发布 / 已完成本機驗證，正在準備 Preview3 發佈，尚未發佈 / Local validation complete; Preview3 release preparation underway, not released.**
->
-> GitHub 上传发布已获授权；本记录仅确认下列本地及公开定价证据，Preview3 CI、构建与发布附件仍待实际结果核对 / GitHub 上傳發佈已獲授權；本記錄僅確認下列本機與公開定價證據，Preview3 CI、建置與發佈附件仍待實際結果核對 / GitHub upload and publication are authorized. This record confirms only the local and public-pricing evidence below; Preview3 CI, builds, and release assets await actual-result verification.
+> **2026-11-01：Preview3 已公开发布、CI 构建成功、附件已回验 / 已公開發佈、CI 建置成功、附件已回驗 / Publicly released, CI builds succeeded, assets verified.**
 
 ## 简体中文
 
@@ -11,7 +9,7 @@
 | 检查 | 实际结果与边界 |
 | --- | --- |
 | 环境 | Flutter `3.47.5` / Dart `3.13.4`。 |
-| 完整测试批次 | 28 个文件，604 tests 全部通过；用时 `00:19`，exit `0`。 |
+| 完整测试批次 | 最终 32 个文件，615 tests 全部通过。原 28 文件 604 tests（`00:19`，exit `0`）为较早批次。 |
 | 定向回归 | timer provider 的 15 tests 已通过；新增 core 9 cases（空定价快照 1、异步准备后 epoch／endpoint 变化中止 8）均在完整批次通过；Agent 文案既有 3 个文件的 17 tests 全部通过。 |
 | 静态分析 | 29 个 Dart 文件加登录测试，共 30 个文件；scoped analyze：`No issues`。 |
 | 源码审阅 | 共 41 个 reviewed files。 |
@@ -25,9 +23,9 @@
 - 已补 1 小时自动刷新 timer；离线时保留最近成功的持久缓存，首次获取失败后每小时重试。timer provider 的 15 tests 已通过，已纳入完整批次结果。
 - Windows／Android 热重载会话均未启动；未做真实 UI 验收。
 - 未配置真实 API Key，未做真实安装、付费生成、真实生成端到端或钱包实扣验证；公开定价及离线规则计算不能证明余额、订阅资格、真实扣款或任意第三方兼容性。
-- 本地 source-only patch／zip 交付位置为 `dist/custom-api-v4.3.1-preview.3-source/`，不是安装包，也不是构建或发布证明。GitHub 上传发布认证已验证，正在准备 Preview3 发布；本记录尚无 Preview3 CI、二进制构建、公开附件回验、产物大小、SHA-256 或已发布源码标识的确认结果，以上仍待实际结果核对，不填写推测值。目标 tag 为 `custom-api-v4.3.1-preview.3`，不是已发布证明。
+- Preview3 已公开发布，CI 全部 job 成功，云端 gate 32 文件通过。七附件均已下载，tag／manifest／source SHA 一致，六项校验通过，四包 SHA-256、ZIP CRC、APK／EXE 检查通过；三平台 QQ 图标资源与源码一致，编译载荷均含群地址 `qm.qq.com/q/jY8Pshi5os`。这些不代替真实安装或 UI 验收。
 
-[协议与费用边界](custom_api.md) · [待发布说明](releases/custom_api_preview.md)。[旧 Preview2（无动态定价）](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2)与[历史 CI](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/actions/runs/41213027696)仅供旧版追溯，不证明 Preview3 已通过、已构建或已发布；旧附件与校验关系不变。只有实际发布并回验后才启用 Preview3 下载。
+[协议与费用边界](custom_api.md) · [发行说明](releases/custom_api_preview.md)。[旧 Preview2（无动态定价）](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2)与[历史 CI](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/actions/runs/41213027696)仅供旧版追溯，不证明 Preview3 已通过、已构建或已发布；旧附件与校验关系不变。Preview3 主下载已切换至本次已回验附件。
 
 ## 繁體中文
 
@@ -36,7 +34,7 @@
 | 檢查 | 實際結果與邊界 |
 | --- | --- |
 | 環境 | Flutter `3.47.5` / Dart `3.13.4`。 |
-| 完整測試批次 | 28 個檔案，604 tests 全部通過；用時 `00:19`，exit `0`。 |
+| 完整測試批次 | 最終 32 個檔案，615 tests 全部通過。原 28 檔案 604 tests（`00:19`，exit `0`）為較早批次。 |
 | 定向回歸 | timer provider 的 15 tests 已通過；新增 core 9 cases（空定價快照 1、非同步準備後 epoch／endpoint 變更中止 8）皆在完整批次通過；Agent 文案既有 3 個檔案的 17 tests 全部通過。 |
 | 靜態分析 | 29 個 Dart 檔案加登入測試，共 30 個檔案；scoped analyze：`No issues`。 |
 | 原始碼審閱 | 共 41 個 reviewed files。 |
@@ -50,9 +48,9 @@
 - 已補 1 小時自動重新整理 timer；離線時保留最近成功的持久快取，首次擷取失敗後每小時重試。timer provider 的 15 tests 已通過，已納入完整批次結果。
 - Windows／Android 熱重載工作階段皆未啟動；未做真實 UI 驗收。
 - 未設定真實 API Key，未做真實安裝、付費生成、真實生成端對端或錢包實扣驗證；公開價格與離線規則計算不證明餘額、訂閱、真實扣款或任意服務相容性。
-- 本機 source-only patch／zip 交付位置為 `dist/custom-api-v4.3.1-preview.3-source/`，不是安裝包，也不是建置或發佈證明。GitHub 上傳發佈認證已驗證，正在準備 Preview3 發佈；本記錄尚無 Preview3 CI、二進位建置、公開附件回驗、產物大小、SHA-256 或已發佈來源識別的確認結果，仍待實際結果核對，不填推測值。目標 tag `custom-api-v4.3.1-preview.3` 不是已發佈證明。
+- Preview3 已公開發佈，CI 全部 job 成功，雲端 gate 32 檔案通過。七附件均已下載，tag／manifest／source SHA 一致，六項校驗通過，四包 SHA-256、ZIP CRC、APK／EXE 檢查通過；三平台 QQ 圖示資源與來源一致，編譯載荷均含群位址 `qm.qq.com/q/jY8Pshi5os`。不代替真實安裝或 UI 驗收。
 
-[協定與費用邊界](custom_api.md) · [待發佈說明](releases/custom_api_preview.md)。[舊 Preview2（無動態定價）](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2)與[歷史 CI](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/actions/runs/41213027696)僅供舊版追溯，不證明 Preview3 已通過、已建置或已發佈；舊附件／校驗關係不變。實際發佈並回驗後才啟用 Preview3 下載。
+[協定與費用邊界](custom_api.md) · [發行說明](releases/custom_api_preview.md)。[舊 Preview2（無動態定價）](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2)與[歷史 CI](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/actions/runs/41213027696)僅供舊版追溯，不證明 Preview3 已通過、已建置或已發佈；舊附件／校驗關係不變。Preview3 主下載已切換至本次已回驗附件。
 
 ## English
 
@@ -61,7 +59,7 @@
 | Check | Observed result and limits |
 | --- | --- |
 | Environment | Flutter `3.47.5` / Dart `3.13.4`. |
-| Full test batch | All 604 tests in 28 files passed; duration `00:19`, exit `0`. |
+| Full test batch | Final batch: all 615 tests in 32 files passed. Earlier batch: 604 tests in 28 files, `00:19`, exit `0`. |
 | Targeted regressions | The timer provider’s 15 tests pass. All 9 new core cases (1 null pricing snapshot, 8 epoch/endpoint changes after asynchronous preparation) passed in the full batch. All 17 tests in 3 existing Agent wording files pass. |
 | Static analysis | 29 Dart files plus the login test, 30 files total; scoped analyze: `No issues`. |
 | Source review | 41 reviewed files. |
@@ -75,6 +73,27 @@
 - A 1-hour automatic-refresh timer has been added. The last successful durable cache is retained offline; an initial fetch failure is retried hourly. The timer provider’s 15 tests pass and are included in the full-batch result.
 - Neither Windows nor Android hot-reload sessions have been started; no real UI acceptance testing has been performed.
 - No real API key has been configured. Real installation, paid generation, real generation end-to-end, and actual wallet debits have not been verified. Public rates and offline rule calculations do not establish balances, subscription eligibility, actual charges, or arbitrary-provider compatibility.
-- Local source-only patch/zip delivery location: `dist/custom-api-v4.3.1-preview.3-source/`, not installers or evidence of a build or release. GitHub upload/publication authentication has been verified and Preview3 release preparation is underway. This record has no confirmed Preview3 CI, binary-build, public-asset verification, artifact-size, SHA-256, or published-source-identifier results yet; these await actual-result verification, and none are invented. Target tag `custom-api-v4.3.1-preview.3` does not establish publication.
+- Preview3 is publicly released. All CI jobs succeeded; the cloud gate passed 32 files. All seven assets were downloaded, tag/manifest/source SHA matched, six checksum entries verified, and four package SHA-256 values, ZIP CRCs, and APK/EXE checks passed. QQ icon resources match source on all three platforms, and compiled payloads contain `qm.qq.com/q/jY8Pshi5os`. This does not establish real installation or UI acceptance.
 
-[Protocol and billing limits](custom_api.md) · [Unreleased notes](releases/custom_api_preview.md). [Old Preview2 (no dynamic pricing)](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2) and [historical CI](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/actions/runs/41213027696) are old-version provenance only, not proof that Preview3 has passed, been built, or been released. Old assets/checksum relationships remain unchanged. Enable Preview3 downloads only after actual publication and asset verification.
+[Protocol and billing limits](custom_api.md) · [Release notes](releases/custom_api_preview.md). [Old Preview2 (no dynamic pricing)](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2) and [historical CI](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/actions/runs/41213027696) are old-version provenance only, not proof that Preview3 has passed, been built, or been released. Old assets/checksum relationships remain unchanged. Primary Preview3 downloads now point to the verified release assets.
+
+## 发布资产 / 發佈資產 / Published assets
+
+[Preview3 Release](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.3) · [CI run 41264301138](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/actions/runs/41264301138)
+
+Tag: `custom-api-v4.3.1-preview.3` · source SHA: `34924235cf21052eea9749800296939dfdce595d` · Release ID: `430321468`
+
+七附件 / 七附件 / Seven assets: four packages, `checksums.txt`, `release_manifest.json`, `release_notes_custom_api.md`. Six checksum entries verified; the checksum file itself is not counted as its own entry.
+
+| 文件 / File | 字节 / Bytes | SHA-256 |
+| --- | ---: | --- |
+| `NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.3.apk` | 277729032 | `3b155e7f6e311113520dbe4b5a8a337c49f21aa5402359c9a3599577e76b6d37` |
+| `NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.3_Portable.zip` | 137608248 | `b24795caa063178bc6e4e6243f596bec1ce1fabe9bacd8072eb1d7b7384c9173` |
+| `NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.3_Portable.zip` | 105065468 | `813a15c5cedc1a26776c6104be93984c451f5690d7e09cca1a73ccb8250455b3` |
+| `NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.3_Setup.exe` | 77969376 | `1716d325ed2a1bae6a5137a1231237674bcf61ad7897ccdfc42ebbd9bc1b5db5` |
+
+签名以本次 manifest 为准：Windows 两包 `unsigned`；macOS `ad-hoc-no-developer-id-not-notarized`；Android `ephemeral-debug-key-not-upstream`。完整性校验不等于发布者数字签名或真实安装验收。
+
+簽章依本次 manifest：Windows 兩包 `unsigned`；macOS `ad-hoc-no-developer-id-not-notarized`；Android `ephemeral-debug-key-not-upstream`。完整性校驗不等於發布者數位簽章或真實安裝驗收。
+
+Signing per this release manifest: both Windows packages `unsigned`; macOS `ad-hoc-no-developer-id-not-notarized`; Android `ephemeral-debug-key-not-upstream`. Integrity verification is not publisher-signature or real-installation acceptance.

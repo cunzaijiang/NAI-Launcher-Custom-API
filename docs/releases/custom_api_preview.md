@@ -6,7 +6,7 @@ Tag: `custom-api-v4.3.1-preview.3` · Filename version: `4.3.1-custom-api-previe
 
 ## 下载 / 下載 / Downloads
 
-**附件以本发布实际资产为准 / 附件以本發佈實際資產為準 / The actual assets attached to this release are authoritative.** 以下为四个包的目标链接，不构成附件可用性、CI 成功或签名验证声明 / 以下為四個套件的目標連結，不代表附件可用、CI 成功或簽章驗證 / These are target links for the four packages, not claims of asset availability, successful CI, or verified signatures.
+**附件以本发布实际资产为准 / 附件以本發佈實際資產為準 / The actual assets attached to this release are authoritative.** Preview3 已公开发布，以下四包已下载回验 / Preview3 已公開發佈，以下四包已下載回驗 / Preview3 is publicly released; all four packages below were downloaded and verified.
 
 | 平台 / Platform | 包 / Package |
 | --- | --- |
@@ -42,9 +42,9 @@ Token 保存在设备安全存储，不进入云备份；登录发送 Token，�
 
 ### 验证与安装安全
 
-2026-11-01 本地验证：**28 文件 604 tests 全通过（`00:19`，exit `0`）**，包含 timer provider 15 tests 与新增 core 9 cases；另有 **3 文件 Agent 文案 17 tests 全通过**；**30 文件 scoped analyze：`No issues`**，审阅 41 文件。245 个 hosted 依赖使用官方 `pub.dev` 的来源检查通过。真实无认证公开定价请求返回 HTTP `200`，并用生产规则验证四模型；这些是本地与公开定价证据，不代表 CI、安装验收或钱包扣费证明。未做真实 UI、真实安装、付费生成端到端或钱包实扣验证，不保证任意服务商兼容。
+2026-11-01 本地验证：**最终 32 文件 615 tests 全通过**，包含 timer provider 15 tests 与新增 core 9 cases；另有 **3 文件 Agent 文案 17 tests 全通过**；**30 文件 scoped analyze：`No issues`**，审阅 41 文件。245 个 hosted 依赖使用官方 `pub.dev` 的来源检查通过。真实无认证公开定价请求返回 HTTP `200`，并用生产规则验证四模型；CI run 41264301138 全部 job 成功，云端 gate 32 文件通过；七附件下载、六项校验及四包哈希、ZIP CRC、APK／EXE 检查通过。这不代表真实安装验收或钱包扣费证明。未做真实 UI、真实安装、付费生成端到端或钱包实扣验证，不保证任意服务商兼容。
 
-以本发布实际 `checksums.txt`、`release_manifest.json` 及 CI 记录核对文件与来源；缺失的大小、SHA-256、源码标识或签名结果不推测、不补造。哈希和独立清单只用于完整性／下载溯源，不是发布者数字签名。旧 Preview2 的 Windows 无 Authenticode、macOS 仅 ad-hoc 且无 Developer ID／公证、Android release 模式使用临时 debug key；**这些旧版信息不能作为 Preview3 签名验证结果**。请核对实际包签名，不假定正式签名或跨版本覆盖安装兼容。应用 ID／安装位置可能与上游重叠，不同签名不能覆盖，卸载可能删除本地数据；先备份，不要全局关闭系统安全保护。源码归档不是安装包，缺少完整 Git LFS 数据库，也不包含上游云盘 OAuth 凭据。
+以本发布实际 `checksums.txt`、`release_manifest.json` 及 CI 记录核对文件与来源；缺失的大小、SHA-256、源码标识或签名结果不推测、不补造。哈希和独立清单只用于完整性／下载溯源，不是发布者数字签名。本次 Preview3 manifest 声明 Windows 无 Authenticode（`unsigned`）、macOS 仅 ad-hoc 且无 Developer ID／公证、Android 使用非上游临时 debug key。请核对实际包签名，不假定正式签名或跨版本覆盖安装兼容。应用 ID／安装位置可能与上游重叠，不同签名不能覆盖，卸载可能删除本地数据；先备份，不要全局关闭系统安全保护。源码归档不是安装包，缺少完整 Git LFS 数据库，也不包含上游云盘 OAuth 凭据。
 
 如遇异常，请通过“设置 → 关于 → 导出诊断日志”反馈，分享前删除 Token 等敏感信息。
 
@@ -73,9 +73,9 @@ Token 在裝置安全儲存、不進雲端備份；登入傳送 Token，繪圖�
 
 ### 驗證與安裝安全
 
-2026-11-01 本機驗證：**28 檔案 604 tests 全通過（`00:19`，exit `0`）**，含 timer provider 15 tests 與新增 core 9 cases；另有 **3 檔案 Agent 文案 17 tests 全通過**；**30 檔案 scoped analyze：`No issues`**，審閱 41 檔案。245 個 hosted 依賴均用官方 `pub.dev` 的來源檢查通過。真實無認證公開定價 HTTP `200`，經生產規則驗證四模型；這是本機與公開價格證據，不代表 CI、安裝驗收或錢包扣費。未做真實 UI、安裝、付費生成端對端或錢包實扣驗證，不保證任意服務相容。
+2026-11-01 本機驗證：**最終 32 檔案 615 tests 全通過**，含 timer provider 15 tests 與新增 core 9 cases；另有 **3 檔案 Agent 文案 17 tests 全通過**；**30 檔案 scoped analyze：`No issues`**，審閱 41 檔案。245 個 hosted 依賴均用官方 `pub.dev` 的來源檢查通過。真實無認證公開定價 HTTP `200`，經生產規則驗證四模型；CI run 41264301138 全部 job 成功，雲端 gate 32 檔案通過；七附件下載、六項校驗及四包雜湊、ZIP CRC、APK／EXE 檢查通過。不代表真實安裝驗收或錢包扣費。未做真實 UI、安裝、付費生成端對端或錢包實扣驗證，不保證任意服務相容。
 
-依本發佈實際 `checksums.txt`、`release_manifest.json` 與 CI 記錄核對檔案／來源，不推測缺失的大小、SHA-256、來源識別或簽章結果。雜湊與獨立清單是完整性／下載溯源，不是發布者數位簽章。舊 Preview2 的 Windows 無 Authenticode、macOS 僅 ad-hoc 且無 Developer ID／公證、Android release 模式臨時 debug key，**不是 Preview3 簽章驗證結果**。核對實際套件簽章，不假定正式簽章或跨版覆蓋相容。ID／安裝位置可能與上游重疊，不同簽章不能覆蓋，解除安裝可能刪資料；先備份，不要全域停用安全保護。來源封存不是安裝包，缺完整 Git LFS 資料庫，不含上游雲端 OAuth 憑證。
+依本發佈實際 `checksums.txt`、`release_manifest.json` 與 CI 記錄核對檔案／來源，不推測缺失的大小、SHA-256、來源識別或簽章結果。雜湊與獨立清單是完整性／下載溯源，不是發布者數位簽章。本次 Preview3 manifest 聲明 Windows 無 Authenticode（`unsigned`）、macOS 僅 ad-hoc 且無 Developer ID／公證、Android 使用非上游臨時 debug key。核對實際套件簽章，不假定正式簽章或跨版覆蓋相容。ID／安裝位置可能與上游重疊，不同簽章不能覆蓋，解除安裝可能刪資料；先備份，不要全域停用安全保護。來源封存不是安裝包，缺完整 Git LFS 資料庫，不含上游雲端 OAuth 憑證。
 
 如遇異常，請透過「設定 → 關於 → 匯出診斷日誌」回報，分享前移除 Token 等敏感資訊。
 
@@ -104,12 +104,22 @@ Tokens remain in device secure storage, excluded from cloud backups. Login sends
 
 ### Validation and installation safety
 
-Local evidence on 2026-11-01: **all 604 tests in 28 files passed (`00:19`, exit `0`)**, including the timer provider's 15 tests and 9 new core cases; **all 17 tests in 3 additional Agent wording files passed**; **scoped analyze of 30 files: `No issues`**; 41 files reviewed. Dependency-source checks passed for all 245 hosted dependencies using official `pub.dev`. A real unauthenticated public-pricing request returned HTTP `200`, and production rules checked all four models. These are local/public-pricing results, not claims of CI success, installation acceptance, or wallet debits. Real UI, installation, paid-generation end-to-end, and wallet-debit testing have not been performed; arbitrary-provider compatibility is not guaranteed.
+Local evidence on 2026-11-01: **all 615 tests in the final 32-file batch passed**, including the timer provider's 15 tests and 9 new core cases; **all 17 tests in 3 additional Agent wording files passed**; **scoped analyze of 30 files: `No issues`**; 41 files reviewed. Dependency-source checks passed for all 245 hosted dependencies using official `pub.dev`. A real unauthenticated public-pricing request returned HTTP `200`, and production rules checked all four models. All jobs in CI run 41264301138 succeeded; the cloud gate passed 32 files. All seven assets were downloaded; six checksum entries, four package hashes, ZIP CRCs, and APK/EXE checks passed. This does not establish real installation acceptance or wallet debits. Real UI, installation, paid-generation end-to-end, and wallet-debit testing have not been performed; arbitrary-provider compatibility is not guaranteed.
 
-Use this release's actual `checksums.txt`, `release_manifest.json`, and CI records to check files and provenance. Missing sizes, SHA-256 values, source identifiers, or signature results are not guessed. Hashes and independent manifests provide integrity/download provenance, not publisher digital signatures. Old Preview2 had unsigned Windows packages, ad-hoc-only macOS signing without Developer ID/notarization, and release-mode Android signed with an ephemeral debug key; **these are not Preview3 signature-verification results**. Check actual package signatures; do not assume production signing or cross-version replacement compatibility. Application IDs/install locations may overlap upstream, differing signatures prevent replacement, and uninstalling can erase data. Back up and never globally disable security. Source archives are not installers, omit the full Git LFS database, and contain no upstream cloud OAuth credentials.
+Use this release's actual `checksums.txt`, `release_manifest.json`, and CI records to check files and provenance. Missing sizes, SHA-256 values, source identifiers, or signature results are not guessed. Hashes and independent manifests provide integrity/download provenance, not publisher digital signatures. This Preview3 manifest declares unsigned Windows packages, ad-hoc-only macOS signing without Developer ID/notarization, and Android signing with an ephemeral non-upstream debug key. Check actual package signatures; do not assume production signing or cross-version replacement compatibility. Application IDs/install locations may overlap upstream, differing signatures prevent replacement, and uninstalling can erase data. Back up and never globally disable security. Source archives are not installers, omit the full Git LFS database, and contain no upstream cloud OAuth credentials.
 
 Report issues through Settings → About → Export diagnostic logs, removing tokens and other sensitive information before sharing.
 
 完整协议与公式 / 完整協定與公式 / Full protocol and formulas: https://github.com/cunzaijiang/NAI-Launcher-Custom-API/blob/custom-api-v4.3.1-preview.3/docs/custom_api.md
 
 实际验证记录 / 實際驗證記錄 / Actual verification record: https://github.com/cunzaijiang/NAI-Launcher-Custom-API/blob/custom-api-v4.3.1-preview.3/docs/custom_api_verification.md
+
+## 发布回验 / 發佈回驗 / Release verification
+
+Source SHA: `34924235cf21052eea9749800296939dfdce595d` · [CI run 41264301138](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/actions/runs/41264301138) · [包大小、SHA-256 与验证边界 / 套件大小、SHA-256 與驗證邊界 / Package sizes, SHA-256, and verification limits](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/blob/custom-api/docs/custom_api_verification.md)
+
+本版更新 [QQ 群入口](https://qm.qq.com/q/jY8Pshi5os)及标准 QQ 图标，其他功能不变。已确认三平台 QQ 图标资源与编译群地址包含，不代表真实点击或 UI 验收。
+
+本版更新 [QQ 群入口](https://qm.qq.com/q/jY8Pshi5os)與標準 QQ 圖示，其他功能不變。已確認三平台 QQ 圖示資源與編譯群位址包含，不代表真實點擊或 UI 驗收。
+
+This version updates the [QQ group entry](https://qm.qq.com/q/jY8Pshi5os) and standard QQ icon; other functionality is unchanged. QQ icon resources and the compiled group URL were confirmed on all three platforms; this is not real click or UI acceptance testing.

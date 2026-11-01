@@ -1,6 +1,6 @@
 # NAI Launcher Custom API
 
-> **Preview3 has completed local validation and is being prepared for release; it has not been released.** GitHub upload and publication are authorized, and release preparation is underway. Preview3 downloads will be updated after actual publication and asset verification. Planned tag: `custom-api-v4.3.1-preview.3`; filename version: `4.3.1-custom-api-preview.3`. Dynamic pricing described here is for locally developed Preview3, not the old Preview2 fallback still downloadable below (no dynamic pricing). Local validation: all 604 tests in 28 files passed (`00:19`, exit `0`); all 17 tests in 3 additional Agent wording files passed; scoped analyze of 30 files reported `No issues`; 41 files were reviewed. [Actual verification record and unverified items](docs/custom_api_verification.md).
+> **Preview3 is publicly released; all four packages were downloaded and verified.** Final local validation: 615 tests in 32 files passed; the additional 17 Agent wording tests in 3 files remain passed. All CI jobs succeeded; the cloud gate passed 32 files. Seven assets were downloaded, six checksum entries verified, and four package hashes, ZIP CRCs, and APK/EXE checks passed. Real installation, UI, and paid-generation acceptance remain unverified. Tag: `custom-api-v4.3.1-preview.3` · [Verification / 验证 / 驗證](docs/custom_api_verification.md).
 
 <p align="center">
   <a href="README.md">简体中文</a> · <a href="README.zh-TW.md">繁體中文</a> · English
@@ -15,13 +15,13 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2"><img src="https://img.shields.io/badge/Custom_API-custom--api--preview-blue" alt="Custom API preview"></a>
+  <a href="https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.3"><img src="https://img.shields.io/badge/Custom_API-custom--api--preview-blue" alt="Custom API preview"></a>
   <img src="https://img.shields.io/badge/Windows%20%7C%20macOS%20%7C%20Android-available-6f7785" alt="Supported platforms">
   <img src="https://img.shields.io/badge/license-MIT-5b8c5a" alt="MIT License">
 </p>
 
 <p align="center">
-  <a href="https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2">Download old Preview2 (no dynamic pricing)</a> ·
+  <a href="https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.3">Download Preview3 (with dynamic pricing)</a> ·
   <a href="docs/releases/custom_api_preview.md">Fork release notes</a> ·
   <a href="https://github.com/cunzaijiang/NAI-Launcher-Custom-API/issues">Report a fork issue</a>
 </p>
@@ -30,20 +30,22 @@
 
 The primary entry is **Custom API** on the sign-in page: enter **one API URL, a nickname, and an API key / token**, using either the site root or a `/v1` URL. Windows, macOS, and Android retain upstream local tools and creative interfaces; local tools work without signing in.
 
-## Old Preview2 fallback downloads (no dynamic pricing)
+## Preview3 downloads (with dynamic pricing)
 
-**Old 4.3.1 Custom API Preview2 is publicly released as a fallback only, without Preview3 dynamic pricing.** [Release and checksums](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2) · [Read this fork's release notes](docs/releases/custom_api_preview.md). Use these four actual packages, not the source archives, to install:
+**4.3.1 Custom API Preview3 is publicly released with dynamic pricing.** [Release and checksums](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.3) · [Read this fork's release notes](docs/releases/custom_api_preview.md). Use these four actual packages, not the source archives, to install:
 
 | Platform | Direct package download |
 | --- | --- |
-| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.2_Setup.exe](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.2/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.2_Setup.exe) |
-| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.2_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.2/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.2_Portable.zip) |
-| Android | [NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.2.apk](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.2/NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.2.apk) |
-| macOS | [NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.2_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.2/NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.2_Portable.zip) |
+| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.3_Setup.exe](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.3/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.3_Setup.exe) |
+| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.3_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.3/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.3_Portable.zip) |
+| Android | [NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.3.apk](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.3/NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.3.apk) |
+| macOS | [NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.3_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.3/NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.3_Portable.zip) |
+
+[History: old Preview2 (no dynamic pricing)](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2). This version updates the QQ group entry and standard QQ icon; other functionality is unchanged. [QQ](https://qm.qq.com/q/jY8Pshi5os)
 
 > **Preview and installation risks**: Back up first. Both Windows packages are unsigned (no Authenticode); macOS has only an ad-hoc signature, no Apple Developer ID and no notarization. Android is a release-mode APK signed with an ephemeral debug key, retaining the upstream application ID: it cannot replace a differently signed upstream installation, and upgrades between preview builds are not guaranteed. Windows installation directories may overlap upstream; uninstalling can erase local data. Verify provenance and SHA-256; do not globally disable system security. This preview has not undergone end-to-end testing against real services; arbitrary third-party providers are not guaranteed to work.
 
-> **Update boundaries for old Preview2 and local Preview3**: In-app GitHub links now point to this fork. Automatic update checks and in-app download/installation are disabled; Check for Updates offers manual downloads from this fork's [Releases page](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases). Independent preview manifests are incompatible with upstream signed update metadata and are not parsed as trusted updates. Already-published Preview 1 packages remain unchanged; upgrade manually from this page.
+> **Preview3 update boundaries**: In-app GitHub links now point to this fork. Automatic update checks and in-app download/installation are disabled; Check for Updates offers manual downloads from this fork's [Releases page](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases). Independent preview manifests are incompatible with upstream signed update metadata and are not parsed as trusted updates. Already-published Preview 1 packages remain unchanged; upgrade manually from this page.
 
 ## Custom API support boundaries
 
@@ -206,18 +208,18 @@ These screenshots are inherited from upstream and are illustrations only, not ev
 
 ## ⚡ Download and get started
 
-### 1. Only old Preview2 fallback installation is available until Preview3 ships
+### 1. Download and install Preview3
 
-Old Preview2 is publicly released without dynamic pricing; Preview3 is not yet released. For fallback installation, use the [release page](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2). The filenames below match the direct links above:
+Preview3 is publicly released with dynamic pricing. To install, use the [release page](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.3). The filenames below match the direct links above:
 
 | Platform | File | Usage |
 | --- | --- | --- |
-| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.2_Setup.exe](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.2/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.2_Setup.exe) | Unsigned installer; back up and check the installation directory first. |
-| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.2_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.2/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.2_Portable.zip) | Unsigned portable package; extract and run. |
-| Android | [NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.2.apk](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.2/NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.2.apk) | Sideload the debug-key-signed APK; permission to install unknown apps may be required. Cannot replace a differently signed upstream installation. |
-| macOS | [NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.2_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.2/NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.2_Portable.zip) | Extract and open `Aaalice NAI Launcher.app`; ad-hoc signed only and unnotarized. |
+| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.3_Setup.exe](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.3/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.3_Setup.exe) | Unsigned installer; back up and check the installation directory first. |
+| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.3_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.3/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.3_Portable.zip) | Unsigned portable package; extract and run. |
+| Android | [NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.3.apk](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.3/NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.3.apk) | Sideload the debug-key-signed APK; permission to install unknown apps may be required. Cannot replace a differently signed upstream installation. |
+| macOS | [NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.3_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.3/NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.3_Portable.zip) | Extract and open `Aaalice NAI Launcher.app`; ad-hoc signed only and unnotarized. |
 
-Old Preview2 includes `checksums.txt`, `release_manifest.json`, and `release_notes_custom_api.md` to verify SHA-256, sizes, and provenance. Checksums are not publisher digital signatures. Read the installation risks and in-app update warning above as well.
+Preview3 includes `checksums.txt`, `release_manifest.json`, and `release_notes_custom_api.md` to verify SHA-256, sizes, and provenance. Checksums are not publisher digital signatures. Read the installation risks and in-app update warning above as well.
 
 ### 2. Start with Custom API
 
@@ -258,7 +260,7 @@ NAI Launcher does not host your account or artwork on a project-operated server.
 
 - If something goes wrong, use **Settings → About → Export diagnostic logs** and attach the exported information to your report.
 - [Open a fork Issue](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/issues) for a reproducible bug or feature request. Remove tokens and other sensitive data before sharing logs.
-- [Old Preview2 fallback release (no dynamic pricing)](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2) and verify checksums; read the [fork release notes](docs/releases/custom_api_preview.md) for changes. Preview3 is not yet released; the current distribution only offers manual downloads from this fork, not in-app update installation.
+- [Preview3 release (with dynamic pricing)](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.3) and verify checksums; read the [fork release notes](docs/releases/custom_api_preview.md) for changes. Preview3 is released and its assets have been verified; the current distribution only offers manual downloads from this fork, not in-app update installation.
 
 ## 🙏 Acknowledgments
 
