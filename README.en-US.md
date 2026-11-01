@@ -1,10 +1,8 @@
 # NAI Launcher Custom API
 
-> **Preview4 is publicly released; all four packages were downloaded and verified.** Local validation: 677 tests in 38 files passed (`00:35`, exit `0`); scoped analysis of 24 Dart files found no issues. CI run 41291110464: `completed / success`; seven assets, six checksum entries, and archive CRCs verified. Real installation, UI, and paid generation remain unverified. [Verification](docs/custom_api_verification.md).
+> **Preview5 is publicly released; all seven assets were downloaded and verified.** All six jobs in CI run 41297577735 succeeded; tag/manifest/source SHA, six checksum entries, four package hashes, ZIP CRCs and APK/EXE checks passed. Final targeted validation passed 740 tests in 42 files (`00:30`, exit `0`), not a green full suite. [Verification](docs/custom_api_verification.md).
 
-> **Preview4 is the current download (a prerelease)**: open Current position on a character card for the 5×5 grid. The cost estimate is inside Generate, without a separate price box. Custom cost calculations and official Anlas are unchanged.
-
-> **Preview5 fixes are in progress, unreleased and awaiting testing.** Planned scope: restore the original main Generate button layout and verify clicks in the complete desktop shell, provide explicit saving-state feedback through `isSaving`, surface preparation errors, and move Chat response parsing to the background while retaining PNG validation. Final scope depends on implementation and verification; this does not establish that all delays are resolved or the Windows click issue's root cause is confirmed. [Preview5 draft](docs/releases/custom_api_preview.md).
+> **Preview5 is the current download (a prerelease)**: desktop/mobile restore the Preview3 main-button core layout; amounts are plain text and the pricing spinner is refresh-only. Explicit `isSaving` feedback, visible preparation errors and background Chat parsing retain PNG validation. Complete-shell/mobile widget regressions do not establish acceptance on users' machines; actual Android/Windows UI testing is blocked. No claim that all delays or the Windows root cause are resolved. [Release notes](docs/releases/custom_api_preview.md).
 
 <p align="center">
   <a href="README.md">简体中文</a> · <a href="README.zh-TW.md">繁體中文</a> · English
@@ -19,13 +17,13 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.4"><img src="https://img.shields.io/badge/Custom_API-custom--api--preview-blue" alt="Custom API preview"></a>
+  <a href="https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.5"><img src="https://img.shields.io/badge/Custom_API-custom--api--preview-blue" alt="Custom API preview"></a>
   <img src="https://img.shields.io/badge/Windows%20%7C%20macOS%20%7C%20Android-available-6f7785" alt="Supported platforms">
   <img src="https://img.shields.io/badge/license-MIT-5b8c5a" alt="MIT License">
 </p>
 
 <p align="center">
-  <a href="https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.4">Download Preview4 (with dynamic pricing)</a> ·
+  <a href="https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.5">Download Preview5 (with dynamic pricing)</a> ·
   <a href="docs/releases/custom_api_preview.md">Fork release notes</a> ·
   <a href="https://github.com/cunzaijiang/NAI-Launcher-Custom-API/issues">Report a fork issue</a>
 </p>
@@ -34,22 +32,22 @@
 
 The primary entry is **Custom API** on the sign-in page: enter **one API URL, a nickname, and an API key / token**, using either the site root or a `/v1` URL. Windows, macOS, and Android retain upstream local tools and creative interfaces; local tools work without signing in.
 
-## Preview4 downloads (with dynamic pricing)
+## Preview5 downloads (with dynamic pricing)
 
-**4.3.1 Custom API Preview4 is publicly released with dynamic pricing.** [Release and checksums](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.4) · [Read this fork's release notes](docs/releases/custom_api_preview.md). Use these four actual packages, not the source archives, to install:
+**4.3.1 Custom API Preview5 is publicly released with dynamic pricing.** [Release and checksums](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.5) · [Read this fork's release notes](docs/releases/custom_api_preview.md). Use these four actual packages, not the source archives, to install:
 
 | Platform | Direct package download |
 | --- | --- |
-| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.4_Setup.exe](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.4/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.4_Setup.exe) |
-| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.4_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.4/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.4_Portable.zip) |
-| Android | [NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.4.apk](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.4/NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.4.apk) |
-| macOS | [NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.4_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.4/NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.4_Portable.zip) |
+| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.5_Setup.exe](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.5/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.5_Setup.exe) |
+| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.5_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.5/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.5_Portable.zip) |
+| Android | [NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.5.apk](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.5/NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.5.apk) |
+| macOS | [NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.5_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.5/NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.5_Portable.zip) |
 
-[History: Preview3 (without these positioning and cost-layout fixes)](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.3)。 [QQ](https://qm.qq.com/q/jY8Pshi5os)
+[History: Preview4](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.4) · [History: Preview3 (without these positioning and cost-layout fixes)](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.3)。 [QQ](https://qm.qq.com/q/jY8Pshi5os)
 
-> **Preview and installation risks**: Back up first. Both Windows packages are unsigned (no Authenticode); macOS has only an ad-hoc signature, no Apple Developer ID and no notarization. Android is a release-mode APK signed with an ephemeral debug key, retaining the upstream application ID: it cannot replace a differently signed upstream installation, and upgrades between preview builds are not guaranteed. Windows installation directories may overlap upstream; uninstalling can erase local data. Verify provenance and SHA-256; do not globally disable system security. This preview has not undergone end-to-end testing against real services; arbitrary third-party providers are not guaranteed to work.
+> **Preview and installation risks**: Back up first. Both Windows packages are unsigned (no Authenticode); macOS has only an ad-hoc signature, no Apple Developer ID and no notarization. Android is a release-mode APK signed with an ephemeral debug key, retaining the upstream application ID: it cannot replace a differently signed upstream installation, and upgrades between preview builds are not guaranteed. Windows installation directories may overlap upstream; uninstalling can erase local data. Verify provenance and SHA-256; do not globally disable system security. This preview has not completed app end-to-end acceptance; arbitrary third-party providers are not guaranteed to work.
 
-> **Preview4 update boundaries**: In-app GitHub links now point to this fork. Automatic update checks and in-app download/installation are disabled; Check for Updates offers manual downloads from this fork's [Releases page](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases). Independent preview manifests are incompatible with upstream signed update metadata and are not parsed as trusted updates. Already-published Preview 1 packages remain unchanged; upgrade manually from this page.
+> **Preview5 update boundaries**: In-app GitHub links now point to this fork. Automatic update checks and in-app download/installation are disabled; Check for Updates offers manual downloads from this fork's [Releases page](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases). Independent preview manifests are incompatible with upstream signed update metadata and are not parsed as trusted updates. Already-published Preview 1 packages remain unchanged; upgrade manually from this page.
 
 ## Custom API support boundaries
 
@@ -174,7 +172,7 @@ The online reference and editing capabilities below describe the official route.
 
 ## 🖼️ Interface preview
 
-These screenshots are inherited from upstream and are illustrations only, not evidence of this fork's Preview2 / Preview4 Custom API appearance, supported capabilities, or real-service testing.
+These screenshots are inherited from upstream and are illustrations only, not evidence of this fork's Preview2 / Preview5 Custom API appearance, supported capabilities, or real-service testing.
 
 ### 🖥️ Desktop
 
@@ -212,25 +210,25 @@ These screenshots are inherited from upstream and are illustrations only, not ev
 
 ## ⚡ Download and get started
 
-### 1. Download and install Preview4
+### 1. Download and install Preview5
 
-Preview4 is publicly released with dynamic pricing. To install, use the [release page](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.4). The filenames below match the direct links above:
+Preview5 is publicly released with dynamic pricing. To install, use the [release page](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.5). The filenames below match the direct links above:
 
 | Platform | File | Usage |
 | --- | --- | --- |
-| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.4_Setup.exe](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.4/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.4_Setup.exe) | Unsigned installer; back up and check the installation directory first. |
-| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.4_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.4/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.4_Portable.zip) | Unsigned portable package; extract and run. |
-| Android | [NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.4.apk](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.4/NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.4.apk) | Sideload the debug-key-signed APK; permission to install unknown apps may be required. Cannot replace a differently signed upstream installation. |
-| macOS | [NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.4_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.4/NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.4_Portable.zip) | Extract and open `Aaalice NAI Launcher.app`; ad-hoc signed only and unnotarized. |
+| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.5_Setup.exe](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.5/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.5_Setup.exe) | Unsigned installer; back up and check the installation directory first. |
+| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.5_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.5/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.5_Portable.zip) | Unsigned portable package; extract and run. |
+| Android | [NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.5.apk](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.5/NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.5.apk) | Sideload the debug-key-signed APK; permission to install unknown apps may be required. Cannot replace a differently signed upstream installation. |
+| macOS | [NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.5_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.5/NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.5_Portable.zip) | Extract and open `Aaalice NAI Launcher.app`; ad-hoc signed only and unnotarized. |
 
-Preview4 includes `checksums.txt`, `release_manifest.json`, and `release_notes_custom_api.md` to verify SHA-256, sizes, and provenance. Checksums are not publisher digital signatures. Read the installation risks and in-app update warning above as well.
+Preview5 includes `checksums.txt`, `release_manifest.json`, and `release_notes_custom_api.md` to verify SHA-256, sizes, and provenance. Checksums are not publisher digital signatures. Read the installation risks and in-app update warning above as well.
 
 ### 2. Start with Custom API
 
 1. Choose **Custom API** on the sign-in page; do not enter a third-party key in official login.
 2. Enter **one API URL**, either the site root or a URL ending in `/v1`, such as `https://provider.example` or `https://provider.example/v1/`. Main and image APIs share this URL; no separate image address or protocol selection is needed.
 3. Enter the required **nickname** and **API key / token**. The key stays in device secure storage and is excluded from cloud backups, but validation sends it to the configured site.
-4. Login validation only requests `/v1/models`, without test generation. Preview4 separately reads public pricing on the supported origin, without a key. After validation, confirm provider billing and capabilities before actively generating. See the five-model allowlist, no-Medium, unavailable V5 references, and unknown-cost limits above.
+4. Login validation only requests `/v1/models`, without test generation. Preview5 separately reads public pricing on the supported origin, without a key. After validation, confirm provider billing and capabilities before actively generating. See the five-model allowlist, no-Medium, unavailable V5 references, and unknown-cost limits above.
 
 **Optional: official NovelAI route.** For the official service, sign in with NovelAI credentials or a **Persistent API Token**. If web security verification blocks password login, use a Persistent API Token instead. Official tokens stay in device secure storage. Official model and Anlas descriptions do not promise equivalent pricing for custom services.
 
@@ -249,7 +247,7 @@ NAI Launcher does not host your account or artwork on a project-operated server.
 | Feature in use | Where the data goes |
 | --- | --- |
 | Generation, image-to-image, inpainting, Vibe encoding | NovelAI or the third-party image API site you explicitly configure, including the Prompt, parameters, and source or reference images required for that request. Third-party tokens are sent to the entered URL; use trusted services only. |
-| Preview4 public pricing retrieval | Public `/api/pricing` on the exact origin `https://api.cunzaijiang.cn` only; no key, Cookie, Prompt, image, or generation. |
+| Preview5 public pricing retrieval | Public `/api/pricing` on the exact origin `https://api.cunzaijiang.cn` only; no key, Cookie, Prompt, image, or generation. |
 | Online gallery search and downloads | The third-party gallery you selected. Availability, rate limits, and content rules belong to each site. |
 | AI translation or Agent Chat | The model service you configured. Conversations, attached images, and tool results required by the task may incur provider fees. |
 | Sync and backup | Your selected Google Drive, OneDrive, GitHub, or WebDAV destination. Only explicitly selected content is uploaded. |
@@ -264,7 +262,7 @@ NAI Launcher does not host your account or artwork on a project-operated server.
 
 - If something goes wrong, use **Settings → About → Export diagnostic logs** and attach the exported information to your report.
 - [Open a fork Issue](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/issues) for a reproducible bug or feature request. Remove tokens and other sensitive data before sharing logs.
-- [Preview4 release (with dynamic pricing)](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.4) and verify checksums; read the [fork release notes](docs/releases/custom_api_preview.md) for changes. Preview4 is released and its assets have been verified; the current distribution only offers manual downloads from this fork, not in-app update installation.
+- [Preview5 release (with dynamic pricing)](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.5) and verify checksums; read the [fork release notes](docs/releases/custom_api_preview.md) for changes. Preview5 is released and its assets have been verified; the current distribution only offers manual downloads from this fork, not in-app update installation.
 
 ## 🙏 Acknowledgments
 

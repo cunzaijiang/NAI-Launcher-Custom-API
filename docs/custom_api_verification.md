@@ -1,10 +1,10 @@
 # Custom API 验证记录 / 驗證記錄 / Verification record
 
-> **Preview4 已公开发布并完成附件回验 / 已公開發佈並完成附件回驗 / Publicly released with assets verified.** CI run `41291110464`: `completed / success`。Preview3 历史证据独立保留 / 歷史證據獨立保留 / Historical evidence is preserved separately.
+> **Preview5 已公开发布并完成附件回验 / 已公開發佈並完成附件回驗 / Publicly released with assets verified.** CI run `41297577735`: six jobs `success`。Preview3／Preview4 历史证据独立保留 / 歷史證據獨立保留 / Historical evidence is preserved separately.
 
 ## Preview5 本地证据与未完成验收 / 本機證據與未完成驗收 / Local evidence and open acceptance
 
-计划 tag / 計畫 tag / Planned tag: `custom-api-v4.3.1-preview.5` · Filename version: `4.3.1-custom-api-preview.5`。尚未发布；当前下载仍为 Preview4 / 尚未發佈；目前下載仍為 Preview4 / Unreleased; Preview4 remains the current download. P3/P4 历史证据不继承 / 歷史證據不繼承 / Historical evidence is not inherited.
+Tag: `custom-api-v4.3.1-preview.5` · Filename version: `4.3.1-custom-api-preview.5`。已公开发布 / 已公開發佈 / Publicly released. P3/P4 历史证据不继承 / 歷史證據不繼承 / Historical evidence is not inherited.
 
 ### 简体中文
 
@@ -13,7 +13,7 @@
 - desktop/mobile 恢复 Preview3 主按钮核心布局；金额为纯文字，价格 spinner 仅用于刷新；`isSaving` 显式反馈保存状态，准备错误可见。Chat 后台解析保留 PNG 校验；新增阶段日志用于后续实际设备定位，不确认 Windows 根因或承诺消除全部一分钟等待。
 - **直接 API 探测：8 请求、7 成功、1 失败，`stream=false`、无重试。** 四模型 single/multi 共 8 个案例（含 initial V5 Full single）：其余 7 个 HTTP 200 且取得有效 PNG；V4.5 Curated single 在 **152.177 秒** `RemoteDisconnected`，未重试，扣费未知。不是应用端到端验收，也不是 8/8 全通过。证据：`tool/.tmp/button-fix/live-test-summary.json`。
 - 成功请求从开始至 headers 为 **3.075–10.754 秒**，至 body complete 为 **19.828–85.959 秒**；不是额外相加的两个时段。离线 Dart 样本解析 **84 ms**、metadata **30 ms**，不能据此把实际等待全部归因本地或外推所有响应性能。
-- **实际 UI 均 blocked**：Android 无 SDK／emulator／device；Windows debug 原生构建下载固定 NVIDIA DLSS 头文件时 TLS 错误 `35`。未完成真实设备 UI、安装或应用端到端验收；Preview5 CI、发布资产及附件回验待完成。
+- **实际 UI 均 blocked**：Android 无 SDK／emulator／device；Windows debug 原生构建下载固定 NVIDIA DLSS 头文件时 TLS 错误 `35`。未完成真实设备 UI、安装或应用端到端验收；Preview5 CI 与附件回验通过不替代这些验收。
 
 ### 繁體中文
 
@@ -22,7 +22,7 @@
 - desktop/mobile 恢復 Preview3 主按鈕核心版面；金額為純文字，價格 spinner 僅用於重新整理；`isSaving` 明確回饋儲存狀態，準備錯誤可見。Chat 背景解析保留 PNG 校驗；新階段日誌供後續實際裝置定位，不確認 Windows 根因或承諾消除全部一分鐘等待。
 - **直接 API 探測：8 請求、7 成功、1 失敗，`stream=false`、無重試。** 四模型 single/multi 共 8 案例（含 initial V5 Full single）：其餘 7 個 HTTP 200 並取得有效 PNG；V4.5 Curated single 在 **152.177 秒** `RemoteDisconnected`，未重試，扣費未知。不是應用程式端對端驗收，也不是 8/8 通過；證據為上述 summary。
 - 成功請求從開始至 headers **3.075–10.754 秒**、至 body complete **19.828–85.959 秒**，不是兩段相加。離線 Dart 樣本解析 **84 ms**、metadata **30 ms**，不代表全部等待皆由本機造成，也不外推所有回應效能。
-- **實際 UI 皆 blocked**：Android 無 SDK／emulator／device；Windows debug 原生建置下載固定 NVIDIA DLSS 標頭時 TLS 錯誤 `35`。未完成真實裝置 UI、安裝或應用程式端對端驗收；Preview5 CI、發佈資產及附件回驗待完成。
+- **實際 UI 皆 blocked**：Android 無 SDK／emulator／device；Windows debug 原生建置下載固定 NVIDIA DLSS 標頭時 TLS 錯誤 `35`。未完成真實裝置 UI、安裝或應用程式端對端驗收；Preview5 CI 與附件回驗通過不替代這些驗收。
 
 ### English
 
@@ -31,11 +31,28 @@
 - Desktop/mobile restore the Preview3 main-button core layout. Amounts are plain text; the pricing spinner is refresh-only. `isSaving` explicitly reports saving, and preparation errors are visible. Background Chat parsing retains PNG validation. New phase logs support later device diagnosis, not a confirmed Windows root cause or a promise to eliminate all minute-long waits.
 - **Direct API probes: 8 requests, 7 successes, 1 failure, `stream=false`, no retries.** The four-model single/multi matrix includes the initial V5 Full single probe. Seven returned HTTP 200 and valid PNGs. V4.5 Curated single raised `RemoteDisconnected` after **152.177 seconds**, without retry; billing is unknown. This is not app E2E acceptance or an 8/8 pass. Evidence: the summary above.
 - Successful requests reached headers **3.075–10.754 seconds** after start and body completion **19.828–85.959 seconds** after start; these are not additive intervals. One offline Dart sample took **84 ms** to parse and **30 ms** for metadata. This neither attributes the whole wait to local processing nor establishes performance for all responses.
-- **Actual UI acceptance is blocked on both platforms**: Android has no SDK/emulator/device; the Windows native debug build hit TLS error `35` downloading pinned NVIDIA DLSS headers. Real-device UI, installation and app E2E acceptance remain incomplete. Preview5 CI, release assets and asset verification remain pending.
+- **Actual UI acceptance is blocked on both platforms**: Android has no SDK/emulator/device; the Windows native debug build hit TLS error `35` downloading pinned NVIDIA DLSS headers. Real-device UI, installation and app E2E acceptance remain incomplete. Successful Preview5 CI and asset verification do not replace that acceptance.
 
 ### CI 配置 / 設定 / Configuration
 
-39-file gate: existing 34 suites, followed by desktop shell click, submit guard, i18n, main navigation and light-theme readability. Existing Chat codec/compatible transport suites remain included. This configuration is not a claim that Preview5 CI has run. 原 34 门禁及 macOS 15、immutable source、no-clobber 保留 / 原 34 閘門及 macOS 15、immutable source、no-clobber 保留 / The original 34 suites and macOS 15, immutable-source and no-clobber safeguards are retained. The disabled updater's separate installer suite is not added to this gate.
+39-file gate: existing 34 suites, followed by desktop shell click, submit guard, i18n, main navigation and light-theme readability. Existing Chat codec/compatible transport suites remain included. [Preview5 CI run 41297577735](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/actions/runs/41297577735) completed with all six jobs successful; this does not establish a green full-repository test suite or real UI acceptance. 原 34 门禁及 macOS 15、immutable source、no-clobber 保留 / 原 34 閘門及 macOS 15、immutable source、no-clobber 保留 / The original 34 suites and macOS 15, immutable-source and no-clobber safeguards are retained. The disabled updater's separate installer suite is not added to this gate.
+
+### Preview5 发布资产 / 發佈資產 / Published assets
+
+[Preview5 Release](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.5) · source SHA: `772fc8f2ee80e024d6bbbfe86a2106c31a66606a` · [CI run 41297577735](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/actions/runs/41297577735): six jobs `success` · App version: `4.3.1+46` · Release ID: `430519156`
+
+七附件已下载，tag／manifest／source SHA、六项校验、四包大小与 SHA-256、ZIP CRC、APK／EXE 检查通过。 / 七附件已下載，tag／manifest／source SHA、六項校驗、四包大小與 SHA-256、ZIP CRC、APK／EXE 檢查通過。 / All seven assets downloaded; tag/manifest/source SHA, six checksum entries, four package sizes/SHA-256 values, ZIP CRCs and APK/EXE checks passed.
+
+证据 / 證據 / Evidence: `tool/.tmp/button-fix/preview5-verified.json` and `dist/custom-api-v4.3.1-preview.5/release_manifest.json`。Seven assets: four packages, `checksums.txt`, `release_manifest.json`, `release_notes_custom_api.md`; checksums do not include themselves.
+
+| 文件 / File | 字节 / Bytes | SHA-256 |
+| --- | ---: | --- |
+| `NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.5.apk` | 277827360 | `f06982d73855f1d953cb1da87a45fd13734d7943fa02cc1cc810fbe66a2fe139` |
+| `NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.5_Portable.zip` | 137622629 | `e0973d58c8abbb06d4f6a25df90c5e20d04adb8c90b2ea7706ba5801e2878e57` |
+| `NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.5_Portable.zip` | 105086244 | `61b08a9a121ff205602f6a234cca290c27f4112d5e263aea75072835479b41e5` |
+| `NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.5_Setup.exe` | 77986377 | `fbace2baf651af0d95fbcc679520996077637611dadb277213c366bc19116b49` |
+
+Signing: Windows `unsigned`; macOS `ad-hoc-no-developer-id-not-notarized`; Android `ephemeral-debug-key-not-upstream`. 完整性校验不等于发布者签名、真实安装或 UI 验收 / 完整性校驗不等於發布者簽章、真實安裝或 UI 驗收 / Integrity verification is not publisher-signature, real-installation or UI acceptance. Code fixes do not establish that issues on users’ machines are resolved.
 
 ## Preview4 实际证据与验证边界 / 實際證據與驗證邊界 / Actual evidence and verification limits
 
