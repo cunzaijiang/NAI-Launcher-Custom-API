@@ -2,6 +2,8 @@
 
 > **Preview3 is publicly released; all four packages were downloaded and verified.** Final local validation: 615 tests in 32 files passed; the additional 17 Agent wording tests in 3 files remain passed. All CI jobs succeeded; the cloud gate passed 32 files. Seven assets were downloaded, six checksum entries verified, and four package hashes, ZIP CRCs, and APK/EXE checks passed. Real installation, UI, and paid-generation acceptance remain unverified. Tag: `custom-api-v4.3.1-preview.3` · [Verification / 验证 / 驗證](docs/custom_api_verification.md).
 
+> **Download status: Preview3 remains the current stable download (a prerelease); Preview4 is in development and has not been released.** Preview4 targets custom Chat multi-character positioning. Test, CI, and asset-verification results on this page belong only to Preview3 and do not establish Preview4 validation. See the [Preview4 release-notes draft](docs/releases/custom_api_preview.md).
+
 <p align="center">
   <a href="README.md">简体中文</a> · <a href="README.zh-TW.md">繁體中文</a> · English
 </p>

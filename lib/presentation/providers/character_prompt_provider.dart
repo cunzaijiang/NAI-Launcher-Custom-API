@@ -5,6 +5,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/constants/model_capabilities.dart';
 import '../../core/utils/app_logger.dart';
+import '../../core/network/nai_api_endpoint_service.dart';
+import '../../core/utils/chat_character_position.dart';
 import '../../data/models/character/character_prompt.dart';
 import '../../data/repositories/character_prompt_repository.dart';
 import 'generation/generation_params_notifier.dart';
@@ -21,6 +23,16 @@ CharacterPromptConfig limitCharacterConfigForModel(
       : config;
   return limited.normalizeCustomPositions();
 }
+
+/// Read-only effective layout; switching profiles never overwrites the native
+/// NovelAI AI-layout preference or the user's saved positions.
+final effectiveCharacterPromptConfigProvider = Provider<CharacterPromptConfig>((
+  ref,
+) {
+  final config = ref.watch(characterPromptNotifierProvider);
+  final chat = ref.watch(naiApiEndpointConfigProvider).isOpenAiCompatible;
+  return chat ? ChatCharacterPosition.effectiveConfig(config) : config;
+});
 
 /// 多角色提示词状态管理 Provider
 ///

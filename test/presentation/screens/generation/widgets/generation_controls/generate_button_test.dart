@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nai_launcher/l10n/app_localizations.dart';
 import 'package:nai_launcher/presentation/providers/cost_estimate_provider.dart';
+import 'package:nai_launcher/presentation/providers/provider_pricing_provider.dart';
 import 'package:nai_launcher/presentation/providers/generation/image_generation_selectors.dart';
 import 'package:nai_launcher/presentation/screens/generation/widgets/generation_controls/generate_button.dart';
 import 'package:nai_launcher/presentation/widgets/common/anlas_cost_badge.dart';
@@ -42,6 +43,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          customProviderPricingVisibleProvider.overrideWith((ref) => false),
           // Free generation hides the cost badge and avoids unrelated providers.
           isFreeGenerationProvider.overrideWith((ref) => true),
         ],

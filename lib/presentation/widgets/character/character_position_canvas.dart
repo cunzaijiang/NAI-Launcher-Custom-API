@@ -7,6 +7,7 @@ import 'package:nai_launcher/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/cache/local_file_image.dart';
+import '../../../core/network/nai_api_endpoint_service.dart';
 import '../../../data/models/character/character_prompt.dart';
 import '../../adaptive/interaction_policy.dart';
 import '../../providers/character_position_canvas_provider.dart';
@@ -84,7 +85,7 @@ class _CharacterPositionCanvasViewState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
-    final config = ref.watch(characterPromptNotifierProvider);
+    final config = ref.watch(effectiveCharacterPromptConfigProvider);
     final characters = config.characters;
     final selectedId = ref.watch(selectedCharacterIdProvider);
 
@@ -454,6 +455,11 @@ class CharacterPositionModeSegments extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    // Chat placement is edited per role through the shared 5×5 picker. Do not
+    // expose a global AI toggle or a continuous canvas that the API quantizes.
+    if (ref.watch(naiApiEndpointConfigProvider).isOpenAiCompatible) {
+      return Text(l10n.characterCanvas_custom);
+    }
     final globalAiChoice = ref.watch(
       characterPromptNotifierProvider.select((c) => c.globalAiChoice),
     );

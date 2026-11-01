@@ -401,7 +401,7 @@ void main() {
     },
   );
 
-  test('AI character placement explicitly disables use_coords', () async {
+  test('legacy AI character placement becomes manual Chat grid', () async {
     await service.generateImage(
       const ImageParams(
         model: 'nai-diffusion-4-5-full',
@@ -411,10 +411,12 @@ void main() {
     );
     final draw = _draw(adapter.jsonBodies.single);
     _expectOnlyChatFields(draw);
-    expect(draw['use_coords'], false);
+    expect(draw['use_coords'], true);
     expect(draw['characters'], [
-      {'prompt': 'girl', 'negative_prompt': ''},
+      {'prompt': 'girl', 'negative_prompt': '', 'position': 'C3'},
     ]);
+    expect(adapter.requests, hasLength(1));
+    expect(adapter.requests.single.path, endsWith('/chat/completions'));
   });
 
   test(

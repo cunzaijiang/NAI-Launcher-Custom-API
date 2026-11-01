@@ -6,6 +6,7 @@ import 'package:nai_launcher/presentation/providers/generation/image_generation_
 import 'package:nai_launcher/presentation/widgets/common/themed_button.dart';
 import 'package:nai_launcher/presentation/widgets/common/anlas_cost_badge.dart';
 import 'package:nai_launcher/presentation/widgets/common/provider_pricing_summary.dart';
+import 'package:nai_launcher/presentation/widgets/common/provider_price_badge.dart';
 import 'package:nai_launcher/presentation/providers/provider_pricing_provider.dart';
 
 /// 集成价格徽章的生成按钮
@@ -80,7 +81,7 @@ class GenerateButtonWithCost extends ConsumerWidget {
         ? Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              button,
+              ProviderPricedPrimaryAction(child: button),
               const SizedBox(height: 4),
               ProviderPricingSummary(isGenerating: isGenerating),
             ],
@@ -102,24 +103,40 @@ class GenerateButtonWithCost extends ConsumerWidget {
       constraints: BoxConstraints(minHeight: height),
       child: !_canSkipCurrentBatch
           ? primaryButton
-          : largeText
-          ? LayoutBuilder(
-              builder: (context, constraints) => Column(
-                mainAxisSize: MainAxisSize.min,
-                // 控制栏先测量自然宽度，再分配最终宽度；测量时不能横向拉伸。
-                crossAxisAlignment: constraints.hasBoundedWidth
-                    ? CrossAxisAlignment.stretch
-                    : CrossAxisAlignment.center,
-                children: [
-                  skipButton,
-                  const SizedBox(height: 8),
-                  primaryButton,
-                ],
-              ),
-            )
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [skipButton, const SizedBox(width: 8), primaryButton],
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                if (largeText ||
+                    (providerPricing &&
+                        constraints.hasBoundedWidth &&
+                        constraints.maxWidth < 440)) {
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    // The footer measures with unbounded width first.
+                    crossAxisAlignment: constraints.hasBoundedWidth
+                        ? CrossAxisAlignment.stretch
+                        : CrossAxisAlignment.center,
+                    children: [
+                      skipButton,
+                      const SizedBox(height: 8),
+                      primaryButton,
+                    ],
+                  );
+                }
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (providerPricing && constraints.hasBoundedWidth)
+                      Flexible(child: skipButton)
+                    else
+                      skipButton,
+                    const SizedBox(width: 8),
+                    if (providerPricing && constraints.hasBoundedWidth)
+                      Flexible(child: primaryButton)
+                    else
+                      primaryButton,
+                  ],
+                );
+              },
             ),
     );
   }
@@ -159,8 +176,20 @@ class GenerateButtonWithCost extends ConsumerWidget {
           )
         : buttonTheme;
 
+    final accessibleTheme = providerPricing
+        ? effectiveTheme.copyWith(
+            filledButtonTheme: FilledButtonThemeData(
+              style:
+                  (effectiveTheme.filledButtonTheme.style ??
+                          const ButtonStyle())
+                      .copyWith(
+                        minimumSize: const WidgetStatePropertyAll(Size(64, 44)),
+                      ),
+            ),
+          )
+        : effectiveTheme;
     return AnimatedTheme(
-      data: effectiveTheme,
+      data: accessibleTheme,
       duration: MediaQuery.disableAnimationsOf(context)
           ? Duration.zero
           : const Duration(milliseconds: 160),
@@ -178,39 +207,71 @@ class GenerateButtonWithCost extends ConsumerWidget {
           index: _showCancelAction ? 1 : 0,
           alignment: Alignment.center,
           children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (!isLoading) ...[
-                  Icon(
-                    requiresLogin
-                        ? Icons.login_rounded
-                        : cooldownRemainingSeconds > 0
-                        ? Icons.hourglass_bottom_outlined
-                        : Icons.auto_awesome,
+            if (providerPricing)
+              ProviderPricedButtonLabel(
+                label: showCancel
+                    ? context.l10n.generation_generate
+                    : _generateLabelText(context),
+                icon: isLoading
+                    ? null
+                    : Icon(
+                        requiresLogin
+                            ? Icons.login_rounded
+                            : cooldownRemainingSeconds > 0
+                            ? Icons.hourglass_bottom_outlined
+                            : Icons.auto_awesome,
+                      ),
+                showCost: showCost && !requiresLogin,
+              )
+            else
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (!isLoading) ...[
+                    Icon(
+                      requiresLogin
+                          ? Icons.login_rounded
+                          : cooldownRemainingSeconds > 0
+                          ? Icons.hourglass_bottom_outlined
+                          : Icons.auto_awesome,
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  Text(
+                    showCancel
+                        ? context.l10n.generation_generate
+                        : _generateLabelText(context),
                   ),
-                  const SizedBox(width: 8),
+                  if (showCost && !requiresLogin && !providerPricing)
+                    AnlasCostBadge(isGenerating: isLoading),
                 ],
-                Text(
-                  showCancel
-                      ? context.l10n.generation_generate
-                      : _generateLabelText(context),
-                ),
-                if (showCost && !requiresLogin && !providerPricing)
-                  AnlasCostBadge(isGenerating: isLoading),
-              ],
-            ),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (_isPreparing)
-                  const GenerateButtonSpinner()
-                else
-                  const Icon(Icons.stop_circle_outlined),
-                const SizedBox(width: 8),
-                Text(context.l10n.common_cancel),
-              ],
-            ),
+              ),
+            if (providerPricing)
+              Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  if (_isPreparing)
+                    const GenerateButtonSpinner()
+                  else
+                    const Icon(Icons.stop_circle_outlined),
+                  Text(context.l10n.common_cancel, textAlign: TextAlign.center),
+                ],
+              )
+            else
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_isPreparing)
+                    const GenerateButtonSpinner()
+                  else
+                    const Icon(Icons.stop_circle_outlined),
+                  const SizedBox(width: 8),
+                  Text(context.l10n.common_cancel),
+                ],
+              ),
           ],
         ),
         style: ThemedButtonStyle.filled,

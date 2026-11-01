@@ -1,4 +1,25 @@
-# Preview3 验证记录 / 驗證記錄 / Verification record
+# Custom API 验证记录 / 驗證記錄 / Verification record
+
+> **Preview4 最终本地回归已通过，尚未发布；Preview3 历史区的 CI、SHA 与附件不适用于 Preview4。 / Preview4 最終本機回歸已通過，尚未發佈；Preview3 歷史區的 CI、SHA 與附件不適用於 Preview4。 / Preview4 final local regressions passed; it is not released. Historical Preview3 CI, SHA, and assets are not Preview4 evidence.**
+
+## Preview4 本地证据与待验证项 / 本機證據與待驗證項 / Local evidence and pending verification
+
+2026-11-01 最终本地验证 / 最終本機驗證 / Final local validation:
+
+| 检查 / 檢查 / Check | Preview4 实际证据 / 實際證據 / Actual evidence |
+| --- | --- |
+| 本地回归 / 本機回歸 / Local regressions | **38 files, 677 tests passed** · `00:35` · exit `0`；含新增 2 个 metadata 一致性用例 / 含新增 2 個 metadata 一致性案例 / Includes 2 added metadata-consistency cases。本地日志 / 本機日誌 / Local log: `tool/.tmp/provider-position/preview4-regressions.log`。 |
+| 定向静态分析 / 定向靜態分析 / Scoped analysis | **24 Dart files** · `No issues found!`；后续 3 个改动文件单独分析亦无问题 / 後續 3 個改動檔案個別分析亦無問題 / The 3 subsequently changed files also passed separate analysis。本地日志 / 本機日誌 / Local log: `tool/.tmp/provider-position/final-analyze.log`。 |
+| 源码审阅 / 原始碼審閱 / Source review | **31 reviewed paths**。 |
+| CI 门禁配置 / CI 閘門設定 / CI gate configuration | 34 条唯一测试路径均存在，不等于 CI 已运行或通过 / 34 條唯一測試路徑皆存在，不等於 CI 已執行或通過 / All 34 unique test paths exist; this does not establish a CI run or pass. |
+
+- 本次范围为自定义 Chat 多角色定位（移除 AI 选择、5×5 网格、旧配置强制 `use_coords: true`）、official 原有定位行为，以及自定义预计费用移入生成按钮、移除独立价格框；费用数值逻辑与官方 Anlas 不变。
+- 本次範圍為自訂 Chat 多角色定位（移除 AI 選擇、5×5 網格、舊設定強制 `use_coords: true`）、official 原有定位行為，以及自訂預估費用移入生成按鈕、移除獨立價格框；費用數值邏輯與官方 Anlas 不變。
+- Scope: custom Chat multi-character positioning (no AI selection, a 5×5 grid, enforced `use_coords: true` for old configurations), existing official positioning, and moving the custom cost estimate into Generate without a separate price box; custom calculations and official Anlas remain unchanged.
+
+未做真实 UI、安装或付费生成；Windows／Android 热重载会话未启动。Preview4 CI、发布 SHA、三平台构建及附件回验仍待实际证据，不沿用下列 Preview3 结果。 / 未做真實 UI、安裝或付費生成；Windows／Android 熱重載工作階段未啟動。Preview4 CI、發佈 SHA、三平台建置及附件回驗仍待實際證據，不沿用下列 Preview3 結果。 / No real UI, installation, or paid-generation testing was performed; Windows/Android hot-reload sessions were not started. Preview4 CI, release SHA, three-platform builds, and asset verification still await actual evidence; none inherit the Preview3 results below.
+
+## Preview3 历史证据 / 歷史證據 / Historical evidence
 
 > **2026-11-01：Preview3 已公开发布、CI 构建成功、附件已回验 / 已公開發佈、CI 建置成功、附件已回驗 / Publicly released, CI builds succeeded, assets verified.**
 
@@ -77,7 +98,7 @@
 
 [Protocol and billing limits](custom_api.md) · [Release notes](releases/custom_api_preview.md). [Old Preview2 (no dynamic pricing)](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2) and [historical CI](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/actions/runs/41213027696) are old-version provenance only, not proof that Preview3 has passed, been built, or been released. Old assets/checksum relationships remain unchanged. Primary Preview3 downloads now point to the verified release assets.
 
-## 发布资产 / 發佈資產 / Published assets
+## Preview3 发布资产（历史）/ 發佈資產（歷史）/ Published assets (historical)
 
 [Preview3 Release](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.3) · [CI run 41264301138](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/actions/runs/41264301138)
 

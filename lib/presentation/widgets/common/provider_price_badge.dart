@@ -7,7 +7,7 @@ import '../../providers/generation/image_workflow_controller.dart';
 import '../../providers/image_generation_provider.dart';
 import '../../providers/provider_pricing_provider.dart';
 
-/// Click, keyboard activation, or touch refreshes public prices, never generates.
+/// Non-interactive, unitless estimate: safe to use inside a generate button.
 class ProviderPriceBadge extends ConsumerWidget {
   const ProviderPriceBadge({super.key});
 
@@ -20,65 +20,99 @@ class ProviderPriceBadge extends ConsumerWidget {
     }
     final pricing = ref.watch(providerPricingCatalogProvider);
     final estimate = ref.watch(providerPriceEstimateProvider);
-    final model = ref.watch(
-      generationParamsNotifierProvider.select((p) => p.model),
-    );
-    final supported = ref.watch(providerPricingOriginSupportedProvider);
-    final l10n = context.l10n;
-    final label = estimate == null
-        ? '--'
-        : l10n.providerPrice_estimate(estimate.formatted);
-    final tooltip = _tooltip(context, pricing.valueOrNull, model);
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(left: 8),
-      child: Tooltip(
-        message:
-            '$tooltip\n${pricing.isLoading ? l10n.providerPrice_refreshing : l10n.providerPrice_refresh}',
-        child: Semantics(
-          label: label,
-          hint: tooltip,
-          button: true,
-          enabled: supported && !pricing.isLoading,
-          child: Material(
-            color: theme.colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(6),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(6),
-              onTap: supported && !pricing.isLoading
-                  ? () => ref
-                        .read(providerPricingCatalogProvider.notifier)
-                        .refresh()
-                  : null,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  minHeight: 44,
-                  minWidth: 44,
-                  maxWidth: 140,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 4,
-                  ),
-                  child: Center(
-                    widthFactor: 1,
-                    heightFactor: 1,
-                    child: Text(
-                      label,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSurface,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
+    return Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 4,
+      runSpacing: 4,
+      children: [
+        Text(
+          context.l10n.providerPrice_estimate(estimate?.formatted ?? '--'),
+          textAlign: TextAlign.center,
+          // Inherit the button's foreground, including disabled/cancel states.
+          style: TextStyle(
+            fontSize: Theme.of(context).textTheme.labelSmall?.fontSize,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        if (pricing.isLoading)
+          Semantics(
+            label: context.l10n.providerPrice_refreshing,
+            child: SizedBox.square(
+              dimension: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: DefaultTextStyle.of(context).style.color,
               ),
             ),
           ),
-        ),
+      ],
+    );
+  }
+}
+
+/// Shared responsive content; no nested tap, focus or refresh semantics.
+class ProviderPricedButtonLabel extends StatelessWidget {
+  const ProviderPricedButtonLabel({
+    super.key,
+    required this.label,
+    this.icon,
+    this.showCost = true,
+  });
+
+  final String label;
+  final Widget? icon;
+  final bool showCost;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    // Wrapped, scaled text must not sit on the button's bottom edge, even
+    // when its theme supplies only horizontal button padding.
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 8,
+      runSpacing: 4,
+      children: [
+        if (icon != null) icon!,
+        Text(label, textAlign: TextAlign.center),
+        if (showCost) const ProviderPriceBadge(),
+      ],
+    ),
+  );
+}
+
+/// A separate, keyboard/touch-accessible action; never submits generation.
+class ProviderPriceRefreshButton extends ConsumerWidget {
+  const ProviderPriceRefreshButton({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pricing = ref.watch(providerPricingCatalogProvider);
+    final supported = ref.watch(providerPricingOriginSupportedProvider);
+    final model = ref.watch(
+      generationParamsNotifierProvider.select((p) => p.model),
+    );
+    final l10n = context.l10n;
+    final action = pricing.isLoading
+        ? l10n.providerPrice_refreshing
+        : l10n.providerPrice_refresh;
+    return IconButton(
+      key: const ValueKey('provider-price-refresh'),
+      style: IconButton.styleFrom(
+        minimumSize: const Size.square(44),
+        maximumSize: const Size.square(44),
+        padding: EdgeInsets.zero,
+        visualDensity: VisualDensity.standard,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
+      onPressed: supported && !pricing.isLoading
+          ? () => ref.read(providerPricingCatalogProvider.notifier).refresh()
+          : null,
+      icon: const Icon(Icons.refresh_rounded),
+      // Details are also available to screen readers, not only hover users.
+      tooltip: '$action\n${_tooltip(context, pricing.valueOrNull, model)}',
     );
   }
 

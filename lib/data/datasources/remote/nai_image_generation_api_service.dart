@@ -20,6 +20,7 @@ import '../../../core/network/nai_api_endpoint_service.dart';
 import '../../../core/network/nai_chat_image_codec.dart';
 import '../../../core/network/request_builders/nai_image_request_builder.dart';
 import '../../../core/utils/app_logger.dart';
+import '../../../core/utils/chat_character_position.dart';
 import '../../models/image/image_params.dart';
 import '../../models/image/image_stream_chunk.dart';
 import '../../services/auth_provider.dart';
@@ -440,6 +441,7 @@ class NAIImageGenerationApiService {
     final pricingCatalog = _pricingService?.currentCatalog;
     if (endpoint.isOpenAiCompatible) {
       NAIChatImageCodec.validateParams(params);
+      params = ChatCharacterPosition.effectiveParams(params);
     }
     final focusedRequest = await _responseProcessor.prepareFocusedInpaint(
       params,

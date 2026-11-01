@@ -15,6 +15,7 @@ import '../common/decoded_memory_image.dart';
 import '../common/menu_action_label.dart';
 import '../common/translated_tag_text.dart';
 import 'add_to_library_dialog.dart';
+import 'chat_character_position_picker.dart';
 import 'inline_character_editor.dart';
 
 /// 内联角色卡（内容常显，点击即编辑）
@@ -208,6 +209,7 @@ class _InlineCharacterCardState extends ConsumerState<InlineCharacterCard> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildHeader(context, theme, showInlineEditor),
+          ChatCharacterPositionButton(characterId: widget.character.id),
           // 预览 ↔ 编辑器：高度平滑生长 + 内容交叉淡化，替代瞬时替换
           AnimatedSize(
             duration: animationDuration,

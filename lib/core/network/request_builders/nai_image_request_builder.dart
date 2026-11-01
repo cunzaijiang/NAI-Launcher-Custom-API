@@ -6,6 +6,7 @@ import '../../constants/api_constants.dart';
 import '../../enums/precise_ref_type.dart';
 import '../../utils/app_logger.dart';
 import '../../utils/character_center_resolver.dart';
+import '../../utils/chat_character_position.dart';
 import '../../utils/exif_orientation.dart';
 import '../../utils/inpaint_mask_utils.dart';
 import '../../utils/nai_resolution_adapter.dart';
@@ -63,9 +64,12 @@ class NAIImageRequestBuilder {
   }) : _originalParams = params,
        params =
            (isOpenAiCompatible || useChatApi
-                   ? params.copyWith(
-                       model: ImageModels.resolveBaseModel(params.model),
-                     )
+                   ? (useChatApi
+                             ? ChatCharacterPosition.effectiveParams(params)
+                             : params)
+                         .copyWith(
+                           model: ImageModels.resolveBaseModel(params.model),
+                         )
                    : params)
                .resolveFixedSettings(),
        _preciseReferences =

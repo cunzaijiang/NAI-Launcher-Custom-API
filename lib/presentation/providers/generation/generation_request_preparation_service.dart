@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import '../../../core/network/request_builders/nai_image_request_builder.dart';
 import '../../../core/utils/character_prompt_block_parser.dart';
+import '../../../core/utils/chat_character_position.dart';
 import '../../../core/utils/prompt_preset_resolution.dart';
 import '../../../core/utils/prompt_edit_document.dart';
 import '../../../core/utils/prompt_effective_params.dart';
@@ -168,6 +169,7 @@ class GenerationRequestPreparationService {
     }
     effective = effectivePromptParams(effective);
     if (isOpenAiCompatible) {
+      effective = ChatCharacterPosition.effectiveParams(effective);
       // Here nSamples is the UI's batch count, not the wire request size.
       // The coordinator sends one sample per request without losing the total.
       NAIImageRequestBuilder.validateCompatibleChatParams(

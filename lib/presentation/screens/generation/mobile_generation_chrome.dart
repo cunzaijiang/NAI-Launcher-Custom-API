@@ -9,7 +9,6 @@ import '../../themes/design_tokens.dart';
 import '../../widgets/anlas/anlas_balance_chip.dart';
 import '../../widgets/anlas/opus_usage_chip.dart';
 import '../../widgets/common/anlas_cost_badge.dart';
-import '../../widgets/common/provider_pricing_summary.dart';
 import '../../providers/provider_pricing_provider.dart';
 import '../../widgets/common/owned_scroll_controller.dart';
 import '../../widgets/common/themed_button.dart';
@@ -156,7 +155,7 @@ class MobileGenerationChrome extends ConsumerWidget {
   Widget? _buildBottomBar(BuildContext context, WidgetRef ref) {
     if (data.keyboardVisible || controller.agentFullScreen) return null;
     final theme = Theme.of(context);
-    return SafeArea(
+    final bottomBar = SafeArea(
       top: false,
       child: Container(
         key: const ValueKey('generation-mobile-bottom-bar'),
@@ -229,6 +228,21 @@ class MobileGenerationChrome extends ConsumerWidget {
           ],
         ),
       ),
+    );
+    if (!ref.watch(customProviderPricingVisibleProvider)) return bottomBar;
+    // On short windows/large text, keep the main action reachable without
+    // letting a growing footer overflow the Scaffold or cover the app bar.
+    final media = MediaQuery.of(context);
+    final availableHeight =
+        (media.size.height -
+                media.viewInsets.bottom -
+                media.padding.top -
+                kToolbarHeight -
+                44)
+            .clamp(0.0, double.infinity);
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: availableHeight),
+      child: SingleChildScrollView(reverse: true, child: bottomBar),
     );
   }
 
@@ -309,6 +323,21 @@ class _MobileGenerateButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final providerPricing = ref.watch(customProviderPricingVisibleProvider);
+    // Custom pricing shares the responsive, non-interactive cost label and
+    // sibling refresh action with desktop. Keep official Anlas chrome unchanged.
+    if (providerPricing) {
+      return GenerateButtonWithCost(
+        isGenerating: isGenerating,
+        showCancel: showCancel,
+        batchStatus: batchStatus,
+        cooldownRemainingSeconds: cooldownRemainingSeconds,
+        onGenerate: onGenerate,
+        onCancel: onCancel,
+        onSkipCurrent: onSkipCurrent,
+        showCost: showCost,
+        requiresLogin: requiresLogin,
+      );
+    }
     final theme = Theme.of(context);
     final cancelTheme = theme.copyWith(
       colorScheme: theme.colorScheme.copyWith(
@@ -393,16 +422,7 @@ class _MobileGenerateButton extends ConsumerWidget {
         style: ThemedButtonStyle.filled,
       ),
     );
-    final primaryButton = providerPricing && showCost && !requiresLogin
-        ? Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              button,
-              const SizedBox(height: 4),
-              ProviderPricingSummary(isGenerating: isGenerating),
-            ],
-          )
-        : button;
+    final primaryButton = button;
     if (!_canSkipCurrentBatch) return primaryButton;
     final progress = '${batchStatus.currentImage}/${batchStatus.totalImages}';
     final skipButton = ThemedButton(

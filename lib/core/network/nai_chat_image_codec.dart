@@ -7,6 +7,8 @@ import '../../data/models/image/image_params.dart';
 import '../../data/services/metadata/unified_metadata_parser.dart';
 import '../enums/precise_ref_type.dart';
 import '../utils/exif_orientation.dart';
+import '../utils/chat_character_position.dart';
+import '../utils/character_center_resolver.dart';
 import '../utils/image_save_utils.dart';
 import 'nai_compatible_request.dart';
 import 'request_builders/reference_strength_normalization.dart';
@@ -99,7 +101,7 @@ abstract final class NAIChatImageCodec {
     final characters = _characters(native);
     if (characters.isNotEmpty) {
       draw['characters'] = characters;
-      draw['use_coords'] = native['use_coords'] == true;
+      draw['use_coords'] = true;
     }
     if (vibes.isNotEmpty) {
       final strengths = normalizeReferenceStrengths(
@@ -176,31 +178,27 @@ abstract final class NAIChatImageCodec {
           );
         }
       }
+      final rawCenter = role['center'];
+      final center = CharacterCenterResolver.resolve(
+        CharacterPrompt(
+          prompt: role['prompt'] as String? ?? '',
+          positionX: rawCenter is Map
+              ? (rawCenter['x'] as num?)?.toDouble()
+              : null,
+          positionY: rawCenter is Map
+              ? (rawCenter['y'] as num?)?.toDouble()
+              : null,
+        ),
+        index: i,
+        total: roles.length,
+        useCoords: native['use_coords'] == true,
+      );
       return <String, dynamic>{
         'prompt': role['prompt'],
         'negative_prompt': role['uc'] ?? '',
-        if (native['use_coords'] == true) 'position': _grid(role['center']),
+        'position': ChatCharacterPosition.grid(center.x, center.y),
       };
     });
-  }
-
-  static String _grid(Object? value) {
-    if (value is! Map) throw ArgumentError('Character center is missing');
-    final x = value['x'];
-    final y = value['y'];
-    if (x is! num ||
-        y is! num ||
-        !x.isFinite ||
-        !y.isFinite ||
-        x < 0 ||
-        x > 1 ||
-        y < 0 ||
-        y > 1) {
-      throw ArgumentError('Character center must contain finite x/y in [0, 1]');
-    }
-    final column = ((x - 0.1) / 0.2).round().clamp(0, 4);
-    final row = ((y - 0.1) / 0.2).round().clamp(0, 4);
-    return '${String.fromCharCode(65 + column)}${row + 1}';
   }
 
   /// Only inline PNG data URIs are accepted. Never follow remote image URLs.
@@ -336,7 +334,9 @@ abstract final class NAIChatImageCodec {
       actualSeed: embedded ?? response.seed ?? requestSeed,
       charCaptions: captions('v4_prompt'),
       charNegCaptions: captions('v4_negative_prompt'),
-      useCoords: params.useCoords,
+      useCoords:
+          requestParameters['use_coords'] == true ||
+          params.characters.isNotEmpty,
     );
   }
 }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../data/models/image/image_params.dart';
+import '../../core/network/nai_api_endpoint_service.dart';
 import 'character_prompt_provider.dart';
 import 'generation_layout_mode_provider.dart';
 import 'image_generation_provider.dart';
@@ -24,6 +25,7 @@ bool isCharacterPositionCanvasAvailable({
 
 /// 位置画布仅在支持角色定位的模型、有角色且未生成/报错时可占用预览区。
 final characterPositionCanvasAvailableProvider = Provider<bool>((ref) {
+  if (ref.watch(naiApiEndpointConfigProvider).isOpenAiCompatible) return false;
   final supportsCharacterPositioning = ref.watch(
     generationParamsNotifierProvider.select(
       (params) => params.capabilities.supportsCharacterPositioning,

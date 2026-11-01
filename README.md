@@ -2,6 +2,8 @@
 
 > **Preview3 已公开发布，四包已下载回验。** 最终本地 32 文件 615 tests 全通过；额外 3 文件 Agent 文案 17 tests 保持通过。CI 全部 job 成功，云端 gate 32 文件通过；七附件下载、六项校验及四包哈希／ZIP CRC／APK／EXE 检查通过。尚未进行真实安装、UI 或付费生成验收。 Tag: `custom-api-v4.3.1-preview.3` · [Verification / 验证 / 驗證](docs/custom_api_verification.md).
 
+> **下载状态：Preview3 仍是当前稳定下载（预发布版）；Preview4 开发中，尚未发布。** Preview4 正修复自定义 Chat 多角色定位；本文的测试、CI 与附件回验结果仅属于 Preview3，不代表 Preview4 已验证。见 [Preview4 发行说明草稿](docs/releases/custom_api_preview.md)。
+
 <p align="center">
   简体中文 · <a href="README.zh-TW.md">繁體中文</a> · <a href="README.en-US.md">English</a>
 </p>

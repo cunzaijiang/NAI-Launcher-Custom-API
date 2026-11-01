@@ -396,7 +396,7 @@ class GenerationPreparationService {
         characters = override.characters;
         useCoords = override.useCoords;
       } else {
-        final config = _ref.read(characterPromptNotifierProvider);
+        final config = _ref.read(effectiveCharacterPromptConfigProvider);
         final conversion = CharacterConversionService(
           aliasResolver: _ref
               .read(aliasResolverServiceProvider.notifier)

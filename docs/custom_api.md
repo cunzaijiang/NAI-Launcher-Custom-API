@@ -2,7 +2,9 @@
 
 > **Preview3 已公开发布并完成附件回验 / 已公開發佈並完成附件回驗 / Publicly released with assets verified.** [Preview3 Downloads](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.3) · source SHA: `34924235cf21052eea9749800296939dfdce595d` · [验证 / 驗證 / Verification](custom_api_verification.md)。动态定价适用于 Preview3，旧 Preview2 不含此功能 / 動態定價適用於 Preview3，舊 Preview2 不含此功能 / Dynamic pricing applies to Preview3, not old Preview2.
 
-最终本地验证 / 最終本機驗證 / Final local validation (2026-11-01): **32 files, 615 tests passed**；额外 Agent 文案 / 額外 Agent 文案 / Additional Agent wording: **3 files, 17 tests passed**；既有 scoped analyze / 既有靜態分析 / Earlier scoped analyze: **30 files, `No issues`**；源码审阅 / 原始碼審閱 / Source review: **41 files**。CI 全部 job 成功，云端 gate 32 文件通过；七附件下载、六项校验通过 / CI 全部 job 成功，雲端 gate 32 檔案通過；七附件下載、六項校驗通過 / All CI jobs succeeded; the cloud gate passed 32 files; seven assets downloaded and six checksum entries verified. 未做真实安装、UI、付费生成或钱包实扣验收 / 未做真實安裝、UI、付費生成或錢包實扣驗收 / Real installation, UI, paid generation, and wallet debits remain unverified.
+> **Preview4 开发中，尚未发布 / 開發中，尚未發佈 / In development, not released.** 本页已通过的测试、CI、SHA 与附件结果均属于旧 Preview3，不证明 Preview4 已验证 / 本頁已通過的測試、CI、SHA 與附件結果皆屬於舊 Preview3，不證明 Preview4 已驗證 / Passing test, CI, SHA, and asset records on this page belong to old Preview3, not Preview4. [Preview4 发行说明草稿 / 發行說明草稿 / Release-notes draft](releases/custom_api_preview.md)。
+
+Preview3 历史本地验证 / 歷史本機驗證 / Historical local validation (2026-11-01): **32 files, 615 tests passed**；额外 Agent 文案 / 額外 Agent 文案 / Additional Agent wording: **3 files, 17 tests passed**；既有 scoped analyze / 既有靜態分析 / Earlier scoped analyze: **30 files, `No issues`**；源码审阅 / 原始碼審閱 / Source review: **41 files**。CI 全部 job 成功，云端 gate 32 文件通过；七附件下载、六项校验通过 / CI 全部 job 成功，雲端 gate 32 檔案通過；七附件下載、六項校驗通過 / All CI jobs succeeded; the cloud gate passed 32 files; seven assets downloaded and six checksum entries verified. 未做真实安装、UI、付费生成或钱包实扣验收 / 未做真實安裝、UI、付費生成或錢包實扣驗收 / Real installation, UI, paid generation, and wallet debits remain unverified.
 
 ## 简体中文
 
@@ -22,6 +24,8 @@
 | `nai-diffusion-5-curated` | V5 Curated |
 
 ### 绘图请求与响应
+
+**Preview4 定位修复（开发中、未发布）**：自定义 Chat 移除“AI 选择”，使用可点击的 5×5 角色位置网格；请求强制 `use_coords: true`，旧 AI 选择／自动定位配置也不例外。official 模式仍保留原有 AI／手动定位，不受该强制规则影响。Preview3 下载不包含此修复；验证状态见[分版本记录](custom_api_verification.md)。
 
 参考字段契约：`controlnet` 是对象 `{ "strength": 1, "images": [{ "image": "<BASE64_PNG>", "info_extracted": 1, "strength": 1 }] }`，不是图片数组本身，提取字段为 `info_extracted`。精准参考使用 `character_references` 数组，**不是 `precise_reference`**。数值仅示例，实际取对应参考参数。
 
@@ -61,6 +65,8 @@ POST `/v1/chat/completions` 的外层是 OpenAI Chat `model`、`messages` 等字
 
 ### 繪圖請求與回應
 
+**Preview4 定位修復（開發中、未發佈）**：自訂 Chat 移除「AI 選擇」，使用可點擊的 5×5 角色位置網格；請求強制 `use_coords: true`，舊 AI 選擇／自動定位設定亦同。official 模式仍保留原有 AI／手動定位，不受此強制規則影響。Preview3 下載不含此修復；驗證狀態見[分版本記錄](custom_api_verification.md)。
+
 參考欄位契約：`controlnet` 是物件 `{ "strength": 1, "images": [{ "image": "<BASE64_PNG>", "info_extracted": 1, "strength": 1 }] }`，不是圖片陣列本身，擷取欄位為 `info_extracted`。精準參考使用 `character_references` 陣列，**不是 `precise_reference`**。數值僅為範例，實際取對應參考參數。
 
 POST `/v1/chat/completions` 外層使用 OpenAI Chat `model`、`messages` 等欄位，訊息內容放序列化 JSON 繪圖 payload（模型、提示詞、參數、來源圖或參考圖），不是一般自然語言聊天，也不把原生參數直接放在外層。服務商必須支援此約定。
@@ -98,6 +104,8 @@ POST `/v1/chat/completions` 外層使用 OpenAI Chat `model`、`messages` 等欄
 - Login only GETs `/v1/models`; a successful nonempty `data` list must contain at least one exact ID in the table above (V4 Full, V4.5 Full/Curated, V5 Full/Curated). HTML, empty lists, unknown models and HTTP errors fail. No test generation or placeholder `/user/subscription` request is made.
 
 ### Drawing requests and responses
+
+**Preview4 positioning fix (in development, unreleased)**: custom Chat removes AI position selection and uses a clickable 5×5 character-position grid. Requests enforce `use_coords: true`, including old AI/automatic-position configurations. Official mode retains its existing AI/manual positioning, without the forced-coordinate rule. Preview3 downloads do not contain this fix; see the [version-separated record](custom_api_verification.md) for verification status.
 
 Reference-field contract: `controlnet` is an object `{ "strength": 1, "images": [{ "image": "<BASE64_PNG>", "info_extracted": 1, "strength": 1 }] }`, not the image array itself. The extraction key is `info_extracted`. Precise references use the `character_references` array, **not `precise_reference`**. Values here are illustrative; per-reference settings supply actual values.
 

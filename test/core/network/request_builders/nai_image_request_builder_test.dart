@@ -17,6 +17,42 @@ import '../../../helpers/exif_orientation_fixture.dart';
 void main() {
   group('Chat request preparation', () {
     test(
+      'Chat forces legacy AI snapshots to manual; native keeps AI mode',
+      () async {
+        for (final chat in [false, true]) {
+          for (final stored in [false, true]) {
+            final params = ImageParams(
+              model: ImageModels.animeDiffusionV45Full,
+              useCoords: false,
+              characters: [
+                CharacterPrompt(
+                  prompt: 'girl',
+                  positionX: stored ? 0.9 : null,
+                  positionY: stored ? 0.1 : null,
+                ),
+              ],
+            );
+            final result = await NAIImageRequestBuilder(
+              params: params,
+              useChatApi: chat,
+              encodeVibe:
+                  (image, {required model, informationExtracted = 1}) async {
+                    fail('Placement must not encode references');
+                  },
+            ).build(sampler: Samplers.kEuler);
+            expect(result.requestParameters['use_coords'], chat);
+            expect(result.requestParameters['v4_prompt']['use_coords'], chat);
+            final roles = result.requestParameters['characterPrompts'] as List;
+            expect(
+              roles.single['center'],
+              stored ? {'x': 0.9, 'y': 0.1} : {'x': 0.5, 'y': 0.5},
+            );
+            expect(params.useCoords, false);
+          }
+        }
+      },
+    );
+    test(
       'Chat validates unsupported user intent before any encoding',
       () async {
         final raw = VibeReference(
@@ -495,11 +531,9 @@ void main() {
               ),
             ],
           ),
-          encodeVibe: (
-            image, {
-            required model,
-            informationExtracted = 1,
-          }) async => throw StateError('failed'),
+          encodeVibe:
+              (image, {required model, informationExtracted = 1}) async =>
+                  throw StateError('failed'),
         ).build(sampler: Samplers.kEuler, isStream: isStream);
         expect(
           result.requestParameters.containsKey('reference_image_multiple'),
@@ -884,44 +918,48 @@ void main() {
       );
     });
 
-    test('should keep complete centers in AI layout while coordinates stay off', () async {
-      final params = ImageParams(
-        model: ImageModels.animeDiffusionV45Full,
-        useCoords: false,
-        characters: [
-          const CharacterPrompt(
-            prompt: 'explicit',
-            negativePrompt: 'explicit negative',
-            positionX: 0.37,
-            positionY: 0.64,
-          ),
-          for (var index = 1; index < 6; index++)
-            CharacterPrompt(prompt: 'character $index'),
-        ],
-      );
-      final result = await NAIImageRequestBuilder(
-        params: params,
-        encodeVibe: _fakeEncodeVibe,
-      ).build(sampler: 'k_euler');
+    test(
+      'should keep complete centers in AI layout while coordinates stay off',
+      () async {
+        final params = ImageParams(
+          model: ImageModels.animeDiffusionV45Full,
+          useCoords: false,
+          characters: [
+            const CharacterPrompt(
+              prompt: 'explicit',
+              negativePrompt: 'explicit negative',
+              positionX: 0.37,
+              positionY: 0.64,
+            ),
+            for (var index = 1; index < 6; index++)
+              CharacterPrompt(prompt: 'character $index'),
+          ],
+        );
+        final result = await NAIImageRequestBuilder(
+          params: params,
+          encodeVibe: _fakeEncodeVibe,
+        ).build(sampler: 'k_euler');
 
-      final v4Prompt =
-          result.requestParameters['v4_prompt'] as Map<String, dynamic>;
-      final caption = v4Prompt['caption'] as Map<String, dynamic>;
-      final captions = caption['char_captions'] as List<dynamic>;
-      final explicitCenter =
-          (captions.first as Map<String, dynamic>)['centers'] as List<dynamic>;
-      final lastCenter =
-          (captions.last as Map<String, dynamic>)['centers'] as List<dynamic>;
+        final v4Prompt =
+            result.requestParameters['v4_prompt'] as Map<String, dynamic>;
+        final caption = v4Prompt['caption'] as Map<String, dynamic>;
+        final captions = caption['char_captions'] as List<dynamic>;
+        final explicitCenter =
+            (captions.first as Map<String, dynamic>)['centers']
+                as List<dynamic>;
+        final lastCenter =
+            (captions.last as Map<String, dynamic>)['centers'] as List<dynamic>;
 
-      expect(explicitCenter.single, equals({'x': 0.37, 'y': 0.64}));
-      expect(lastCenter.single, equals({'x': 0.8, 'y': 0.75}));
-      expect(v4Prompt['use_coords'], isFalse);
-      expect(
-        result
-            .requestParameters['v4_negative_prompt']['caption']['char_captions'][0]['centers'][0],
-        equals({'x': 0.37, 'y': 0.64}),
-      );
-    });
+        expect(explicitCenter.single, equals({'x': 0.37, 'y': 0.64}));
+        expect(lastCenter.single, equals({'x': 0.8, 'y': 0.75}));
+        expect(v4Prompt['use_coords'], isFalse);
+        expect(
+          result
+              .requestParameters['v4_negative_prompt']['caption']['char_captions'][0]['centers'][0],
+          equals({'x': 0.37, 'y': 0.64}),
+        );
+      },
+    );
 
     test('should replace malformed centers in AI layout', () async {
       const params = ImageParams(
@@ -1256,110 +1294,116 @@ void main() {
       );
     });
 
-    test('should scale encoded vibe strengths like the web client once their sum exceeds one', () async {
-      const params = ImageParams(
-        model: 'nai-diffusion-4-full',
-        normalizeVibeStrength: true,
-        vibeReferencesV4: [
-          VibeReference(
-            displayName: 'first',
-            vibeEncoding: 'first-encoded',
-            sourceType: VibeSourceType.png,
-            strength: 0.6,
-          ),
-          VibeReference(
-            displayName: 'second',
-            vibeEncoding: 'second-encoded',
-            sourceType: VibeSourceType.png,
-            strength: 0.7,
-          ),
-        ],
-      );
-      const total = 0.6 + 0.7;
-      final builder = NAIImageRequestBuilder(
-        params: params,
-        encodeVibe: _fakeEncodeVibe,
-      );
+    test(
+      'should scale encoded vibe strengths like the web client once their sum exceeds one',
+      () async {
+        const params = ImageParams(
+          model: 'nai-diffusion-4-full',
+          normalizeVibeStrength: true,
+          vibeReferencesV4: [
+            VibeReference(
+              displayName: 'first',
+              vibeEncoding: 'first-encoded',
+              sourceType: VibeSourceType.png,
+              strength: 0.6,
+            ),
+            VibeReference(
+              displayName: 'second',
+              vibeEncoding: 'second-encoded',
+              sourceType: VibeSourceType.png,
+              strength: 0.7,
+            ),
+          ],
+        );
+        const total = 0.6 + 0.7;
+        final builder = NAIImageRequestBuilder(
+          params: params,
+          encodeVibe: _fakeEncodeVibe,
+        );
 
-      final nonStreamResult = await builder.build(sampler: 'k_euler');
-      final streamResult = await builder.build(
-        sampler: 'k_euler',
-        isStream: true,
-      );
+        final nonStreamResult = await builder.build(sampler: 'k_euler');
+        final streamResult = await builder.build(
+          sampler: 'k_euler',
+          isStream: true,
+        );
 
-      for (final result in [nonStreamResult, streamResult]) {
+        for (final result in [nonStreamResult, streamResult]) {
+          expect(
+            result.requestParameters['reference_strength_multiple'],
+            equals([0.6 / total, 0.7 / total]),
+          );
+          expect(
+            result.requestParameters['normalize_reference_strength_multiple'],
+            isTrue,
+          );
+        }
+      },
+    );
+
+    test(
+      'should keep encoded vibe strengths when normalization is off or unnecessary',
+      () async {
+        const disabled = ImageParams(
+          model: 'nai-diffusion-4-full',
+          normalizeVibeStrength: false,
+          vibeReferencesV4: [
+            VibeReference(
+              displayName: 'first',
+              vibeEncoding: 'first-encoded',
+              sourceType: VibeSourceType.png,
+              strength: 0.6,
+            ),
+            VibeReference(
+              displayName: 'second',
+              vibeEncoding: 'second-encoded',
+              sourceType: VibeSourceType.png,
+              strength: 0.7,
+            ),
+          ],
+        );
+        const withinOne = ImageParams(
+          model: 'nai-diffusion-4-full',
+          normalizeVibeStrength: true,
+          vibeReferencesV4: [
+            VibeReference(
+              displayName: 'first',
+              vibeEncoding: 'first-encoded',
+              sourceType: VibeSourceType.png,
+              strength: 0.3,
+            ),
+            VibeReference(
+              displayName: 'second',
+              vibeEncoding: 'second-encoded',
+              sourceType: VibeSourceType.png,
+              strength: 0.5,
+            ),
+          ],
+        );
+
+        final disabledResult = await NAIImageRequestBuilder(
+          params: disabled,
+          encodeVibe: _fakeEncodeVibe,
+        ).build(sampler: 'k_euler');
+        final withinOneResult = await NAIImageRequestBuilder(
+          params: withinOne,
+          encodeVibe: _fakeEncodeVibe,
+        ).build(sampler: 'k_euler');
+
         expect(
-          result.requestParameters['reference_strength_multiple'],
-          equals([0.6 / total, 0.7 / total]),
+          disabledResult.requestParameters['reference_strength_multiple'],
+          equals([0.6, 0.7]),
         );
         expect(
-          result.requestParameters['normalize_reference_strength_multiple'],
-          isTrue,
+          disabledResult
+              .requestParameters['normalize_reference_strength_multiple'],
+          isFalse,
         );
-      }
-    });
-
-    test('should keep encoded vibe strengths when normalization is off or unnecessary', () async {
-      const disabled = ImageParams(
-        model: 'nai-diffusion-4-full',
-        normalizeVibeStrength: false,
-        vibeReferencesV4: [
-          VibeReference(
-            displayName: 'first',
-            vibeEncoding: 'first-encoded',
-            sourceType: VibeSourceType.png,
-            strength: 0.6,
-          ),
-          VibeReference(
-            displayName: 'second',
-            vibeEncoding: 'second-encoded',
-            sourceType: VibeSourceType.png,
-            strength: 0.7,
-          ),
-        ],
-      );
-      const withinOne = ImageParams(
-        model: 'nai-diffusion-4-full',
-        normalizeVibeStrength: true,
-        vibeReferencesV4: [
-          VibeReference(
-            displayName: 'first',
-            vibeEncoding: 'first-encoded',
-            sourceType: VibeSourceType.png,
-            strength: 0.3,
-          ),
-          VibeReference(
-            displayName: 'second',
-            vibeEncoding: 'second-encoded',
-            sourceType: VibeSourceType.png,
-            strength: 0.5,
-          ),
-        ],
-      );
-
-      final disabledResult = await NAIImageRequestBuilder(
-        params: disabled,
-        encodeVibe: _fakeEncodeVibe,
-      ).build(sampler: 'k_euler');
-      final withinOneResult = await NAIImageRequestBuilder(
-        params: withinOne,
-        encodeVibe: _fakeEncodeVibe,
-      ).build(sampler: 'k_euler');
-
-      expect(
-        disabledResult.requestParameters['reference_strength_multiple'],
-        equals([0.6, 0.7]),
-      );
-      expect(
-        disabledResult
-            .requestParameters['normalize_reference_strength_multiple'],
-        isFalse,
-      );
-      expect(
-        withinOneResult.requestParameters['reference_strength_multiple'],
-        equals([0.3, 0.5]),
-      );
-    });
+        expect(
+          withinOneResult.requestParameters['reference_strength_multiple'],
+          equals([0.3, 0.5]),
+        );
+      },
+    );
 
     test('should normalize over successfully encoded vibes only', () async {
       final params = ImageParams(
@@ -1492,56 +1536,59 @@ void main() {
       },
     );
 
-    test('should omit disabled precise references from request payload', () async {
-      final params = ImageParams(
-        model: 'nai-diffusion-4-5-full',
-        preciseReferences: [
-          PreciseReference(
-            image: _validPngBytes(width: 2, height: 2),
-            type: PreciseRefType.character,
-            strength: 0.9,
-            fidelity: 0.8,
-            enabled: false,
-          ),
-          PreciseReference(
-            image: _validPngBytes(width: 3, height: 3),
-            type: PreciseRefType.style,
-            strength: 0.4,
-            fidelity: 0.25,
-          ),
-        ],
-      );
+    test(
+      'should omit disabled precise references from request payload',
+      () async {
+        final params = ImageParams(
+          model: 'nai-diffusion-4-5-full',
+          preciseReferences: [
+            PreciseReference(
+              image: _validPngBytes(width: 2, height: 2),
+              type: PreciseRefType.character,
+              strength: 0.9,
+              fidelity: 0.8,
+              enabled: false,
+            ),
+            PreciseReference(
+              image: _validPngBytes(width: 3, height: 3),
+              type: PreciseRefType.style,
+              strength: 0.4,
+              fidelity: 0.25,
+            ),
+          ],
+        );
 
-      final builder = NAIImageRequestBuilder(
-        params: params,
-        encodeVibe: _fakeEncodeVibe,
-      );
+        final builder = NAIImageRequestBuilder(
+          params: params,
+          encodeVibe: _fakeEncodeVibe,
+        );
 
-      final result = await builder.build(sampler: 'k_euler');
+        final result = await builder.build(sampler: 'k_euler');
 
-      expect(
-        result.requestParameters['director_reference_images'],
-        hasLength(1),
-      );
-      expect(
-        result.requestParameters['director_reference_strength_values'],
-        equals([0.4]),
-      );
-      expect(
-        result
-            .requestParameters['director_reference_secondary_strength_values'],
-        equals([0.75]),
-      );
-      expect(
-        result.requestParameters['director_reference_descriptions'],
-        equals([
-          {
-            'caption': {'base_caption': 'style', 'char_captions': <Object>[]},
-            'legacy_uc': false,
-          },
-        ]),
-      );
-    });
+        expect(
+          result.requestParameters['director_reference_images'],
+          hasLength(1),
+        );
+        expect(
+          result.requestParameters['director_reference_strength_values'],
+          equals([0.4]),
+        );
+        expect(
+          result
+              .requestParameters['director_reference_secondary_strength_values'],
+          equals([0.75]),
+        );
+        expect(
+          result.requestParameters['director_reference_descriptions'],
+          equals([
+            {
+              'caption': {'base_caption': 'style', 'char_captions': <Object>[]},
+              'legacy_uc': false,
+            },
+          ]),
+        );
+      },
+    );
 
     test('should forward uncapped precise strength and fidelity', () async {
       final params = ImageParams(
@@ -1992,75 +2039,78 @@ void main() {
       },
     );
 
-    test('should send expanded infill source and full-size request mask for outpaint', () async {
-      final expandedSource = _validPngBytes(width: 1472, height: 1664);
-      final expandedMask = img.Image(width: 1472, height: 1664);
-      img.fill(expandedMask, color: img.ColorRgba8(0, 0, 0, 255));
-      for (var y = 0; y < 64; y++) {
-        for (var x = 0; x < expandedMask.width; x++) {
-          expandedMask.setPixelRgba(x, y, 255, 255, 255, 255);
+    test(
+      'should send expanded infill source and full-size request mask for outpaint',
+      () async {
+        final expandedSource = _validPngBytes(width: 1472, height: 1664);
+        final expandedMask = img.Image(width: 1472, height: 1664);
+        img.fill(expandedMask, color: img.ColorRgba8(0, 0, 0, 255));
+        for (var y = 0; y < 64; y++) {
+          for (var x = 0; x < expandedMask.width; x++) {
+            expandedMask.setPixelRgba(x, y, 255, 255, 255, 255);
+          }
         }
-      }
 
-      final params = ImageParams(
-        action: ImageGenerationAction.infill,
-        model: 'nai-diffusion-4-5-full',
-        width: 1472,
-        height: 1664,
-        sourceImage: expandedSource,
-        maskImage: Uint8List.fromList(img.encodePng(expandedMask)),
-        strength: 0.42,
-        noise: 0.13,
-        addOriginalImage: true,
-        vibeReferencesV4: const [
-          VibeReference(
-            displayName: 'pre',
-            vibeEncoding: 'pre-encoded',
-            sourceType: VibeSourceType.png,
-          ),
-        ],
-      );
+        final params = ImageParams(
+          action: ImageGenerationAction.infill,
+          model: 'nai-diffusion-4-5-full',
+          width: 1472,
+          height: 1664,
+          sourceImage: expandedSource,
+          maskImage: Uint8List.fromList(img.encodePng(expandedMask)),
+          strength: 0.42,
+          noise: 0.13,
+          addOriginalImage: true,
+          vibeReferencesV4: const [
+            VibeReference(
+              displayName: 'pre',
+              vibeEncoding: 'pre-encoded',
+              sourceType: VibeSourceType.png,
+            ),
+          ],
+        );
 
-      final builder = NAIImageRequestBuilder(
-        params: params,
-        encodeVibe: _fakeEncodeVibe,
-      );
+        final builder = NAIImageRequestBuilder(
+          params: params,
+          encodeVibe: _fakeEncodeVibe,
+        );
 
-      final result = await builder.build(sampler: 'k_euler');
-      final parameters = result.requestParameters;
-      final decodedSource = img.decodeImage(
-        base64Decode(parameters['image'] as String),
-      );
-      final decodedMask = img.decodeImage(
-        base64Decode(parameters['mask'] as String),
-      );
+        final result = await builder.build(sampler: 'k_euler');
+        final parameters = result.requestParameters;
+        final decodedSource = img.decodeImage(
+          base64Decode(parameters['image'] as String),
+        );
+        final decodedMask = img.decodeImage(
+          base64Decode(parameters['mask'] as String),
+        );
 
-      expect(parameters['width'], equals(1472));
-      expect(parameters['height'], equals(1664));
-      expect(
-        base64Decode(parameters['image'] as String),
-        equals(expandedSource),
-      );
-      expect(decodedSource, isNotNull);
-      expect(decodedMask, isNotNull);
-      expect('${decodedSource!.width}x${decodedSource.height}', '1472x1664');
-      expect('${decodedMask!.width}x${decodedMask.height}', '1472x1664');
-      expect(decodedMask.getPixel(0, 0).r.toInt(), equals(255));
-      expect(decodedMask.getPixel(0, 63).r.toInt(), equals(255));
-      expect(decodedMask.getPixel(0, 64).r.toInt(), equals(0));
-      expect(decodedMask.getPixel(0, 64).a.toInt(), equals(255));
-      expect(result.normalizedSourceImageBytes, equals(expandedSource));
-      expect(
-        result.inpaintMaskArtifacts!.requestMaskBytes,
-        equals(base64Decode(parameters['mask'] as String)),
-      );
-      expect(parameters['strength'], equals(0.42));
-      expect(parameters['noise'], equals(0.13));
-      expect(parameters['add_original_image'], isFalse);
-      expect(parameters.containsKey('reference_image_multiple'), isFalse);
-      expect(result.vibeEncodingMap, isEmpty);
-      expect(result.requestData['action'], equals('infill'));
-    });
+        expect(parameters['width'], equals(1472));
+        expect(parameters['height'], equals(1664));
+        expect(
+          base64Decode(parameters['image'] as String),
+          equals(expandedSource),
+        );
+        expect(decodedSource, isNotNull);
+        expect(decodedMask, isNotNull);
+        expect('${decodedSource!.width}x${decodedSource.height}', '1472x1664');
+        expect('${decodedMask!.width}x${decodedMask.height}', '1472x1664');
+        expect(decodedMask.getPixel(0, 0).r.toInt(), equals(255));
+        expect(decodedMask.getPixel(0, 63).r.toInt(), equals(255));
+        expect(decodedMask.getPixel(0, 64).r.toInt(), equals(0));
+        expect(decodedMask.getPixel(0, 64).a.toInt(), equals(255));
+        expect(result.normalizedSourceImageBytes, equals(expandedSource));
+        expect(
+          result.inpaintMaskArtifacts!.requestMaskBytes,
+          equals(base64Decode(parameters['mask'] as String)),
+        );
+        expect(parameters['strength'], equals(0.42));
+        expect(parameters['noise'], equals(0.13));
+        expect(parameters['add_original_image'], isFalse);
+        expect(parameters.containsKey('reference_image_multiple'), isFalse);
+        expect(result.vibeEncodingMap, isEmpty);
+        expect(result.requestData['action'], equals('infill'));
+      },
+    );
 
     test(
       'should allow focused inpaint masks to skip extra post expansion',

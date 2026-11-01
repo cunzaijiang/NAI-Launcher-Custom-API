@@ -501,7 +501,7 @@ class ImageGenerationNotifier extends _$ImageGenerationNotifier {
         ),
         characters: GenerationCharacterPreparation(
           read: (_) {
-            final config = ref.read(characterPromptNotifierProvider);
+            final config = ref.read(effectiveCharacterPromptConfigProvider);
             final characters = _convertCharactersToApiFormat(config);
             return CharacterPreparationSnapshot(
               characters: characters,
