@@ -1,8 +1,8 @@
 # NAI Launcher Custom API
 
-> **Preview3 已公開發佈，四包已下載回驗。** 最終本機 32 檔案 615 tests 全通過；額外 3 檔案 Agent 文案 17 tests 維持通過。CI 全部 job 成功，雲端 gate 32 檔案通過；七附件下載、六項校驗及四包雜湊／ZIP CRC／APK／EXE 檢查通過。尚未進行真實安裝、UI 或付費生成驗收。 Tag: `custom-api-v4.3.1-preview.3` · [Verification / 验证 / 驗證](docs/custom_api_verification.md).
+> **Preview4 已公開發佈，四包已下載回驗。** 本機 38 檔案 677 tests 全通過（`00:35`，exit `0`）；24 Dart 檔案靜態分析無問題。CI run 41291110464：`completed / success`；七附件下載、六項校驗與封存 CRC 回驗通過。未做真實安裝、UI 或付費生成。 [驗證記錄](docs/custom_api_verification.md)。
 
-> **下載狀態：Preview3 仍是目前穩定下載（預發佈版）；Preview4 開發中，尚未發佈。** Preview4 正修復自訂 Chat 多角色定位；本文的測試、CI 與附件回驗結果僅屬於 Preview3，不代表 Preview4 已驗證。見 [Preview4 發行說明草稿](docs/releases/custom_api_preview.md)。
+> **Preview4 目前下載（預發佈版）**：角色卡「目前位置」開啟 5×5 網格；預估費用移入生成按鈕、移除獨立價格框。自訂費用數值邏輯與官方 Anlas 不變。
 
 <p align="center">
   <a href="README.md">简体中文</a> · 繁體中文 · <a href="README.en-US.md">English</a>
@@ -17,13 +17,13 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.3"><img src="https://img.shields.io/badge/Custom_API-custom--api--preview-blue" alt="Custom API preview"></a>
+  <a href="https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.4"><img src="https://img.shields.io/badge/Custom_API-custom--api--preview-blue" alt="Custom API preview"></a>
   <img src="https://img.shields.io/badge/Windows%20%7C%20macOS%20%7C%20Android-available-6f7785" alt="支援平台">
   <img src="https://img.shields.io/badge/license-MIT-5b8c5a" alt="MIT License">
 </p>
 
 <p align="center">
-  <a href="https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.3">下載 Preview3（含動態定價）</a> ·
+  <a href="https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.4">下載 Preview4（含動態定價）</a> ·
   <a href="docs/releases/custom_api_preview.md">本分支更新說明</a> ·
   <a href="https://github.com/cunzaijiang/NAI-Launcher-Custom-API/issues">回報本分支問題</a>
 </p>
@@ -32,22 +32,22 @@
 
 本分支以登入頁的「自訂介面」為主要入口：只需 **一個 API URL、暱稱和 API Key / Token**，支援站點根位址或 `/v1` 位址。Windows、macOS 與 Android 保留上游的本機工具和創作介面，不登入也能先使用本機工具。
 
-## Preview3 下載（含動態定價）
+## Preview4 下載（含動態定價）
 
-**4.3.1 Custom API Preview3 已公開發佈，包含動態定價。** [發佈頁與檢查碼](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.3) · [閱讀本分支更新說明](docs/releases/custom_api_preview.md)。請使用以下四個實際安裝包，不要下載原始碼封存檔來安裝：
+**4.3.1 Custom API Preview4 已公開發佈，包含動態定價。** [發佈頁與檢查碼](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.4) · [閱讀本分支更新說明](docs/releases/custom_api_preview.md)。請使用以下四個實際安裝包，不要下載原始碼封存檔來安裝：
 
 | 平台 | 直接下載安裝包 |
 | --- | --- |
-| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.3_Setup.exe](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.3/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.3_Setup.exe) |
-| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.3_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.3/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.3_Portable.zip) |
-| Android | [NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.3.apk](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.3/NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.3.apk) |
-| macOS | [NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.3_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.3/NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.3_Portable.zip) |
+| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.4_Setup.exe](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.4/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.4_Setup.exe) |
+| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.4_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.4/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.4_Portable.zip) |
+| Android | [NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.4.apk](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.4/NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.4.apk) |
+| macOS | [NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.4_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.4/NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.4_Portable.zip) |
 
-[歷史版本：舊 Preview2（不含動態定價）](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.2)。 本版更新 QQ 群入口與標準 QQ 圖示，其他功能不變。 [QQ](https://qm.qq.com/q/jY8Pshi5os)
+[歷史版本：Preview3（無本次定位與費用版面修復）](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.3)。 [QQ](https://qm.qq.com/q/jY8Pshi5os)
 
 > **預覽版與安裝風險**：請先備份。Windows 安裝版與可攜版均未做 Authenticode 簽章；macOS 僅 ad-hoc 簽章，無 Apple Developer ID 且未公證；Android 為 release 模式、臨時 debug key 簽章，應用程式 ID 沿用上游，不能覆蓋不同簽章的上游安裝，也不保證不同預覽建置間直接覆蓋安裝。Windows 安裝目錄可能與上游重疊；解除安裝可能刪除本機資料。請核對來源與 SHA-256，不要全域停用系統安全保護。本預覽未做真實服務端對端測試，不保證任意第三方站點可用。
 
-> **Preview3 更新邊界**：應用程式內 GitHub 入口指向本分支；自動檢查更新與應用程式內下載安裝已停用，「檢查更新」只提供本分支 [Releases 頁面](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases)的手動下載入口。獨立預覽清單不相容上游簽章更新格式，不會當作可信任自動更新解析。舊 Preview 1 套件不會因此改變，請從本頁手動升級。
+> **Preview4 更新邊界**：應用程式內 GitHub 入口指向本分支；自動檢查更新與應用程式內下載安裝已停用，「檢查更新」只提供本分支 [Releases 頁面](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases)的手動下載入口。獨立預覽清單不相容上游簽章更新格式，不會當作可信任自動更新解析。舊 Preview 1 套件不會因此改變，請從本頁手動升級。
 
 ## 自訂 API 支援邊界
 
@@ -55,8 +55,8 @@
 - 登入僅讀取 `/v1/models` 驗證，不觸發試畫。僅接受五個精確模型 ID：`nai-diffusion-4-full`、`nai-diffusion-4-5-full`、`nai-diffusion-4-5-curated`、`nai-diffusion-5-full`、`nai-diffusion-5-curated`。
 - **不支援 V5 Medium（節約檔）；V5 的 Vibe／Precise Reference 參考功能不可用。** 其他模型的參考圖、生成與編輯能力仍取決於服務商；登入成功不等於所有功能可用。僅回傳最終影像，沒有中間串流預覽，失敗不自動重試。
 - **Chat Vibe 將原始參考圖交給伺服器編碼與快取；其預算欄位會被忽略。** 目前用戶端不持久儲存或重用回傳的 `vibe_cache_ids`，不保證跨請求快取重用。 自訂繪圖不呼叫原生 `/v1/ai` 生成或編碼端點；獨立 Encode 操作不屬於繪圖鏈路，不能據此推斷 Chat Vibe 能力。
-- **Preview3 動態定價僅適用於精確 origin `https://api.cunzaijiang.cn`**（根位址或 `/v1` 入口，不接受其他站點、子網域或代理路徑前綴）。獨立用戶端公開 GET `https://api.cunzaijiang.cn/api/pricing`，不傳送 API Key、Authorization 或 Cookie，不跟隨重新導向；定價讀取不是登入或試畫。僅解析 V4.5 Full/Curated、V5 Full/Curated 四個模型的受限白名單運算式，不使用 `eval`；未知運算式、模型或站點顯示未知，不猜價格，也不把此來源的規則套到其他站點。
-- 儲存 `pricing_version` 與擷取時間，裝置本機持久快取 TTL 為 1 小時，不進入雲端備份；已補每小時自動重新整理，首次擷取失敗後每小時重試。點擊／觸控或鍵盤啟動價格徽章只重新整理價格；失敗保留最近成功規則並提示離線／過期，無法估價時顯示 `--`。依使用者明確要求，報價與 usage 計算值只顯示**無單位原始數字**，不顯示 USD、CNY 或貨幣符號，不推斷幣別。
+- **動態定價僅適用於精確 origin `https://api.cunzaijiang.cn`**（根位址或 `/v1` 入口，不接受其他站點、子網域或代理路徑前綴）。獨立用戶端公開 GET `https://api.cunzaijiang.cn/api/pricing`，不傳送 API Key、Authorization 或 Cookie，不跟隨重新導向；定價讀取不是登入或試畫。僅解析 V4.5 Full/Curated、V5 Full/Curated 四個模型的受限白名單運算式，不使用 `eval`；未知運算式、模型或站點顯示未知，不猜價格，也不把此來源的規則套到其他站點。
+- 儲存 `pricing_version` 與擷取時間，裝置本機持久快取 TTL 為 1 小時，不進入雲端備份；已補每小時自動重新整理，首次擷取失敗後每小時重試。預估費用顯示在生成按鈕內；價格重新整理不觸發生成；失敗保留最近成功規則並提示離線／過期，無法估價時顯示 `--`。依使用者明確要求，報價與 usage 計算值只顯示**無單位原始數字**，不顯示 USD、CNY 或貨幣符號，不推斷幣別。
 - 同步規則所描述的 **NAI4.5 標準基本值為 0，仍可能有附加費用；NAI5 基本值為 0.05**，這些數值隨同步費率變化，不是硬編碼的穩定承諾。服務商專屬 extra-Anlas 估算在有效面積 `≤1048576` 且實際步數 `≤28` 時基本部分為 0，超出則使用現有面積／步數公式；可用的 Precise Reference 每張加 5，Vibe 編碼每張每次請求估計 0–2（伺服器快取未知，超過四張的附加費另計），批次按所有獨立請求加總。詳見[定價公式與邊界](docs/custom_api.md)。
 - 回應費用顯示使用實際回傳的原始 `p` / `c` 代入同步運算式，**不是實際錢包帳單**；保留 `p=100000` 與運算式要求 `p=1` 不一致的警告，不改寫 usage 來迎合預估。餘額、訂閱資格與錢包實扣仍未知；官方整數 Anlas 與授權門檻不變，Agent/MCP 仍須確認未知費用，不能因預估為 0 自動按免費放行。Vibe 預算不是硬上限，請向服務商確認價格與限額。
 - API Key / Token、Prompt、參數與所需影像會傳送至你填寫的站點，請僅使用可信服務。詳見[自訂 API 說明](docs/custom_api.md)。
@@ -172,7 +172,7 @@
 
 ## 🖼️ 介面預覽
 
-以下截圖沿用上游，僅作介面示意，不代表本分支 Preview2／Preview3 的自訂介面外觀、支援範圍或真實服務測試結果。
+以下截圖沿用上游，僅作介面示意，不代表本分支 Preview2／Preview4 的自訂介面外觀、支援範圍或真實服務測試結果。
 
 ### 🖥️ 桌面版
 
@@ -210,25 +210,25 @@
 
 ## ⚡ 下載與開始使用
 
-### 1. 下載並安裝 Preview3
+### 1. 下載並安裝 Preview4
 
-Preview3 已公開發佈並包含動態定價。安裝請查看[發佈頁面](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.3)，檔名如下（與上方直接連結一致）：
+Preview4 已公開發佈並包含動態定價。安裝請查看[發佈頁面](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.4)，檔名如下（與上方直接連結一致）：
 
 | 平台 | 檔案 | 用法 |
 | --- | --- | --- |
-| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.3_Setup.exe](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.3/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.3_Setup.exe) | 未簽章安裝版；先備份並檢查安裝目錄。 |
-| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.3_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.3/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.3_Portable.zip) | 未簽章可攜版；解壓縮後直接執行。 |
-| Android | [NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.3.apk](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.3/NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.3.apk) | 側載 debug key 簽章 APK；可能需要允許安裝未知來源軟體，不能覆蓋不同簽章的上游安裝。 |
-| macOS | [NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.3_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.3/NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.3_Portable.zip) | 解壓縮後開啟 `Aaalice NAI Launcher.app`；僅 ad-hoc 簽章且未公證。 |
+| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.4_Setup.exe](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.4/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.4_Setup.exe) | 未簽章安裝版；先備份並檢查安裝目錄。 |
+| Windows | [NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.4_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.4/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.4_Portable.zip) | 未簽章可攜版；解壓縮後直接執行。 |
+| Android | [NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.4.apk](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.4/NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.4.apk) | 側載 debug key 簽章 APK；可能需要允許安裝未知來源軟體，不能覆蓋不同簽章的上游安裝。 |
+| macOS | [NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.4_Portable.zip](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.4/NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.4_Portable.zip) | 解壓縮後開啟 `Aaalice NAI Launcher.app`；僅 ad-hoc 簽章且未公證。 |
 
-Preview3 附帶 `checksums.txt`、`release_manifest.json` 和 `release_notes_custom_api.md`，可核對 SHA-256、檔案大小與來源；檢查碼不等於發佈者數位簽章。請同時閱讀上方安裝風險與應用程式內更新警告。
+Preview4 附帶 `checksums.txt`、`release_manifest.json` 和 `release_notes_custom_api.md`，可核對 SHA-256、檔案大小與來源；檢查碼不等於發佈者數位簽章。請同時閱讀上方安裝風險與應用程式內更新警告。
 
 ### 2. 優先使用「自訂介面」
 
 1. 在登入頁選擇 **「自訂介面」**，不要將第三方 Key 填入官方登入。
 2. 填寫 **一個 API URL**：站點根位址或以 `/v1` 結尾的位址均可；例如 `https://provider.example` 或 `https://provider.example/v1/`。主 API 與影像 API 共用此位址，無需另填影像位址或選擇協定。
 3. 填寫必需的 **暱稱** 和 **API Key / Token**。Key 僅儲存在目前裝置安全儲存空間，不進入雲端備份，但驗證時會傳送至所填站點。
-4. 登入驗證僅請求 `/v1/models`，不會試畫；Preview3 在受支援站點另行公開讀取定價，不使用 Key。通過驗證後，先確認服務商計費與能力，再主動生成。五模型白名單、無 Medium、V5 參考不可用及未知費用限制見上方。
+4. 登入驗證僅請求 `/v1/models`，不會試畫；Preview4 在受支援站點另行公開讀取定價，不使用 Key。通過驗證後，先確認服務商計費與能力，再主動生成。五模型白名單、無 Medium、V5 參考不可用及未知費用限制見上方。
 
 **可選：NovelAI 官方路線。** 如需官方服務，可使用 NovelAI 帳號密碼或 **Persistent API Token** 登入；網頁安全驗證造成密碼登入失敗時可改用 Persistent API Token。官方 Token 僅儲存在目前裝置安全儲存空間。官方模型與 Anlas 說明不適用於自訂服務的費用承諾。
 
@@ -247,7 +247,7 @@ NAI Launcher 不會在專案自有伺服器上託管你的帳號或作品。只�
 | 使用的功能 | 資料會傳送到哪裡 |
 | --- | --- |
 | 生成、圖片生成圖片、重繪、Vibe 編碼 | NovelAI 或你明確設定的第三方影像 API 站點；包括本次請求所需的 Prompt、參數和來源圖片或參考圖。第三方 Token 會傳送到所填位址，請僅使用可信服務。 |
-| Preview3 公開定價讀取 | 僅精確 origin `https://api.cunzaijiang.cn` 的公開 `/api/pricing`；不傳送 Key、Cookie、Prompt 或圖片，不進行生成。 |
+| Preview4 公開定價讀取 | 僅精確 origin `https://api.cunzaijiang.cn` 的公開 `/api/pricing`；不傳送 Key、Cookie、Prompt 或圖片，不進行生成。 |
 | 線上圖庫搜尋與下載 | 你選擇的第三方圖庫；可用性、速率限制和內容規則由各網站決定。 |
 | AI 翻譯或智慧代理 | 你設定的模型服務；對話、附加圖片和完成任務所需的工具結果可能產生服務費用。 |
 | 同步與備份 | 你選擇的 Google Drive、OneDrive、GitHub 或 WebDAV；只上傳明確勾選的內容。 |
@@ -262,7 +262,7 @@ NAI Launcher 不會在專案自有伺服器上託管你的帳號或作品。只�
 
 - 如遇異常，請透過「設定 → 關於 → 匯出診斷日誌」儲存排查資訊，並在回報時一併提供。
 - [提交本分支 Issue](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/issues)：回報可以重現的問題或提出功能建議；分享日誌前請移除 Token 等敏感資訊。
-- [Preview3 發佈頁（含動態定價）](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.3)並核對檢查碼檔案；更新內容見[本分支更新說明](docs/releases/custom_api_preview.md)。Preview3 已發佈並完成附件回驗；目前發行版僅支援本分支手動下載，不支援應用程式內安裝更新。
+- [Preview4 發佈頁（含動態定價）](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.4)並核對檢查碼檔案；更新內容見[本分支更新說明](docs/releases/custom_api_preview.md)。Preview4 已發佈並完成附件回驗；目前發行版僅支援本分支手動下載，不支援應用程式內安裝更新。
 
 ## 🙏 致謝
 
