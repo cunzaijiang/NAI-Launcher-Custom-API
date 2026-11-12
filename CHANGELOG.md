@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [4.3.1-custom-api-preview.6] - 2026-11-12
+
+### 🐛 修复
+
+- 修复自定义 Chat 绘图接收大体积图片时可能出现的 Stack Overflow，手机、Windows 与 macOS 同步使用新的图片提取逻辑，并保留图片完整性校验。
+
 ## [4.3.1] - 2026-10-24
 
 > [!WARNING]

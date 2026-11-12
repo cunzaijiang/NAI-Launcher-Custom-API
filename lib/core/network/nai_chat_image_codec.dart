@@ -244,20 +244,10 @@ abstract final class NAIChatImageCodec {
         'Chat drawing response has no message content',
       );
     }
-    final matches = RegExp(
-      r'!\[[^\]]*\]\(data:image/png;base64,([A-Za-z0-9+/=\r\n]+)\)',
-      caseSensitive: false,
-    ).allMatches(content).toList();
-    if (matches.length != 1) {
-      throw const FormatException(
-        'Chat drawing must return exactly one inline Markdown PNG data URI',
-      );
-    }
+    final encoded = _inlinePngBase64(content);
     final Uint8List bytes;
     try {
-      bytes = base64Decode(
-        matches.single.group(1)!.replaceAll(RegExp(r'\s'), ''),
-      );
+      bytes = base64Decode(encoded);
     } on FormatException {
       throw const FormatException('Chat drawing returned invalid PNG base64');
     }
@@ -294,6 +284,78 @@ abstract final class NAIChatImageCodec {
           ? cacheIds.whereType<String>().toList()
           : const [],
     );
+  }
+
+  /// Match the inline image grammar with forward-only scans. A regexp over a
+  /// multi-megabyte Base64 payload can exhaust the regexp engine's stack.
+  static String _inlinePngBase64(String content) {
+    const marker = '](data:image/png;base64,';
+    var cursor = 0;
+    var payloadStart = -1;
+    var payloadEnd = -1;
+    while (cursor < content.length) {
+      final opening = content.indexOf('![', cursor);
+      if (opening < 0) break;
+      final closing = content.indexOf(']', opening + 2);
+      if (closing < 0) break;
+      cursor = closing + 1;
+      // Nested opening markers share this first closing bracket, so a failed
+      // suffix cannot hide another match inside the same alt text.
+      final start = closing + marker.length;
+      if (start > content.length ||
+          content.substring(closing, start).toLowerCase() != marker) {
+        continue;
+      }
+      var end = start;
+      while (end < content.length && _isBase64CodeUnit(content.codeUnitAt(end))) {
+        end++;
+      }
+      cursor = end;
+      if (end == start ||
+          end == content.length ||
+          content.codeUnitAt(end) != 0x29) {
+        continue;
+      }
+      if (payloadStart >= 0) {
+        throw const FormatException(
+          'Chat drawing must return exactly one inline Markdown PNG data URI',
+        );
+      }
+      payloadStart = start;
+      payloadEnd = end;
+      cursor = end + 1;
+    }
+    if (payloadStart < 0) {
+      throw const FormatException(
+        'Chat drawing must return exactly one inline Markdown PNG data URI',
+      );
+    }
+    return _withoutBase64LineBreaks(content, payloadStart, payloadEnd);
+  }
+
+  static bool _isBase64CodeUnit(int code) =>
+      (code >= 0x41 && code <= 0x5a) ||
+      (code >= 0x61 && code <= 0x7a) ||
+      (code >= 0x30 && code <= 0x39) ||
+      code == 0x2b ||
+      code == 0x2f ||
+      code == 0x3d ||
+      code == 0x0d ||
+      code == 0x0a;
+
+  static String _withoutBase64LineBreaks(String content, int start, int end) {
+    final output = StringBuffer();
+    var chunkStart = start;
+    for (var i = start; i < end; i++) {
+      final code = content.codeUnitAt(i);
+      if (code == 0x0d || code == 0x0a) {
+        output.write(content.substring(chunkStart, i));
+        chunkStart = i + 1;
+      }
+    }
+    if (chunkStart == start) return content.substring(start, end);
+    output.write(content.substring(chunkStart, end));
+    return output.toString();
   }
 
   // Cache identifiers are response metadata only; they are not persisted or

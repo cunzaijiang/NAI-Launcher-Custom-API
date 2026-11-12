@@ -8,15 +8,15 @@ permissions:
   contents: read
 
 concurrency:
-  group: custom-api-v4.3.1-preview.5
+  group: custom-api-v4.3.1-preview.6
   cancel-in-progress: false
 
 env:
   FLUTTER_VERSION: "3.47.5"
   PUB_HOSTED_URL: https://pub.dev
-  RELEASE_TAG: custom-api-v4.3.1-preview.5
+  RELEASE_TAG: custom-api-v4.3.1-preview.6
   RELEASE_REPOSITORY: cunzaijiang/NAI-Launcher-Custom-API
-  ASSET_VERSION: 4.3.1-custom-api-preview.5
+  ASSET_VERSION: 4.3.1-custom-api-preview.6
 
 defaults:
   run:
@@ -403,7 +403,7 @@ jobs:
           }
           # GitHub ref creation fails atomically if another process created this tag.
           gh api --method POST "repos/$repo/git/refs" -f "ref=refs/tags/$tag" -f "sha=$env:SOURCE_SHA"
-          gh release create $tag --repo $repo --verify-tag --draft --prerelease --latest=false --title "NAI Launcher Custom API 4.3.1 Preview 5 (Generation interaction and status fixes)" --notes-file release-assets/release_notes_custom_api.md
+          gh release create $tag --repo $repo --verify-tag --draft --prerelease --latest=false --title "NAI Launcher Custom API 4.3.1 Preview 6 (Large image Stack Overflow fix)" --notes-file release-assets/release_notes_custom_api.md
           $paths = @(Get-ChildItem -LiteralPath release-assets -File | Sort-Object Name | ForEach-Object FullName)
           # No --clobber. A partial upload stays a draft and must be inspected manually.
           gh release upload $tag @paths --repo $repo

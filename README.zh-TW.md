@@ -1,5 +1,7 @@
 # NAI Launcher Custom API
 
+> **Preview6 大圖修復正在建置。** 修復自訂 Chat 繪圖的大型圖片解析；發佈成功前，下方 Preview5 仍是可下載版本。[Preview6 更新說明](docs/releases/custom_api_preview.md)。
+
 > **Preview5 已公開發佈，七附件已下載回驗。** CI run 41297577735 六個 job 全部成功；tag／manifest／source SHA、六項校驗、四包雜湊、ZIP CRC、APK／EXE 檢查通過。本機最終定向 42 檔案 740 tests 通過（`00:30`，exit `0`），不代表全倉 green。[驗證記錄](docs/custom_api_verification.md)。
 
 > **Preview5 目前下載（預發佈版）**：desktop/mobile 恢復 Preview3 主按鈕核心版面，金額純文字、價格 spinner 僅重新整理；`isSaving` 明確儲存回饋、準備錯誤可見，Chat 背景解析保留 PNG 校驗。完整 shell 與 mobile widget 回歸不等於使用者機器驗收；Android／Windows 實際 UI 皆 blocked，不承諾全部延遲或 Windows 根因已解決。[發行說明](docs/releases/custom_api_preview.md)。

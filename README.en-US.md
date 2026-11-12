@@ -1,5 +1,7 @@
 # NAI Launcher Custom API
 
+> **Preview6 large-image fix is being built.** Updates custom Chat image decoding; Preview5 below remains the downloadable version until publication succeeds. [Preview6 notes](docs/releases/custom_api_preview.md).
+
 > **Preview5 is publicly released; all seven assets were downloaded and verified.** All six jobs in CI run 41297577735 succeeded; tag/manifest/source SHA, six checksum entries, four package hashes, ZIP CRCs and APK/EXE checks passed. Final targeted validation passed 740 tests in 42 files (`00:30`, exit `0`), not a green full suite. [Verification](docs/custom_api_verification.md).
 
 > **Preview5 is the current download (a prerelease)**: desktop/mobile restore the Preview3 main-button core layout; amounts are plain text and the pricing spinner is refresh-only. Explicit `isSaving` feedback, visible preparation errors and background Chat parsing retain PNG validation. Complete-shell/mobile widget regressions do not establish acceptance on users' machines; actual Android/Windows UI testing is blocked. No claim that all delays or the Windows root cause are resolved. [Release notes](docs/releases/custom_api_preview.md).

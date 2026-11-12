@@ -285,6 +285,97 @@ void main() {
     },
   );
 
+  for (final (width, height) in [(1472, 1472), (1088, 1092), (1092, 1088)]) {
+    test('decodes multi-megabyte noisy $width x $height PNG', () {
+      final png = _noisyPng(width, height);
+      final encoded = base64Encode(png);
+      expect(encoded.length, greaterThan(4 * 1024 * 1024));
+      final decoded = NAIChatImageCodec.decodeResponse(
+        _contentResponse(
+          'Generated image:\n![large](data:image/png;base64,$encoded)'
+          '<!-- seeds: [12345] -->'
+          '<!-- vibe_cache_ids: ["large-cache"] -->',
+        ),
+      );
+      expect((decoded.width, decoded.height), (width, height));
+      expect(decoded.image, png);
+      expect(decoded.seed, 12345);
+      expect(decoded.vibeCacheIds, ['large-cache']);
+      if (width == 1472) {
+        // Exercise the old regexp's long failing path as well as success.
+        expect(
+          () => NAIChatImageCodec.decodeResponse(
+            _contentResponse('![large](data:image/png;base64,$encoded'),
+          ),
+          throwsA(
+            isA<FormatException>().having(
+              (error) => error.message,
+              'detail',
+              contains('exactly one inline Markdown PNG data URI'),
+            ),
+          ),
+        );
+      }
+    });
+  }
+
+  test('accepts case-insensitive PNG marker and only CR/LF line breaks', () {
+    final png = _png();
+    final encoded = base64Encode(png);
+    final wrapped = StringBuffer();
+    for (var start = 0; start < encoded.length; start += 64) {
+      final end = start + 64 < encoded.length ? start + 64 : encoded.length;
+      wrapped
+        ..write(encoded.substring(start, end))
+        ..write('\r\n');
+    }
+    final decoded = NAIChatImageCodec.decodeResponse(
+      _contentResponse('prefix ![alt](DaTa:ImAgE/PnG;BaSe64,\n$wrapped) suffix'),
+    );
+    expect(decoded.image, png);
+    expect((decoded.width, decoded.height), (64, 128));
+  });
+
+  test('rejects malformed Markdown and duplicate inline PNG matches', () {
+    final encoded = base64Encode(_png());
+    final inline = '![x](data:image/png;base64,$encoded)';
+    for (final content in [
+      '![x](data:image/png;base64,)',
+      '![x](data:image/png;base64,\r\n)',
+      '![x](data:image/png;base64,$encoded',
+      '![x(data:image/png;base64,$encoded)',
+      '![x] (data:image/png;base64,$encoded)',
+      '![x](data:image/png;base64, $encoded)',
+      '![x](data:image/png;base64,${encoded.substring(0, 8)}\t'
+          '${encoded.substring(8)})',
+      '![x](data:image/png;base64,${encoded.substring(0, 8)}_'
+          '${encoded.substring(8)})',
+      '$inline ![other](DATA:IMAGE/PNG;BASE64,$encoded)',
+      '$inline ![bad-padding](data:image/png;base64,abc=def)',
+    ]) {
+      expect(
+        () => NAIChatImageCodec.decodeResponse(_contentResponse(content)),
+        throwsA(isA<FormatException>()),
+        reason: 'Malformed or duplicate inline PNG must fail',
+      );
+    }
+  });
+
+  test('preserves matching after malformed candidates and nested alt text', () {
+    final png = _png();
+    final inline = '![outer ![inner](data:image/png;base64,${base64Encode(png)})';
+    for (final prefix in [
+      '![bad](data:image/png;base64,invalid!) ',
+      '![bad](https://untrusted.invalid/a.png) ',
+      '![unclosed alt ',
+    ]) {
+      final decoded = NAIChatImageCodec.decodeResponse(
+        _contentResponse('$prefix$inline'),
+      );
+      expect(decoded.image, png);
+    }
+  });
+
   test('async decode retains strict envelope and PNG rejection', () async {
     final png = _png();
     final inline = '![x](data:image/png;base64,${base64Encode(png)})';
@@ -509,6 +600,34 @@ List<int> _idatChunks(Uint8List png) {
   }
   return output;
 }
+
+// A fixed xorshift stream avoids a compressible blank-image fixture. Level 0
+// keeps fixture encoding fast and guarantees a multi-megabyte PNG at each size.
+Uint8List _noisyPng(int width, int height) {
+  final pixels = Uint8List(width * height * 3);
+  var state = 0x12345678;
+  for (var i = 0; i < pixels.length; i++) {
+    state ^= (state << 13) & 0xffffffff;
+    state ^= state >>> 17;
+    state ^= (state << 5) & 0xffffffff;
+    pixels[i] = state & 0xff;
+  }
+  final image = img.Image.fromBytes(
+    width: width,
+    height: height,
+    bytes: pixels.buffer,
+    numChannels: 3,
+  );
+  return Uint8List.fromList(img.encodePng(image, level: 0));
+}
+
+String _contentResponse(String content) => jsonEncode({
+  'choices': [
+    {
+      'message': {'content': content},
+    },
+  ],
+});
 
 Uint8List _png() =>
     Uint8List.fromList(img.encodePng(img.Image(width: 64, height: 128)));
