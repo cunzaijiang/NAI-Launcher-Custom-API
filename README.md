@@ -1,10 +1,18 @@
 # NAI Launcher Custom API
 
-> **Preview6 大图修复正在构建。** 修复自定义 Chat 绘图的大体积图片解析；发布成功前，下方 Preview5 仍是可下载版本。[Preview6 更新说明](docs/releases/custom_api_preview.md)。
+> **Preview6 大图修复已发布。** 自定义 Chat 绘图改用线性扫描解析大体积图片，覆盖 1472×1472、1088×1092、1092×1088 离线回归。39 文件、710 tests 通过，三端构建成功，七附件完成哈希回验。[下载 Preview6](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.6) · [更新说明](docs/releases/custom_api_preview.md)。应用版本 `4.3.1+47`；请手动下载安装，真实设备生成验收仍待完成。
 
 > **Preview5 已公开发布，七附件已下载回验。** CI run 41297577735 六个 job 全部成功；tag／manifest／source SHA、六项校验、四包哈希、ZIP CRC、APK／EXE 检查通过。本地最终定向 42 文件 740 tests 通过（`00:30`，exit `0`），不代表全仓 green。[验证记录](docs/custom_api_verification.md)。
 
-> **Preview5 当前下载（预发布版）**：desktop/mobile 恢复 Preview3 主按钮核心布局，金额纯文字、价格 spinner 仅刷新；`isSaving` 显式保存反馈、准备错误可见，Chat 后台解析保留 PNG 校验。完整 shell 与 mobile widget 回归不等于用户机器验收；Android／Windows 实际 UI 均 blocked，不承诺全部延迟或 Windows 根因已解决。[发行说明](docs/releases/custom_api_preview.md)。
+> **Preview5 历史版本（预发布版）**：desktop/mobile 恢复 Preview3 主按钮核心布局，金额纯文字、价格 spinner 仅刷新；`isSaving` 显式保存反馈、准备错误可见，Chat 后台解析保留 PNG 校验。完整 shell 与 mobile widget 回归不等于用户机器验收；Android／Windows 实际 UI 均 blocked，不承诺全部延迟或 Windows 根因已解决。[发行说明](docs/releases/custom_api_preview.md)。
+
+
+## Preview6 downloads / 下载 / 下載
+
+- [Android APK](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.6/NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.6.apk)
+- [Windows Setup](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.6/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.6_Setup.exe)
+- [Windows Portable](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.6/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.6_Portable.zip)
+- [macOS Portable](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.6/NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.6_Portable.zip)
 
 <p align="center">
   简体中文 · <a href="README.zh-TW.md">繁體中文</a> · <a href="README.en-US.md">English</a>
@@ -34,7 +42,7 @@
 
 本分支以登录页的“自定义接口”为主要入口：只需 **一个 API URL、昵称和 API Key / Token**，支持站点根地址或 `/v1` 地址。Windows、macOS 与 Android 保留上游的本地工具和创作界面，不登录也能先使用本地工具。
 
-## Preview5 下载（含动态定价）
+## Preview5 历史下载（含动态定价）
 
 **4.3.1 Custom API Preview5 已公开发布，包含动态定价。** [发布页面与校验文件](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.5) · [阅读本分支更新说明](docs/releases/custom_api_preview.md)。请使用以下四个实际安装包，不要下载源码归档来安装：
 

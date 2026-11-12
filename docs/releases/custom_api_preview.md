@@ -2,7 +2,7 @@
 
 Tag: `custom-api-v4.3.1-preview.6` · App version: `4.3.1+47`
 
-准备发布 / 準備發佈 / Preparing release. 构建与验证结果以本版本 GitHub Actions 和 Release 附件为准，不继承 Preview5 测试结果。 / 建置與驗證結果以本版本 GitHub Actions 與 Release 附件為準，不繼承 Preview5 測試結果。 / Build and validation results come from this version's GitHub Actions and release assets, not earlier preview results.
+已发布 / 已發佈 / Published: [Preview6 Release](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.6)。[CI 43133676596](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/actions/runs/43133676596) 六项 job 全部成功；39 文件、710 tests passed。七附件大小与 SHA-256 已核实，CI 发布前下载回验。源码 / Source: `2a4dda661d55da72bfb443ecef7b1ad6410e5d03`。真实设备安装与生成验收仍未完成 / 真實裝置安裝與生成驗收仍未完成 / Real-device installation and generation acceptance remain pending.
 
 ## 简体中文
 

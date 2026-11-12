@@ -1,5 +1,16 @@
 # Custom API 验证记录 / 驗證記錄 / Verification record
 
+## Preview6 大图解析修复 / 大圖解析修復 / Large-image parsing fix
+
+- 发布 / Published: `custom-api-v4.3.1-preview.6`, app `4.3.1+47`; source `2a4dda661d55da72bfb443ecef7b1ad6410e5d03`.
+- [CI 43133676596](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/actions/runs/43133676596): all six jobs succeeded, 39 regression files, 710 tests passed. This is the scoped release gate, not a claim of a green full repository suite.
+- Android APK, Windows Setup/Portable, macOS Portable rebuilt from the same source. Exactly seven published assets; CI downloads every asset and compares size/SHA-256 before publication. Manifest and checksum entries independently match GitHub API asset digests.
+- Offline noisy-PNG regressions cover 1472×1472, 1088×1092 and 1092×1088, each with >4 MiB Base64, plus malformed/duplicate responses. No paid generation for this fix. Real-device installation/generation acceptance remains pending.
+- Manual update only. Android ephemeral debug signing, Windows unsigned, macOS ad-hoc without notarization. [Release notes](releases/custom_api_preview.md).
+
+## Preview5 historical evidence / 历史证据 / 歷史證據
+
+
 > **Preview5 已公开发布并完成附件回验 / 已公開發佈並完成附件回驗 / Publicly released with assets verified.** CI run `41297577735`: six jobs `success`。Preview3／Preview4 历史证据独立保留 / 歷史證據獨立保留 / Historical evidence is preserved separately.
 
 ## Preview5 本地证据与未完成验收 / 本機證據與未完成驗收 / Local evidence and open acceptance

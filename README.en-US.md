@@ -1,10 +1,18 @@
 # NAI Launcher Custom API
 
-> **Preview6 large-image fix is being built.** Updates custom Chat image decoding; Preview5 below remains the downloadable version until publication succeeds. [Preview6 notes](docs/releases/custom_api_preview.md).
+> **Preview6 large-image fix is published.** Linear scanning replaces large Base64 regex matching, with offline regressions at 1472×1472, 1088×1092 and 1092×1088. All 710 tests in 39 files and all three platform builds passed; seven assets passed hash verification. [Download Preview6](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.6) · [Release notes](docs/releases/custom_api_preview.md). App version `4.3.1+47`; manual installation required. Real-device generation acceptance remains pending.
 
 > **Preview5 is publicly released; all seven assets were downloaded and verified.** All six jobs in CI run 41297577735 succeeded; tag/manifest/source SHA, six checksum entries, four package hashes, ZIP CRCs and APK/EXE checks passed. Final targeted validation passed 740 tests in 42 files (`00:30`, exit `0`), not a green full suite. [Verification](docs/custom_api_verification.md).
 
-> **Preview5 is the current download (a prerelease)**: desktop/mobile restore the Preview3 main-button core layout; amounts are plain text and the pricing spinner is refresh-only. Explicit `isSaving` feedback, visible preparation errors and background Chat parsing retain PNG validation. Complete-shell/mobile widget regressions do not establish acceptance on users' machines; actual Android/Windows UI testing is blocked. No claim that all delays or the Windows root cause are resolved. [Release notes](docs/releases/custom_api_preview.md).
+> **Preview5 historical release (a prerelease)**: desktop/mobile restore the Preview3 main-button core layout; amounts are plain text and the pricing spinner is refresh-only. Explicit `isSaving` feedback, visible preparation errors and background Chat parsing retain PNG validation. Complete-shell/mobile widget regressions do not establish acceptance on users' machines; actual Android/Windows UI testing is blocked. No claim that all delays or the Windows root cause are resolved. [Release notes](docs/releases/custom_api_preview.md).
+
+
+## Preview6 downloads / 下载 / 下載
+
+- [Android APK](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.6/NAI_Launcher_Custom_API_Android_4.3.1-custom-api-preview.6.apk)
+- [Windows Setup](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.6/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.6_Setup.exe)
+- [Windows Portable](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.6/NAI_Launcher_Custom_API_Windows_4.3.1-custom-api-preview.6_Portable.zip)
+- [macOS Portable](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/download/custom-api-v4.3.1-preview.6/NAI_Launcher_Custom_API_macOS_4.3.1-custom-api-preview.6_Portable.zip)
 
 <p align="center">
   <a href="README.md">简体中文</a> · <a href="README.zh-TW.md">繁體中文</a> · English
@@ -34,7 +42,7 @@
 
 The primary entry is **Custom API** on the sign-in page: enter **one API URL, a nickname, and an API key / token**, using either the site root or a `/v1` URL. Windows, macOS, and Android retain upstream local tools and creative interfaces; local tools work without signing in.
 
-## Preview5 downloads (with dynamic pricing)
+## Preview5 historical downloads (with dynamic pricing)
 
 **4.3.1 Custom API Preview5 is publicly released with dynamic pricing.** [Release and checksums](https://github.com/cunzaijiang/NAI-Launcher-Custom-API/releases/tag/custom-api-v4.3.1-preview.5) · [Read this fork's release notes](docs/releases/custom_api_preview.md). Use these four actual packages, not the source archives, to install:
 
